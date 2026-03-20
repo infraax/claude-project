@@ -1,0 +1,135 @@
+{
+  "name": "claude-project",
+  "displayName": "Claude Project",
+  "version": "3.0.0",
+  "description": "Project context system for Claude Code — .claude-project file, diary MCP, CLI, VS Code integration",
+  "author": "claudelab",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/infraax/claude-project.git"
+  },
+  "publisher": "claudelab",
+  "icon": "icons/icon.png",
+  "categories": [
+    "Other",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "mcp",
+    "ai",
+    "project-context",
+    "anthropic",
+    "diary"
+  ],
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=18"
+  },
+  "activationEvents": [
+    "workspaceContains:.claude-project"
+  ],
+  "main": "./dist/extension.js",
+  "bin": {
+    "claude-project": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "mcp",
+    "schema",
+    "icons",
+    "language-configuration.json",
+    "README.md",
+    "LICENSE.txt"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "claude-project",
+        "aliases": [
+          "Claude Project"
+        ],
+        "filenames": [
+          ".claude-project"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": ".claude-project",
+        "url": "./schema/claude-project.schema.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "claudeProject.status",
+        "title": "Show Status",
+        "category": "Claude Project"
+      },
+      {
+        "command": "claudeProject.init",
+        "title": "Init in Current Folder",
+        "category": "Claude Project"
+      },
+      {
+        "command": "claudeProject.sync",
+        "title": "Sync Memory → Obsidian",
+        "category": "Claude Project"
+      },
+      {
+        "command": "claudeProject.injectMcp",
+        "title": "Add MCP Server to ~/.mcp.json",
+        "category": "Claude Project"
+      },
+      {
+        "command": "claudeProject.openMemory",
+        "title": "Open Memory Folder",
+        "category": "Claude Project"
+      }
+    ],
+    "configuration": {
+      "title": "Claude Project",
+      "properties": {
+        "claudeProject.mcpAutoInject": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically add claude-diary MCP entry to ~/.mcp.json when a .claude-project is detected."
+        },
+        "claudeProject.obsidianVault": {
+          "type": "string",
+          "default": "",
+          "description": "Override the Obsidian vault path for all projects. Leave blank to use the path from each .claude-project file."
+        },
+        "claudeProject.statusBarEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show current project name and stage in the VS Code status bar."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x dist/cli.js",
+    "build:watch": "tsc -p tsconfig.json --watch",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run clean && npm run build",
+    "link": "npm run build && npm link",
+    "package": "vsce package",
+    "publish:npm": "npm publish --access public",
+    "publish:vsce": "vsce publish",
+    "publish:all": "npm run build && npm run publish:npm && npm run publish:vsce"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "typescript": "^5.5.0"
+  }
+}

@@ -1,0 +1,136 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'           # triggers Triple Release on v3.0.0, v3.1.0, etc.
+    branches:
+      - main           # triggers CI build + lint on every push to main
+
+jobs:
+  # ── CI: build + lint (runs on every push) ─────────────────────────────────
+  build:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (type-check)
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify CLI entry point exists
+        run: node dist/cli.js --version
+
+      - name: Verify MCP server exists
+        run: test -f mcp/server.py && echo "server.py OK"
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  # ── Release: npm + vsce + GitHub Release (runs only on version tags) ───────
+  release:
+    name: Triple Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js (with npm registry auth)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Verify package version matches tag
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${{ steps.version.outputs.VERSION }}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "ERROR: package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+            exit 1
+          fi
+          echo "Version $PKG_VERSION matches tag — proceeding"
+
+      # ── 1 of 3: npm publish ─────────────────────────────────────────────────
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # ── 2 of 3: VS Code Marketplace ─────────────────────────────────────────
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Package VS Code extension
+        run: vsce package --out claude-project-${{ steps.version.outputs.VERSION }}.vsix
+
+      - name: Publish to VS Code Marketplace
+        run: vsce publish --pat ${{ secrets.VSCE_PAT }}
+
+      # ── 3 of 3: GitHub Release ───────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: v${{ steps.version.outputs.VERSION }}
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            claude-project-${{ steps.version.outputs.VERSION }}.vsix
+          body: |
+            ## Install
+
+            **npm (CLI + MCP server):**
+            ```bash
+            npm install -g claude-project
+            ```
+
+            **VS Code Marketplace:**
+            Search for `claudelab.claude-project` in the Extensions panel, or:
+            ```bash
+            code --install-extension claude-project-${{ steps.version.outputs.VERSION }}.vsix
+            ```
+
+            **MCP registry (Claude Code):**
+            Add to `~/.mcp.json`:
+            ```json
+            {
+              "mcpServers": {
+                "claude-diary": {
+                  "command": "npx",
+                  "args": ["-y", "claude-project", "mcp"]
+                }
+              }
+            }
+            ```
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

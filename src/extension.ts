@@ -1,0 +1,310 @@
+/**
+ * extension.ts — VS Code extension entry point for @claudelab/project
+ *
+ * Activates when a .claude-project file is present anywhere in the workspace.
+ * Provides:
+ *   - Status bar: ⬡ ProjectName  [current stage]
+ *   - Commands palette (Cmd+Shift+P → "Claude Project: ...")
+ *   - Auto-inject claude-diary MCP into ~/.mcp.json on first activation
+ *   - JSON schema validation for .claude-project files
+ */
+
+import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import { ClaudeProject } from './lib/project.js';
+import { inject, isInjected, eject, getMcpJsonPath } from './lib/mcp-inject.js';
+
+// ── State ─────────────────────────────────────────────────────────────────────
+
+let statusBarItem: vscode.StatusBarItem;
+let fileWatcher: vscode.FileSystemWatcher | undefined;
+
+// ── Activation ────────────────────────────────────────────────────────────────
+
+export function activate(context: vscode.ExtensionContext): void {
+  // Status bar
+  const config = vscode.workspace.getConfiguration('claudeProject');
+  if (config.get<boolean>('statusBarEnabled', true)) {
+    statusBarItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      100,
+    );
+    statusBarItem.command = 'claudeProject.status';
+    statusBarItem.tooltip = 'Claude Project — click for details';
+    context.subscriptions.push(statusBarItem);
+    updateStatusBar();
+  }
+
+  // Watch .claude-project files for changes
+  fileWatcher = vscode.workspace.createFileSystemWatcher('**/.claude-project');
+  fileWatcher.onDidChange(updateStatusBar);
+  fileWatcher.onDidCreate(updateStatusBar);
+  fileWatcher.onDidDelete(updateStatusBar);
+  context.subscriptions.push(fileWatcher);
+
+  // Re-read on workspace folder change
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(updateStatusBar),
+  );
+
+  // Register commands
+  context.subscriptions.push(
+    vscode.commands.registerCommand('claudeProject.status', cmdStatus),
+    vscode.commands.registerCommand('claudeProject.init', cmdInit),
+    vscode.commands.registerCommand('claudeProject.sync', cmdSync),
+    vscode.commands.registerCommand('claudeProject.injectMcp', cmdInjectMcp),
+    vscode.commands.registerCommand('claudeProject.openMemory', cmdOpenMemory),
+  );
+
+  // Auto-inject MCP if configured
+  if (config.get<boolean>('mcpAutoInject', true)) {
+    runAutoInject(context);
+  }
+}
+
+export function deactivate(): void {
+  fileWatcher?.dispose();
+}
+
+// ── Status Bar ────────────────────────────────────────────────────────────────
+
+function updateStatusBar(): void {
+  if (!statusBarItem) return;
+
+  const project = findWorkspaceProject();
+  if (!project) {
+    statusBarItem.hide();
+    return;
+  }
+
+  const stage = project.stage ? `  [${project.stage}]` : '';
+  statusBarItem.text = `⬡ ${project.name}${stage}`;
+  statusBarItem.show();
+}
+
+// ── Project Detection ─────────────────────────────────────────────────────────
+
+function findWorkspaceProject(): ClaudeProject | null {
+  const folders = vscode.workspace.workspaceFolders;
+  if (!folders) return null;
+
+  for (const folder of folders) {
+    let current = folder.uri.fsPath;
+    while (true) {
+      const candidate = path.join(current, '.claude-project');
+      if (fs.existsSync(candidate)) {
+        try {
+          return JSON.parse(fs.readFileSync(candidate, 'utf-8')) as ClaudeProject;
+        } catch {
+          return null;
+        }
+      }
+      const parent = path.dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+  }
+
+  return null;
+}
+
+function findWorkspaceProjectFile(): string | null {
+  const folders = vscode.workspace.workspaceFolders;
+  if (!folders) return null;
+
+  for (const folder of folders) {
+    let current = folder.uri.fsPath;
+    while (true) {
+      const candidate = path.join(current, '.claude-project');
+      if (fs.existsSync(candidate)) return candidate;
+      const parent = path.dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+  }
+
+  return null;
+}
+
+// ── Commands ──────────────────────────────────────────────────────────────────
+
+function cmdStatus(): void {
+  const filePath = findWorkspaceProjectFile();
+  if (!filePath) {
+    vscode.window.showInformationMessage(
+      'No .claude-project found in this workspace.',
+      'Init now',
+    ).then((choice) => {
+      if (choice === 'Init now') cmdInit();
+    });
+    return;
+  }
+
+  let project: ClaudeProject;
+  try {
+    project = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as ClaudeProject;
+  } catch {
+    vscode.window.showErrorMessage(`Failed to read ${filePath}`);
+    return;
+  }
+
+  const diaryPath = project.diary_path.replace('~', os.homedir());
+  const diaryOk   = fs.existsSync(diaryPath)  ? '✓' : '✗';
+  const vaultOk   = fs.existsSync(project.obsidian_vault) ? '✓' : '✗';
+
+  const details = [
+    `**${project.name}** (${project.project_id.slice(0, 8)})`,
+    ``,
+    `Stage: ${project.stage ?? '(none)'}`,
+    `Created: ${project.created} by ${project.created_by}`,
+    ``,
+    `${diaryOk} Diary: ${diaryPath}`,
+    `${vaultOk} Obsidian: ${project.obsidian_vault}`,
+    ``,
+    `File: ${filePath}`,
+  ].join('\n');
+
+  vscode.window.showInformationMessage(details, { modal: true }, 'Open File', 'Open Memory').then((choice) => {
+    if (choice === 'Open File') {
+      vscode.commands.executeCommand('vscode.open', vscode.Uri.file(filePath));
+    } else if (choice === 'Open Memory') {
+      cmdOpenMemory();
+    }
+  });
+}
+
+function cmdInit(): void {
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  if (!folder) {
+    vscode.window.showErrorMessage('Open a folder first before running Claude Project: Init.');
+    return;
+  }
+
+  const targetFile = path.join(folder.uri.fsPath, '.claude-project');
+  if (fs.existsSync(targetFile)) {
+    vscode.window.showWarningMessage(
+      '.claude-project already exists in this workspace.',
+      'Open it',
+    ).then((choice) => {
+      if (choice === 'Open it') {
+        vscode.commands.executeCommand('vscode.open', vscode.Uri.file(targetFile));
+      }
+    });
+    return;
+  }
+
+  vscode.window.showInputBox({
+    prompt: 'Project name',
+    placeHolder: 'MyProject',
+  }).then((name) => {
+    if (!name) return;
+    return vscode.window.showInputBox({
+      prompt: 'One-line description (optional)',
+      placeHolder: 'What this project does',
+    }).then((description) => {
+      // Run CLI in integrated terminal — keeps output visible and familiar
+      const terminal = vscode.window.createTerminal('Claude Project');
+      terminal.show();
+      const desc = description ? ` -d "${description.replace(/"/g, '\\"')}"` : '';
+      terminal.sendText(`claude-project init "${name.replace(/"/g, '\\"')}"${desc}`);
+    });
+  });
+}
+
+function cmdSync(): void {
+  const project = findWorkspaceProject();
+  if (!project) {
+    vscode.window.showErrorMessage('No .claude-project found in this workspace.');
+    return;
+  }
+
+  if (!fs.existsSync(project.obsidian_vault)) {
+    vscode.window.showWarningMessage(
+      `Obsidian vault not found at: ${project.obsidian_vault}\n\nMount your vault drive or update the obsidian_vault path in .claude-project.`,
+    );
+    return;
+  }
+
+  const terminal = vscode.window.createTerminal('Claude Project Sync');
+  terminal.show();
+  terminal.sendText('claude-project sync');
+}
+
+function cmdInjectMcp(): void {
+  const result = inject();
+
+  switch (result.status) {
+    case 'already_present':
+      vscode.window.showInformationMessage(
+        'claude-diary MCP is already configured in ~/.mcp.json.',
+      );
+      break;
+
+    case 'injected':
+    case 'created':
+      vscode.window.showInformationMessage(
+        `claude-diary MCP added to ${result.path}. Restart Claude Code to activate.`,
+        'Open ~/.mcp.json',
+      ).then((choice) => {
+        if (choice === 'Open ~/.mcp.json') {
+          vscode.commands.executeCommand('vscode.open', vscode.Uri.file(getMcpJsonPath()));
+        }
+      });
+      break;
+
+    case 'error':
+      vscode.window.showErrorMessage(`MCP inject failed: ${result.message}`);
+      break;
+  }
+}
+
+function cmdOpenMemory(): void {
+  const project = findWorkspaceProject();
+  if (!project) {
+    vscode.window.showErrorMessage('No .claude-project found in this workspace.');
+    return;
+  }
+
+  const diaryPath = project.diary_path.replace('~', os.homedir());
+  if (!fs.existsSync(diaryPath)) {
+    vscode.window.showWarningMessage(
+      `Memory directory not found: ${diaryPath}\n\nRun 'claude-project init' to initialise it.`,
+    );
+    return;
+  }
+
+  // Open in VS Code's file explorer
+  vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(diaryPath));
+}
+
+// ── Auto-inject ───────────────────────────────────────────────────────────────
+
+function runAutoInject(context: vscode.ExtensionContext): void {
+  // Only suggest once per install, not on every window open
+  const KEY = 'mcpInjectedV3';
+  const alreadyDone = context.globalState.get<boolean>(KEY, false);
+
+  if (alreadyDone || isInjected()) {
+    context.globalState.update(KEY, true);
+    return;
+  }
+
+  const project = findWorkspaceProject();
+  if (!project) return; // no .claude-project — don't nag
+
+  vscode.window.showInformationMessage(
+    `Claude Project detected: **${project.name}**\nAdd the claude-diary MCP server to ~/.mcp.json?`,
+    { modal: false },
+    'Add MCP',
+    'Not now',
+  ).then((choice) => {
+    if (choice === 'Add MCP') {
+      cmdInjectMcp();
+      context.globalState.update(KEY, true);
+    } else if (choice === 'Not now') {
+      // Remind next session
+    }
+  });
+}
