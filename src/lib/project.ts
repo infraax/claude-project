@@ -11,8 +11,72 @@ export interface McpServerConfig {
   env?: Record<string, string>;
 }
 
+export interface AgentDefinition {
+  role: string;
+  model?: string;
+  instructions?: string;
+  tools?: string[];
+  max_tokens?: number;
+  tags?: string[];
+}
+
+export interface ServiceDefinition {
+  type: 'process' | 'http' | 'grpc' | 'mqtt' | 'websocket' | 'other';
+  url?: string;
+  command?: string;
+  healthcheck?: string;
+  description?: string;
+  env?: Record<string, string>;
+  tags?: string[];
+}
+
+export interface AutomationTrigger {
+  type: 'file_change' | 'schedule' | 'event' | 'manual' | 'dispatch' | 'service_up' | 'service_down';
+  pattern?: string;
+  cron?: string;
+  event_type?: string;
+  service?: string;
+}
+
+export interface AutomationAction {
+  type: 'run_command' | 'dispatch_agent' | 'write_event' | 'send_notification' | 'sync_obsidian' | 'call_webhook';
+  command?: string;
+  agent?: string;
+  prompt?: string;
+  event_type?: string;
+  message?: string;
+  url?: string;
+}
+
+export interface Automation {
+  id: string;
+  description?: string;
+  enabled?: boolean;
+  trigger: AutomationTrigger;
+  action: AutomationAction;
+}
+
+export interface ToolDefinition {
+  command: string;
+  description?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  tags?: string[];
+}
+
+export interface MonitoringConfig {
+  enabled?: boolean;
+  watch_paths?: string[];
+  healthcheck_interval_seconds?: number;
+  log_retention_days?: number;
+  notify?: {
+    macos_notifications?: boolean;
+    webhook_url?: string;
+  };
+}
+
 export interface ClaudeProject {
-  version: '3';
+  version: '3' | '4';
   project_id: string;
   name: string;
   description: string;
@@ -27,6 +91,12 @@ export interface ClaudeProject {
   mcp?: {
     servers?: Record<string, McpServerConfig>;
   };
+  // v4 fields
+  agents?: Record<string, AgentDefinition>;
+  services?: Record<string, ServiceDefinition>;
+  automations?: Automation[];
+  tools?: Record<string, ToolDefinition>;
+  monitoring?: MonitoringConfig;
 }
 
 export interface FoundProject {
@@ -36,20 +106,17 @@ export interface FoundProject {
 }
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
-// All paths are resolved at runtime from env vars or cross-platform standards.
-// Nothing here is machine-specific.
 
 export const DEFAULTS = {
-  // Obsidian vault: env override → ~/.claude/obsidian (works on any system)
   obsidianVault: process.env['CLAUDE_OBSIDIAN_VAULT']
     ?? path.join(os.homedir(), '.claude', 'obsidian'),
 
-  // Diary base: env override → ~/.claude/projects
   diaryBase: process.env['CLAUDE_DIARY_BASE']
     ?? path.join(os.homedir(), '.claude', 'projects'),
 
+  // jsdelivr CDN — enterprise-trusted, backed by npm package, no raw GitHub
   schemaUrl:
-    'https://raw.githubusercontent.com/infraax/claude-project/main/schema/claude-project.schema.json',
+    'https://cdn.jsdelivr.net/npm/@claudelab/project/schema/claude-project.schema.json',
 } as const;
 
 // ── Core: find .claude-project walking up ─────────────────────────────────────
@@ -84,7 +151,7 @@ export function buildProject(name: string, description: string): ClaudeProject {
   const diaryPath = path.join(DEFAULTS.diaryBase, `project-${shortId}`, 'memory');
 
   return {
-    version: '3',
+    version: '4',
     project_id: projectId,
     name,
     description,
@@ -93,6 +160,11 @@ export function buildProject(name: string, description: string): ClaudeProject {
     obsidian_vault: DEFAULTS.obsidianVault,
     obsidian_folder: `Projects/${name}`,
     diary_path: diaryPath,
+    monitoring: {
+      enabled: true,
+      log_retention_days: 90,
+      notify: { macos_notifications: true },
+    },
   };
 }
 

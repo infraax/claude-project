@@ -8,6 +8,8 @@ import {
   writeProject,
 } from '../lib/project.js';
 import { resolvePaths } from '../lib/paths.js';
+import { registerProject } from '../lib/registry.js';
+import { appendEvent } from '../lib/events.js';
 
 export interface InitOptions {
   description: string;
@@ -39,13 +41,24 @@ export function init(name: string, options: InitOptions): void {
 
   const targetDir = process.cwd();
   const filePath  = writeProject(targetDir, project);
+  const paths     = resolvePaths(project, targetDir);
 
-  // Create memory directory
-  const { memoryDir, obsidianProjectDir } = resolvePaths(project);
-  ensureDir(memoryDir);
+  // ── Machine-local runtime dirs ──────────────────────────────────────────────
+  // memory/ — WAKEUP.md, SESSION_JOURNAL.md (existing)
+  ensureDir(paths.memoryDir);
+  // sessions/ — per-session transcripts
+  ensureDir(paths.sessionsDir);
+  // dispatches/ — task queue
+  ensureDir(paths.dispatchesDir);
+
+  // ── Project config dirs (alongside .claude-project, committable) ────────────
+  ensureDir(paths.agentsDir);
+  ensureDir(paths.servicesDir);
+  ensureDir(paths.automationsDir);
+  ensureDir(paths.toolsDir);
 
   // Seed WAKEUP.md
-  const wakeupPath = path.join(memoryDir, 'WAKEUP.md');
+  const wakeupPath = path.join(paths.memoryDir, 'WAKEUP.md');
   if (!fs.existsSync(wakeupPath)) {
     fs.writeFileSync(
       wakeupPath,
@@ -58,10 +71,30 @@ export function init(name: string, options: InitOptions): void {
     );
   }
 
+  // Seed .claude/README.md so the directory is self-documenting
+  const dotClaudeReadme = path.join(paths.dotClaudeDir, 'README.md');
+  if (!fs.existsSync(dotClaudeReadme)) {
+    fs.writeFileSync(
+      dotClaudeReadme,
+      `# ${name} — Claude Project Config\n\n` +
+      `This directory is the project-scoped configuration for Claude.\n` +
+      `It lives alongside \`.claude-project\` and can be committed to version control.\n\n` +
+      `| Directory | Purpose |\n` +
+      `|-----------|----------|\n` +
+      `| \`agents/\` | Sub-agent definitions (YAML or JSON) |\n` +
+      `| \`services/\` | Service descriptors |\n` +
+      `| \`automations/\` | Trigger → action rules |\n` +
+      `| \`tools/\` | Project-local scripts and tool definitions |\n\n` +
+      `Runtime state (events, sessions, dispatches) is stored in:\n` +
+      `\`${paths.runtimeDir}\`\n`,
+      'utf-8',
+    );
+  }
+
   // Create Obsidian project folder + README if vault exists
   if (fs.existsSync(project.obsidian_vault)) {
-    ensureDir(obsidianProjectDir);
-    const readmePath = path.join(obsidianProjectDir, 'README.md');
+    ensureDir(paths.obsidianProjectDir);
+    const readmePath = path.join(paths.obsidianProjectDir, 'README.md');
     if (!fs.existsSync(readmePath)) {
       fs.writeFileSync(
         readmePath,
@@ -72,18 +105,33 @@ export function init(name: string, options: InitOptions): void {
         `| **Project ID** | \`${project.project_id}\` |\n` +
         `| **Created** | ${project.created} |\n` +
         `| **Created by** | ${project.created_by} |\n` +
-        `| **Diary** | \`${memoryDir}\` |\n`,
+        `| **Diary** | \`${paths.memoryDir}\` |\n` +
+        `| **Runtime** | \`${paths.runtimeDir}\` |\n`,
         'utf-8',
       );
     }
   }
 
+  // ── Register in global registry ─────────────────────────────────────────────
+  registerProject(project, targetDir);
+
+  // ── Log project_init event ──────────────────────────────────────────────────
+  appendEvent(project, 'project_init', {
+    name,
+    description: options.description,
+    stage: project.stage,
+    project_dir: targetDir,
+  });
+
   console.log(
     `\n  Initialised project '${name}'\n\n` +
     `    ID:       ${project.project_id}\n` +
+    `    Version:  ${project.version}\n` +
     `    File:     ${filePath}\n` +
-    `    Diary:    ${memoryDir}\n` +
-    `    Obsidian: ${obsidianProjectDir}\n` +
+    `    Diary:    ${paths.memoryDir}\n` +
+    `    Runtime:  ${paths.runtimeDir}\n` +
+    `    Config:   ${paths.dotClaudeDir}/\n` +
+    `    Obsidian: ${paths.obsidianProjectDir}\n` +
     `    Source:   ${project.created_by}\n`,
   );
 }
