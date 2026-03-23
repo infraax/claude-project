@@ -1,8 +1,8 @@
 {
   "name": "claude-project",
   "displayName": "Claude Project",
-  "version": "3.0.0",
-  "description": "Project context system for Claude Code — .claude-project file, diary MCP, CLI, VS Code integration",
+  "version": "4.0.0",
+  "description": "Project brain for Claude Code — .claude-project v4, event log, registry, dispatch queue, agent orchestration, daemon, .claudep file type, diary MCP, CLI, VS Code integration",
   "author": "claudelab",
   "license": "MIT",
   "repository": {
@@ -22,7 +22,12 @@
     "ai",
     "project-context",
     "anthropic",
-    "diary"
+    "diary",
+    "agent-orchestration",
+    "event-log",
+    "registry",
+    "dispatch-queue",
+    "claudep"
   ],
   "engines": {
     "vscode": "^1.85.0",
@@ -87,6 +92,26 @@
       {
         "command": "claudeProject.openMemory",
         "title": "Open Memory Folder",
+        "category": "Claude Project"
+      },
+      {
+        "command": "claudeProject.showEvents",
+        "title": "Show Event Log",
+        "category": "Claude Project"
+      },
+      {
+        "command": "claudeProject.listDispatches",
+        "title": "List Dispatches",
+        "category": "Claude Project"
+      },
+      {
+        "command": "claudeProject.daemonStatus",
+        "title": "Daemon Status",
+        "category": "Claude Project"
+      },
+      {
+        "command": "claudeProject.openRegistry",
+        "title": "Open Project Registry",
         "category": "Claude Project"
       }
     ],

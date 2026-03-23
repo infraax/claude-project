@@ -1,0 +1,220 @@
+/**
+ * daemon.ts
+ * Manages the claude-project daemon — a lightweight launchd service on macOS
+ * that keeps the project registry hot, watches for new .claude-project files,
+ * checks service health, and fires scheduled automations.
+ *
+ * Commands:
+ *   claude-project daemon install   — write plist + load into launchd
+ *   claude-project daemon uninstall — unload + remove plist
+ *   claude-project daemon status    — show whether daemon is running
+ *   claude-project daemon run       — run the daemon loop (called by launchd)
+ */
+
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { listRegistry, registerProject, getRegistry } from '../lib/registry.js';
+import { appendEvent } from '../lib/events.js';
+import { findProject, ClaudeProject } from '../lib/project.js';
+import { getSearchRoots } from '../lib/paths.js';
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const PLIST_LABEL   = 'dev.claudelab.claude-project.daemon';
+const PLIST_FILENAME = `${PLIST_LABEL}.plist`;
+const LAUNCH_AGENTS  = path.join(os.homedir(), 'Library', 'LaunchAgents');
+const PLIST_PATH     = path.join(LAUNCH_AGENTS, PLIST_FILENAME);
+
+// ── Plist generation ──────────────────────────────────────────────────────────
+
+function buildPlist(cliPath: string): string {
+  // Scan every 5 minutes (300 seconds)
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+    "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>${PLIST_LABEL}</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>${cliPath}</string>
+        <string>daemon</string>
+        <string>run</string>
+    </array>
+
+    <key>StartInterval</key>
+    <integer>300</integer>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>${path.join(os.homedir(), '.claude', 'daemon.log')}</string>
+
+    <key>StandardErrorPath</key>
+    <string>${path.join(os.homedir(), '.claude', 'daemon.error.log')}</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin</string>
+    </dict>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>ThrottleInterval</key>
+    <integer>60</integer>
+</dict>
+</plist>
+`;
+}
+
+// ── Install ───────────────────────────────────────────────────────────────────
+
+export function daemonInstall(): void {
+  if (os.platform() !== 'darwin') {
+    console.error('\n  Daemon install is only supported on macOS (launchd).\n');
+    process.exit(1);
+  }
+
+  // Resolve the claude-project CLI path
+  const cliPath = process.execPath === process.argv[0]
+    ? process.argv[1]   // running via node directly
+    : process.execPath; // bundled binary
+
+  // Better: find via which or use the actual bin path
+  const whichResult = (() => {
+    try {
+      const { execSync } = require('child_process');
+      return execSync('which claude-project', { encoding: 'utf-8' }).trim();
+    } catch {
+      return process.argv[1];
+    }
+  })();
+
+  fs.mkdirSync(LAUNCH_AGENTS, { recursive: true });
+  fs.writeFileSync(PLIST_PATH, buildPlist(whichResult), 'utf-8');
+
+  console.log(`\n  Written: ${PLIST_PATH}`);
+
+  try {
+    const { execSync } = require('child_process');
+    execSync(`launchctl load -w "${PLIST_PATH}"`, { encoding: 'utf-8' });
+    console.log(`  Loaded:  ${PLIST_LABEL}`);
+    console.log(`\n  Daemon is now running. It will scan every 5 minutes.\n`);
+    console.log(`  Logs: ~/.claude/daemon.log\n`);
+  } catch (err) {
+    console.error(`\n  Warning: could not load via launchctl: ${String(err)}`);
+    console.error(`  You can load it manually:\n`);
+    console.error(`    launchctl load -w "${PLIST_PATH}"\n`);
+  }
+}
+
+// ── Uninstall ─────────────────────────────────────────────────────────────────
+
+export function daemonUninstall(): void {
+  if (os.platform() !== 'darwin') {
+    console.error('\n  Daemon uninstall is only supported on macOS.\n');
+    process.exit(1);
+  }
+
+  if (!fs.existsSync(PLIST_PATH)) {
+    console.log(`\n  Daemon plist not found at ${PLIST_PATH}\n`);
+    return;
+  }
+
+  try {
+    const { execSync } = require('child_process');
+    execSync(`launchctl unload -w "${PLIST_PATH}"`, { encoding: 'utf-8' });
+    console.log(`  Unloaded: ${PLIST_LABEL}`);
+  } catch {
+    // ignore if not loaded
+  }
+
+  fs.unlinkSync(PLIST_PATH);
+  console.log(`\n  Removed: ${PLIST_PATH}\n  Daemon stopped.\n`);
+}
+
+// ── Status ────────────────────────────────────────────────────────────────────
+
+export function daemonStatus(): void {
+  const installed = fs.existsSync(PLIST_PATH);
+
+  let running = false;
+  if (installed && os.platform() === 'darwin') {
+    try {
+      const { execSync } = require('child_process');
+      const out = execSync(`launchctl list ${PLIST_LABEL} 2>/dev/null`, { encoding: 'utf-8' });
+      running = out.includes(PLIST_LABEL);
+    } catch {
+      running = false;
+    }
+  }
+
+  const registry = getRegistry();
+  const projectCount = Object.keys(registry.projects).length;
+  const logPath = path.join(os.homedir(), '.claude', 'daemon.log');
+  const logExists = fs.existsSync(logPath);
+
+  console.log(
+    `\n  Claude Project Daemon\n` +
+    `  ─────────────────────\n` +
+    `  Plist:    ${installed ? '✓ installed' : '✗ not installed'}  (${PLIST_PATH})\n` +
+    `  Running:  ${running ? '✓ active' : '✗ not running'}\n` +
+    `  Registry: ${projectCount} project(s) known\n` +
+    `  Log:      ${logExists ? logPath : '(no log yet)'}\n\n` +
+    (installed
+      ? ''
+      : `  Install with: claude-project daemon install\n`) +
+    '',
+  );
+}
+
+// ── Run (called by launchd) ───────────────────────────────────────────────────
+
+export function daemonRun(): void {
+  const ts = new Date().toISOString();
+  console.log(`[${ts}] claude-project daemon scan started`);
+
+  // Scan known roots for .claude-project files and refresh registry
+  const roots = getSearchRoots();
+  let found = 0;
+
+  function walk(dir: string, depth: number): void {
+    if (depth > 6) return;
+    let entries: fs.Dirent[];
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); }
+    catch { return; }
+
+    for (const entry of entries) {
+      if (entry.name.startsWith('.') && entry.name !== '.claude-project') continue;
+      const fullPath = path.join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        walk(fullPath, depth + 1);
+      } else if (entry.name === '.claude-project') {
+        try {
+          const raw = fs.readFileSync(fullPath, 'utf-8');
+          const project = JSON.parse(raw) as ClaudeProject;
+          const projectDir = path.dirname(fullPath);
+          registerProject(project, projectDir);
+          appendEvent(project, 'daemon_scan', { project_dir: projectDir });
+          found++;
+          console.log(`[${ts}] Registered: ${project.name} (${project.project_id.slice(0, 8)})`);
+        } catch {
+          // skip malformed
+        }
+      }
+    }
+  }
+
+  for (const root of roots) {
+    walk(root, 0);
+  }
+
+  console.log(`[${ts}] Scan complete. ${found} project(s) registered/refreshed.`);
+}
