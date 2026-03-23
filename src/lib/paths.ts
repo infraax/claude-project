@@ -12,13 +12,32 @@ export interface ResolvedPaths {
   obsidianProjectDir: string;
   wakeupFile: string;
   journalFile: string;
+  // v4: runtime dirs
+  runtimeDir: string;       // <diary_parent>/  e.g. ~/.claude/projects/project-XXXX/
+  eventsFile: string;       // runtimeDir/events.jsonl
+  sessionsDir: string;      // runtimeDir/sessions/
+  dispatchesDir: string;    // runtimeDir/dispatches/
+  // v4: project config dirs (alongside .claude-project)
+  dotClaudeDir: string;     // projectDir/.claude/
+  agentsDir: string;        // projectDir/.claude/agents/
+  servicesDir: string;      // projectDir/.claude/services/
+  automationsDir: string;   // projectDir/.claude/automations/
+  toolsDir: string;         // projectDir/.claude/tools/
 }
 
-export function resolvePaths(project: ClaudeProject): ResolvedPaths {
+export function resolvePaths(project: ClaudeProject, projectDir?: string): ResolvedPaths {
   const memoryDir = expandHome(project.diary_path);
   const obsidianVault = expandHome(project.obsidian_vault ?? DEFAULTS.obsidianVault);
   const obsidianFolder = project.obsidian_folder ?? 'Projects/Unsorted';
   const obsidianProjectDir = path.join(obsidianVault, obsidianFolder);
+
+  // Runtime dir lives one level above memory/ (the project-XXXX folder)
+  const runtimeDir = path.dirname(memoryDir);
+
+  // .claude/ config dir lives alongside .claude-project in the project root
+  const dotClaudeDir = projectDir
+    ? path.join(projectDir, '.claude')
+    : path.join(process.cwd(), '.claude');
 
   return {
     memoryDir,
@@ -27,6 +46,17 @@ export function resolvePaths(project: ClaudeProject): ResolvedPaths {
     obsidianProjectDir,
     wakeupFile: path.join(memoryDir, 'WAKEUP.md'),
     journalFile: path.join(memoryDir, 'SESSION_JOURNAL.md'),
+    // v4 runtime dirs
+    runtimeDir,
+    eventsFile: path.join(runtimeDir, 'events.jsonl'),
+    sessionsDir: path.join(runtimeDir, 'sessions'),
+    dispatchesDir: path.join(runtimeDir, 'dispatches'),
+    // v4 project config dirs
+    dotClaudeDir,
+    agentsDir: path.join(dotClaudeDir, 'agents'),
+    servicesDir: path.join(dotClaudeDir, 'services'),
+    automationsDir: path.join(dotClaudeDir, 'automations'),
+    toolsDir: path.join(dotClaudeDir, 'tools'),
   };
 }
 

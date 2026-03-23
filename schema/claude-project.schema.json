@@ -1,16 +1,20 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://raw.githubusercontent.com/infraax/claude-project/main/schema/claude-project.schema.json",
+  "$id": "https://cdn.jsdelivr.net/npm/@claudelab/project/schema/claude-project.schema.json",
   "title": "Claude Project",
-  "description": "Project context file for Claude Code. Works like .git — drop it in any directory to give Claude persistent memory, Obsidian sync, and source-attributed journal entries for that project.",
+  "description": "Project context file for Claude Code. Works like .git — drop it in any directory to give Claude persistent memory, Obsidian sync, event logging, agent orchestration, and source-attributed journal entries for that project.",
   "type": "object",
   "required": ["version", "project_id", "name"],
   "additionalProperties": false,
   "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema URL. Auto-populated by claude-project init."
+    },
     "version": {
       "type": "string",
-      "const": "3",
-      "description": "Schema version. Always '3' for this release."
+      "enum": ["3", "4"],
+      "description": "Schema version. '4' for projects created with claude-project v4+."
     },
     "project_id": {
       "type": "string",
@@ -43,12 +47,8 @@
     },
     "obsidian_vault": {
       "type": "string",
-      "description": "Absolute path to the Obsidian vault root. Diary entries are synced here. Defaults to CLAUDE_OBSIDIAN_VAULT env var or ~/.claude/obsidian.",
-      "examples": [
-        "~/Documents/ObsidianVault",
-        "/Users/you/Obsidian/MyVault",
-        "C:\\Users\\you\\Documents\\Obsidian"
-      ]
+      "description": "Absolute path to the Obsidian vault root. Defaults to CLAUDE_OBSIDIAN_VAULT env var or ~/.claude/obsidian.",
+      "examples": ["~/Documents/ObsidianVault", "/Users/you/Obsidian/MyVault"]
     },
     "obsidian_folder": {
       "type": "string",
@@ -57,7 +57,7 @@
     },
     "diary_path": {
       "type": "string",
-      "description": "Absolute path to the memory directory for this project. Contains WAKEUP.md, SESSION_JOURNAL.md, discoveries.md, etc. Defaults to CLAUDE_DIARY_PATH env var or ~/.claude/memory.",
+      "description": "Absolute path to the memory directory for this project. Contains WAKEUP.md, SESSION_JOURNAL.md, events.jsonl, sessions/, dispatches/, etc.",
       "examples": ["~/.claude/projects/project-a1b2c3d4/memory"]
     },
     "stage": {
@@ -68,28 +68,14 @@
     "shared_paths": {
       "type": "object",
       "description": "Named paths to shared resources on this machine (e.g. external drives, network shares).",
-      "additionalProperties": {
-        "type": "string"
-      },
-      "examples": [
-        {
-          "shared_drive": "/Volumes/SharedDisk/Projects",
-          "tools": "/opt/mytools"
-        }
-      ]
+      "additionalProperties": { "type": "string" },
+      "examples": [{ "shared_drive": "/Volumes/SharedDisk/Projects", "tools": "/opt/mytools" }]
     },
     "devices": {
       "type": "object",
       "description": "Named devices involved in this project with their IPs or hostnames.",
-      "additionalProperties": {
-        "type": "string"
-      },
-      "examples": [
-        {
-          "raspberry-pi": "192.168.1.10",
-          "dev-server": "192.168.1.20"
-        }
-      ]
+      "additionalProperties": { "type": "string" },
+      "examples": [{ "raspberry-pi": "192.168.1.10", "dev-server": "192.168.1.20" }]
     },
     "mcp": {
       "type": "object",
@@ -103,6 +89,291 @@
               "command": { "type": "string" },
               "args": { "type": "array", "items": { "type": "string" } },
               "env": { "type": "object", "additionalProperties": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "agents": {
+      "type": "object",
+      "description": "Named sub-agent definitions for this project. Each agent has a role, model, instructions, and optional tools.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["role"],
+        "additionalProperties": false,
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "Short description of what this agent does.",
+            "examples": ["code-reviewer", "test-runner", "doc-writer"]
+          },
+          "model": {
+            "type": "string",
+            "description": "Claude model ID to use for this agent.",
+            "examples": ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"]
+          },
+          "instructions": {
+            "type": "string",
+            "description": "System prompt / instructions for this agent."
+          },
+          "tools": {
+            "type": "array",
+            "description": "MCP tools or built-in tools this agent is allowed to use.",
+            "items": { "type": "string" }
+          },
+          "max_tokens": {
+            "type": "integer",
+            "description": "Max output tokens for this agent.",
+            "minimum": 1
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Arbitrary tags for grouping/filtering agents."
+          }
+        }
+      },
+      "examples": [{
+        "reviewer": {
+          "role": "Code reviewer — flag issues, suggest improvements",
+          "model": "claude-sonnet-4-6",
+          "tools": ["read_file", "search_files"]
+        }
+      }]
+    },
+    "services": {
+      "type": "object",
+      "description": "Named services involved in this project — local processes, APIs, or remote endpoints that Claude should be aware of.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["type"],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["process", "http", "grpc", "mqtt", "websocket", "other"],
+            "description": "Service transport type."
+          },
+          "url": {
+            "type": "string",
+            "description": "Endpoint URL or address.",
+            "examples": ["http://localhost:8080", "mqtt://192.168.1.5:1883"]
+          },
+          "command": {
+            "type": "string",
+            "description": "Shell command to start the service (for type=process).",
+            "examples": ["npm run dev", "python3 server.py"]
+          },
+          "healthcheck": {
+            "type": "string",
+            "description": "URL or command to check if the service is healthy.",
+            "examples": ["http://localhost:8080/health"]
+          },
+          "description": {
+            "type": "string",
+            "description": "What this service does."
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": { "type": "string" },
+            "description": "Environment variables required by this service."
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "examples": [{
+        "api": {
+          "type": "http",
+          "url": "http://localhost:3000",
+          "command": "npm run dev",
+          "healthcheck": "http://localhost:3000/health",
+          "description": "Main REST API"
+        }
+      }]
+    },
+    "automations": {
+      "type": "array",
+      "description": "Automation rules: trigger → action pairs that define repeatable workflows.",
+      "items": {
+        "type": "object",
+        "required": ["id", "trigger", "action"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique short identifier for this automation.",
+            "examples": ["auto-test-on-save", "notify-on-deploy"]
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of what this automation does."
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether this automation is active."
+          },
+          "trigger": {
+            "type": "object",
+            "required": ["type"],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["file_change", "schedule", "event", "manual", "dispatch", "service_up", "service_down"],
+                "description": "What causes this automation to fire."
+              },
+              "pattern": {
+                "type": "string",
+                "description": "Glob or regex pattern (for file_change triggers).",
+                "examples": ["**/*.ts", "src/**"]
+              },
+              "cron": {
+                "type": "string",
+                "description": "Cron expression (for schedule triggers).",
+                "examples": ["0 */6 * * *", "0 9 * * 1-5"]
+              },
+              "event_type": {
+                "type": "string",
+                "description": "Event type to listen for (for event triggers).",
+                "examples": ["session_end", "deploy_complete"]
+              },
+              "service": {
+                "type": "string",
+                "description": "Service name to watch (for service_up/service_down triggers)."
+              }
+            }
+          },
+          "action": {
+            "type": "object",
+            "required": ["type"],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["run_command", "dispatch_agent", "write_event", "send_notification", "sync_obsidian", "call_webhook"],
+                "description": "What to do when triggered."
+              },
+              "command": {
+                "type": "string",
+                "description": "Shell command to run (for run_command actions)."
+              },
+              "agent": {
+                "type": "string",
+                "description": "Agent name to dispatch (for dispatch_agent actions)."
+              },
+              "prompt": {
+                "type": "string",
+                "description": "Prompt to send to the agent."
+              },
+              "event_type": {
+                "type": "string",
+                "description": "Event type to emit (for write_event actions)."
+              },
+              "message": {
+                "type": "string",
+                "description": "Notification message or webhook body."
+              },
+              "url": {
+                "type": "string",
+                "description": "Webhook URL (for call_webhook actions)."
+              }
+            }
+          }
+        }
+      },
+      "examples": [[{
+        "id": "sync-on-session-end",
+        "description": "Sync memory to Obsidian after each Claude session",
+        "trigger": { "type": "event", "event_type": "session_end" },
+        "action": { "type": "sync_obsidian" }
+      }]]
+    },
+    "tools": {
+      "type": "object",
+      "description": "Project-local tool definitions. Scripts or MCP tools specific to this project.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["command"],
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Shell command or script path to invoke this tool.",
+            "examples": ["./scripts/deploy.sh", "npm run test", "python3 tools/analyze.py"]
+          },
+          "description": {
+            "type": "string",
+            "description": "What this tool does."
+          },
+          "args": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Default arguments passed to the command."
+          },
+          "env": {
+            "type": "object",
+            "additionalProperties": { "type": "string" },
+            "description": "Environment variables required by this tool."
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "examples": [{
+        "deploy": {
+          "command": "./scripts/deploy.sh",
+          "description": "Deploy to production",
+          "tags": ["ops", "production"]
+        }
+      }]
+    },
+    "monitoring": {
+      "type": "object",
+      "description": "Monitoring and alerting configuration for this project.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the daemon monitors this project."
+        },
+        "watch_paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths (relative to project root) to watch for file changes.",
+          "examples": [["src/", "config/"]]
+        },
+        "healthcheck_interval_seconds": {
+          "type": "integer",
+          "minimum": 10,
+          "default": 60,
+          "description": "How often the daemon checks service health."
+        },
+        "log_retention_days": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 90,
+          "description": "How many days to retain events.jsonl entries."
+        },
+        "notify": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Notification channels for alerts.",
+          "properties": {
+            "macos_notifications": {
+              "type": "boolean",
+              "default": true,
+              "description": "Send macOS system notifications for alerts."
+            },
+            "webhook_url": {
+              "type": "string",
+              "description": "Webhook URL for alert payloads (Slack, Discord, custom)."
             }
           }
         }
