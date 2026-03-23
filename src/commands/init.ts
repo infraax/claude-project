@@ -10,12 +10,14 @@ import {
 import { resolvePaths } from '../lib/paths.js';
 import { registerProject } from '../lib/registry.js';
 import { appendEvent } from '../lib/events.js';
+import { generateClaudeMd } from './generate-claude-md.js';
 
 export interface InitOptions {
   description: string;
   obsidian?: string;
   diary?: string;
   stage?: string;
+  claudeMd?: boolean;  // default true — set false via --no-claude-md
 }
 
 export function init(name: string, options: InitOptions): void {
@@ -123,15 +125,27 @@ export function init(name: string, options: InitOptions): void {
     project_dir: targetDir,
   });
 
+  // ── Auto-generate CLAUDE.md ─────────────────────────────────────────────────
+  // Default true; skipped only if --no-claude-md is passed.
+  let claudeMdPath = '';
+  if (options.claudeMd !== false) {
+    try {
+      claudeMdPath = generateClaudeMd({ quiet: true });
+    } catch {
+      // Non-fatal — init succeeded, CLAUDE.md generation failed silently
+    }
+  }
+
   console.log(
     `\n  Initialised project '${name}'\n\n` +
-    `    ID:       ${project.project_id}\n` +
-    `    Version:  ${project.version}\n` +
-    `    File:     ${filePath}\n` +
-    `    Diary:    ${paths.memoryDir}\n` +
-    `    Runtime:  ${paths.runtimeDir}\n` +
-    `    Config:   ${paths.dotClaudeDir}/\n` +
-    `    Obsidian: ${paths.obsidianProjectDir}\n` +
-    `    Source:   ${project.created_by}\n`,
+    `    ID:        ${project.project_id}\n` +
+    `    Version:   ${project.version}\n` +
+    `    File:      ${filePath}\n` +
+    `    Diary:     ${paths.memoryDir}\n` +
+    `    Runtime:   ${paths.runtimeDir}\n` +
+    `    Config:    ${paths.dotClaudeDir}/\n` +
+    `    Obsidian:  ${paths.obsidianProjectDir}\n` +
+    `    CLAUDE.md: ${claudeMdPath || '(skipped)'}\n` +
+    `    Source:    ${project.created_by}\n`,
   );
 }

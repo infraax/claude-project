@@ -10,6 +10,10 @@ import { mcp }                                         from './commands/mcp.js';
 import { injectCmd, ejectCmd, statusCmd as mcpStatusCmd } from './commands/inject.js';
 import { daemonInstall, daemonUninstall, daemonStatus, daemonRun } from './commands/daemon.js';
 import { installExt, uninstallExt, createClaudepStub } from './commands/install-ext.js';
+import { generateClaudeMd }                            from './commands/generate-claude-md.js';
+import { logEventCmd }                                 from './commands/log-event.js';
+import { hookRun }                                     from './commands/hook-run.js';
+import { hooksInstall, hooksUninstall, hooksStatus }  from './commands/hooks.js';
 
 const program = new Command();
 
@@ -19,7 +23,7 @@ program
     'Project brain for Claude Code.\n' +
     'Drop a .claude-project file in any directory to give Claude\n' +
     'persistent memory, a registry, event log, agent orchestration,\n' +
-    'dispatch queue, Obsidian sync, and macOS-native .claudep support.',
+    'dispatch queue, automatic CLAUDE.md, session hooks, and more.',
   )
   .version('4.0.0');
 
@@ -32,6 +36,7 @@ program
   .option('-o, --obsidian <path>',    'Override Obsidian vault path')
   .option('--diary <path>',           'Override diary memory path')
   .option('-s, --stage <text>',       'Set initial stage label')
+  .option('--no-claude-md',           'Skip generating CLAUDE.md')
   .action((name: string, options) => {
     init(name, options);
   });
@@ -63,6 +68,79 @@ program
   .action(() => {
     sync();
   });
+
+// ── generate-claude-md ────────────────────────────────────────────────────────
+
+program
+  .command('generate-claude-md')
+  .alias('gcm')
+  .description('Generate (or refresh) CLAUDE.md from the live project brain')
+  .option('-o, --output <path>', 'Override output path (default: project root CLAUDE.md)')
+  .option('-q, --quiet',         'Suppress console output')
+  .action((options) => {
+    try {
+      generateClaudeMd(options);
+    } catch (err) {
+      console.error(`\n  Error: ${String(err)}\n`);
+      process.exit(1);
+    }
+  });
+
+// ── log-event ─────────────────────────────────────────────────────────────────
+
+program
+  .command('log-event <type> [summary]')
+  .description('Append an event to the project event log (useful in shell scripts and hooks)')
+  .option('--tags <tags>',  'Comma-separated tags, e.g. deploy,prod')
+  .option('--data <json>',  'Extra JSON data to attach to the event')
+  .option('-q, --quiet',    'Suppress console output')
+  .action((type: string, summary: string | undefined, options) => {
+    logEventCmd(type, summary, options);
+  });
+
+// ── hook-run ──────────────────────────────────────────────────────────────────
+
+program
+  .command('hook-run <event>')
+  .description(
+    'Run a lifecycle hook action (called by Claude Code via settings.json hooks).\n' +
+    'Reads hook payload JSON from stdin.\n' +
+    'Events: SessionStart, Stop, SessionEnd',
+  )
+  .action(async (event: string) => {
+    await hookRun(event);
+  });
+
+// ── hooks ─────────────────────────────────────────────────────────────────────
+
+const hooks = program
+  .command('hooks')
+  .description('Manage Claude Code session hooks (wires session lifecycle into the project brain)');
+
+hooks
+  .command('install')
+  .description('Add SessionStart + Stop hooks to settings.json')
+  .option('--global', 'Write to ~/.claude/settings.json (fires for all projects)')
+  .option('--local',  'Write to .claude/settings.local.json (not committed)')
+  .action((options) => {
+    try { hooksInstall(options); }
+    catch (err) { console.error(`\n  Error: ${String(err)}\n`); process.exit(1); }
+  });
+
+hooks
+  .command('uninstall')
+  .description('Remove claude-project hooks from settings.json')
+  .option('--global', 'Remove from ~/.claude/settings.json')
+  .option('--local',  'Remove from .claude/settings.local.json')
+  .action((options) => {
+    try { hooksUninstall(options); }
+    catch (err) { console.error(`\n  Error: ${String(err)}\n`); process.exit(1); }
+  });
+
+hooks
+  .command('status')
+  .description('Show which settings files have claude-project hooks installed')
+  .action(() => { hooksStatus(); });
 
 // ── mcp ───────────────────────────────────────────────────────────────────────
 
