@@ -3,14 +3,17 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'           # triggers Triple Release on v3.0.0, v3.1.0, etc.
+      - 'v*'           # triggers Triple Release on v4.1.0, etc.
     branches:
-      - main           # triggers CI build + lint on every push to main
+      - main           # triggers CI on every push to main
+  pull_request:
+    branches:
+      - main           # triggers CI on every PR targeting main
 
 jobs:
-  # ── CI: build + lint (runs on every push) ─────────────────────────────────
+  # ── CI: lint + test + build (runs on every push and PR) ───────────────────
   build:
-    name: Build & Lint
+    name: Build, Lint & Test
     runs-on: ubuntu-latest
 
     steps:
@@ -27,6 +30,9 @@ jobs:
 
       - name: Lint (type-check)
         run: npm run lint
+
+      - name: Test
+        run: npm test
 
       - name: Build
         run: npm run build
