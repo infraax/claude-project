@@ -27,7 +27,7 @@ program
     'persistent memory, a registry, event log, agent orchestration,\n' +
     'dispatch queue, automatic CLAUDE.md, session hooks, and more.',
   )
-  .version('4.0.0');
+  .version('4.1.0');
 
 // ── init ──────────────────────────────────────────────────────────────────────
 
