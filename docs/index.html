@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>claude-project — Project brain for Claude Code</title>
+  <meta name="description" content="Give Claude persistent memory, event logs, agent dispatch, automations, and auto-generated CLAUDE.md for any project." />
+  <meta property="og:title" content="claude-project" />
+  <meta property="og:description" content="Project brain for Claude Code — persistent memory, event log, agent dispatch, automations, MCP server." />
+  <meta property="og:url" content="https://infraax.github.io/claude-project/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>" />
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --accent: #f78166;
+      --accent2: #79c0ff;
+      --accent3: #56d364;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --radius: 8px;
+      --max: 900px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.6;
+    }
+
+    a { color: var(--accent2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Nav ── */
+    nav {
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 100;
+    }
+    nav .logo { font-weight: 700; font-size: 1rem; color: var(--text); }
+    nav .logo span { color: var(--accent); }
+    nav a { color: var(--muted); font-size: 0.9rem; }
+    nav a:hover { color: var(--text); text-decoration: none; }
+    nav .spacer { flex: 1; }
+    nav .badge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: var(--accent3);
+    }
+
+    /* ── Hero ── */
+    .hero {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 80px 24px 60px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: 1.2rem;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+    .hero-badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+    .hero-badges img { height: 20px; }
+
+    .cta-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-block;
+      padding: 10px 24px;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; text-decoration: none; }
+    .btn-primary { background: var(--accent); color: #0d1117; }
+    .btn-secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+
+    /* ── Install strip ── */
+    .install-strip {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      text-align: center;
+    }
+    .install-strip code {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 10px 24px;
+      border-radius: var(--radius);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 1rem;
+      color: var(--accent3);
+      display: inline-block;
+    }
+
+    /* ── Features ── */
+    .section {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 64px 24px;
+    }
+    .section h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .card-icon { font-size: 1.8rem; margin-bottom: 12px; }
+    .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+    .card p { font-size: 0.9rem; color: var(--muted); }
+
+    /* ── Code blocks ── */
+    .code-section { max-width: var(--max); margin: 0 auto; padding: 0 24px 64px; }
+    .code-section h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: 32px; }
+    .tabs { display: flex; gap: 2px; margin-bottom: -1px; }
+    .tab {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: 6px 6px 0 0;
+      font-size: 0.85rem;
+      color: var(--muted);
+      cursor: pointer;
+      background: var(--bg);
+    }
+    .tab.active { background: var(--surface); color: var(--text); }
+    pre {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0 var(--radius) var(--radius) var(--radius);
+      padding: 24px;
+      overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.85rem;
+      line-height: 1.7;
+    }
+    .kw { color: #ff7b72; }
+    .str { color: #a5d6ff; }
+    .cmt { color: var(--muted); font-style: italic; }
+    .key { color: #79c0ff; }
+    .num { color: #f2cc60; }
+
+    /* ── Integrations ── */
+    .integrations { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+    .integ {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 20px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .integ-icon { font-size: 1.2rem; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="logo">claude<span>-project</span></div>
+  <a href="#features">Features</a>
+  <a href="#quickstart">Quick Start</a>
+  <a href="#automation">Automation</a>
+  <a href="https://github.com/infraax/claude-project">GitHub</a>
+  <div class="spacer"></div>
+  <div class="badge">v4.1.0</div>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>Project brain for<br /><span>Claude Code</span></h1>
+  <p>
+    Drop a <code style="background:var(--surface);padding:2px 8px;border-radius:4px;font-size:0.9rem">.claude-project</code> file in any directory.
+    Get persistent memory, event logs, agent dispatch, automations, session hooks, and auto-generated CLAUDE.md — all wired into Claude Code.
+  </p>
+
+  <div class="hero-badges">
+    <img src="https://img.shields.io/npm/v/claude-project?style=flat-square&color=f78166&label=npm" alt="npm version" />
+    <img src="https://img.shields.io/npm/dm/claude-project?style=flat-square&color=79c0ff&label=downloads" alt="downloads" />
+    <img src="https://img.shields.io/github/license/infraax/claude-project?style=flat-square&color=56d364" alt="license" />
+    <img src="https://img.shields.io/github/actions/workflow/status/infraax/claude-project/release.yml?style=flat-square&label=CI" alt="CI" />
+    <img src="https://img.shields.io/badge/Claude%20Code-compatible-orange?style=flat-square" alt="Claude Code" />
+  </div>
+
+  <div class="cta-group">
+    <a class="btn btn-primary" href="#quickstart">Get Started</a>
+    <a class="btn btn-secondary" href="https://github.com/infraax/claude-project">View on GitHub</a>
+    <a class="btn btn-secondary" href="https://www.npmjs.com/package/claude-project">npm package</a>
+  </div>
+</div>
+
+<!-- Install strip -->
+<div class="install-strip">
+  <code>npm install -g claude-project</code>
+</div>
+
+<!-- Features -->
+<div class="section" id="features">
+  <h2>Everything Claude needs to know about your project</h2>
+  <div class="grid">
+    <div class="card">
+      <div class="card-icon">🧠</div>
+      <h3>Persistent Memory</h3>
+      <p>Structured memory files in your diary folder. Claude reads them at session start and writes discoveries, decisions, and milestones back.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📋</div>
+      <h3>Event Log</h3>
+      <p>Append-only JSONL event log — every session start, end, tool call, dispatch, and automation fire is timestamped and UUID-tagged.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚡</div>
+      <h3>Automation Engine</h3>
+      <p>Trigger automations on events, cron schedules, file changes, or service health transitions. Actions include shell commands, agent dispatch, Obsidian sync, and webhooks.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🤖</div>
+      <h3>Agent Dispatch</h3>
+      <p>Queue tasks for Claude agents. The dispatch runner calls the Claude API with a full tool loop — read files, run commands, log events — all sandboxed to your project.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📄</div>
+      <h3>Auto CLAUDE.md</h3>
+      <p>CLAUDE.md is generated and refreshed automatically from your project brain — stage, agents, services, recent events, and dispatch queue included.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔌</div>
+      <h3>MCP Server</h3>
+      <p>Full MCP server with memory, journal, events, dispatch, registry, and project info tools. Works in stdio and HTTP/SSE modes.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🪝</div>
+      <h3>Session Hooks</h3>
+      <p>Claude Code hooks fire on SessionStart and Stop — logging events, syncing Obsidian, refreshing CLAUDE.md, and triggering automations automatically.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🌐</div>
+      <h3>Project Registry</h3>
+      <p>A global registry of all your projects at <code>~/.claude/registry.json</code>. The daemon keeps it hot — instant project lookup without filesystem scans.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🖥️</div>
+      <h3>VS Code Extension</h3>
+      <p>Status bar integration, .claude-project syntax highlighting, JSON Schema validation, and quick-access commands from the command palette.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Start -->
+<div class="code-section" id="quickstart">
+  <h2>Quick Start</h2>
+  <div class="tabs">
+    <div class="tab active">CLI</div>
+  </div>
+  <pre><span class="cmt"># 1. Install</span>
+npm install -g claude-project
+
+<span class="cmt"># 2. Initialise a project</span>
+cd ~/my-project
+claude-project init <span class="str">"My Project"</span> -d <span class="str">"What it does"</span> -s <span class="str">"Planning"</span>
+
+<span class="cmt"># 3. Add the MCP server to Claude Code</span>
+claude-project inject
+
+<span class="cmt"># 4. Install session hooks (fires on every Claude Code session)</span>
+claude-project hooks install --global
+
+<span class="cmt"># 5. Start the background daemon (macOS)</span>
+claude-project daemon install
+
+<span class="cmt"># 6. Check project status</span>
+claude-project status</pre>
+</div>
+
+<!-- Automation -->
+<div class="code-section" id="automation">
+  <h2>Automation Example</h2>
+  <pre><span class="cmt">// .claude-project</span>
+{
+  <span class="key">"version"</span>: <span class="str">"4"</span>,
+  <span class="key">"name"</span>: <span class="str">"My Project"</span>,
+  <span class="key">"agents"</span>: {
+    <span class="key">"summariser"</span>: {
+      <span class="key">"role"</span>: <span class="str">"Daily summariser"</span>,
+      <span class="key">"model"</span>: <span class="str">"claude-sonnet-4-6"</span>,
+      <span class="key">"instructions"</span>: <span class="str">"Summarise recent project events concisely."</span>,
+      <span class="key">"tools"</span>: [<span class="str">"read_file"</span>, <span class="str">"log_event"</span>]
+    }
+  },
+  <span class="key">"automations"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="str">"sync-on-session-end"</span>,
+      <span class="key">"trigger"</span>: { <span class="key">"type"</span>: <span class="str">"event"</span>, <span class="key">"event_type"</span>: <span class="str">"session_end"</span> },
+      <span class="key">"action"</span>:  { <span class="key">"type"</span>: <span class="str">"sync_obsidian"</span> }
+    },
+    {
+      <span class="key">"id"</span>: <span class="str">"daily-summary"</span>,
+      <span class="key">"trigger"</span>: { <span class="key">"type"</span>: <span class="str">"schedule"</span>, <span class="key">"cron"</span>: <span class="str">"0 9 * * *"</span> },
+      <span class="key">"action"</span>:  { <span class="key">"type"</span>: <span class="str">"dispatch_agent"</span>, <span class="key">"agent"</span>: <span class="str">"summariser"</span>,
+                   <span class="key">"prompt"</span>: <span class="str">"Summarise yesterday's events."</span> }
+    }
+  ]
+}</pre>
+</div>
+
+<!-- Integrations -->
+<div class="section">
+  <h2>Integrations &amp; Registries</h2>
+  <div class="integrations">
+    <div class="integ"><span class="integ-icon">📦</span> npm registry</div>
+    <div class="integ"><span class="integ-icon">🐙</span> GitHub Packages</div>
+    <div class="integ"><span class="integ-icon">🧩</span> VS Code Marketplace</div>
+    <div class="integ"><span class="integ-icon">🔌</span> Claude Code MCP</div>
+    <div class="integ"><span class="integ-icon">🍎</span> macOS launchd daemon</div>
+    <div class="integ"><span class="integ-icon">🗒️</span> Obsidian vault sync</div>
+    <div class="integ"><span class="integ-icon">🤖</span> Anthropic Claude API</div>
+    <div class="integ"><span class="integ-icon">🔗</span> Webhook / Slack</div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <p>
+    <a href="https://github.com/infraax/claude-project">GitHub</a> ·
+    <a href="https://www.npmjs.com/package/claude-project">npm</a> ·
+    <a href="https://github.com/infraax/claude-project/blob/main/LICENSE.txt">MIT License</a> ·
+    <a href="https://github.com/infraax/claude-project/blob/main/.github/CONTRIBUTING.md">Contributing</a>
+  </p>
+  <p style="margin-top:8px">Built for <a href="https://claude.ai/code">Claude Code</a></p>
+</footer>
+
+</body>
+</html>

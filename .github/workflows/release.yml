@@ -3,15 +3,15 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'           # triggers Triple Release on v4.1.0, etc.
+      - 'v*'
     branches:
-      - main           # triggers CI on every push to main
+      - main
   pull_request:
     branches:
-      - main           # triggers CI on every PR targeting main
+      - main
 
 jobs:
-  # ── CI: lint + test + build (runs on every push and PR) ───────────────────
+  # ── CI: lint + test + build (every push and PR) ────────────────────────────
   build:
     name: Build, Lint & Test
     runs-on: ubuntu-latest
@@ -37,7 +37,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Verify CLI entry point exists
+      - name: Verify CLI entry point
         run: node dist/cli.js --version
 
       - name: Verify MCP server exists
@@ -48,19 +48,25 @@ jobs:
         with:
           name: dist
           path: dist/
-          retention-days: 1
+          retention-days: 3
 
-  # ── Release: npm + vsce + GitHub Release (runs only on version tags) ───────
+  # ── Release: npm + GitHub Packages + vsce + GitHub Release ────────────────
   release:
-    name: Triple Release
+    name: Release
     needs: build
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    environment: production
+
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js (with npm registry auth)
+      - name: Set up Node.js (npm registry)
         uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -82,18 +88,36 @@ jobs:
           PKG_VERSION=$(node -p "require('./package.json').version")
           TAG_VERSION="${{ steps.version.outputs.VERSION }}"
           if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "ERROR: package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+            echo "ERROR: package.json ($PKG_VERSION) does not match tag ($TAG_VERSION)"
             exit 1
           fi
-          echo "Version $PKG_VERSION matches tag — proceeding"
+          echo "Version $PKG_VERSION OK"
 
-      # ── 1 of 3: npm publish ─────────────────────────────────────────────────
+      # ── 1 of 4: Publish to npm ─────────────────────────────────────────────
       - name: Publish to npm
-        run: npm publish --access public
+        run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # ── 2 of 3: VS Code Marketplace ─────────────────────────────────────────
+      # ── 2 of 4: Publish to GitHub Packages ────────────────────────────────
+      - name: Set up Node.js (GitHub Packages)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://npm.pkg.github.com'
+
+      - name: Publish to GitHub Packages
+        run: |
+          node -e "
+            const pkg = require('./package.json');
+            pkg.publishConfig = { registry: 'https://npm.pkg.github.com', access: 'public' };
+            require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 3 of 4: VS Code Marketplace ───────────────────────────────────────
       - name: Install vsce
         run: npm install -g @vscode/vsce
 
@@ -102,41 +126,41 @@ jobs:
 
       - name: Publish to VS Code Marketplace
         run: vsce publish --pat ${{ secrets.VSCE_PAT }}
+        continue-on-error: true
 
-      # ── 3 of 3: GitHub Release ───────────────────────────────────────────────
+      # ── 4 of 4: GitHub Release ─────────────────────────────────────────────
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: v${{ steps.version.outputs.VERSION }}
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
+          make_latest: true
           files: |
             claude-project-${{ steps.version.outputs.VERSION }}.vsix
           body: |
-            ## Install
+            ## claude-project v${{ steps.version.outputs.VERSION }}
 
-            **npm (CLI + MCP server):**
+            ### Install
+
+            **npm:**
             ```bash
             npm install -g claude-project
             ```
 
-            **VS Code Marketplace:**
-            Search for `claudelab.claude-project` in the Extensions panel, or:
+            **GitHub Packages:**
             ```bash
-            code --install-extension claude-project-${{ steps.version.outputs.VERSION }}.vsix
+            npm install -g claude-project --registry https://npm.pkg.github.com
             ```
 
-            **MCP registry (Claude Code):**
-            Add to `~/.mcp.json`:
+            **VS Code:** Search `claudelab.claude-project` in Extensions, or install the `.vsix` file attached below.
+
+            **MCP server (add to `~/.mcp.json`):**
             ```json
-            {
-              "mcpServers": {
-                "claude-diary": {
-                  "command": "npx",
-                  "args": ["-y", "claude-project", "mcp"]
-                }
-              }
-            }
+            { "mcpServers": { "claude-diary": { "command": "claude-project", "args": ["mcp"] } } }
             ```
+
+            ---
+            Full changelog: https://github.com/infraax/claude-project#changelog
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
