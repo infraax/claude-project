@@ -14,6 +14,8 @@ import { generateClaudeMd }                            from './commands/generate
 import { logEventCmd }                                 from './commands/log-event.js';
 import { hookRun }                                     from './commands/hook-run.js';
 import { hooksInstall, hooksUninstall, hooksStatus }  from './commands/hooks.js';
+import { dispatchList, dispatchShow, dispatchCreate, dispatchRun } from './commands/dispatch.js';
+import { automationList, automationRun }               from './commands/automation.js';
 
 const program = new Command();
 
@@ -220,5 +222,57 @@ ext
   .command('create [name]')
   .description('Create a .claudep stub for the current project (for Finder / sharing)')
   .action((name?: string) => { createClaudepStub(name); });
+
+// ── dispatch ──────────────────────────────────────────────────────────────────
+
+const dispatch = program
+  .command('dispatch')
+  .description('Manage and run agent dispatches');
+
+dispatch
+  .command('list')
+  .description('List dispatches')
+  .option('-s, --status <status>', 'Filter by status: pending|running|completed|failed')
+  .option('-a, --agent <name>',    'Filter by agent name')
+  .action((options) => { dispatchList(options); });
+
+dispatch
+  .command('show <id>')
+  .description('Show full dispatch details and result')
+  .action((id: string) => { dispatchShow(id); });
+
+dispatch
+  .command('create <title>')
+  .description('Create a new pending dispatch')
+  .option('-b, --body <text>',     'Task body / prompt for the agent')
+  .option('-a, --agent <name>',    'Agent name (references project.agents key)')
+  .option('-p, --priority <level>','Priority: low|normal|high (default: normal)')
+  .action((title: string, options) => { dispatchCreate(title, options); });
+
+dispatch
+  .command('run [id]')
+  .description('Run a pending dispatch (requires ANTHROPIC_API_KEY)')
+  .option('--all',              'Run all pending dispatches')
+  .option('-a, --agent <name>', 'Filter to dispatches for this agent')
+  .option('--dry-run',          'Show what would run without calling the API')
+  .action(async (id: string | undefined, options) => {
+    await dispatchRun(id, options);
+  });
+
+// ── automation ────────────────────────────────────────────────────────────────
+
+const automation = program
+  .command('automation')
+  .description('Inspect and manually trigger automations');
+
+automation
+  .command('list')
+  .description('List all automations with last-fired time and fire count')
+  .action(() => { automationList(); });
+
+automation
+  .command('run <id>')
+  .description('Manually fire an automation by ID (fires as manual trigger)')
+  .action((id: string) => { automationRun(id); });
 
 program.parse(process.argv);

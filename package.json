@@ -149,6 +149,7 @@
     "publish:all": "npm run build && npm run publish:npm && npm run publish:vsce"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.54.0",
     "commander": "^12.1.0"
   },
   "devDependencies": {
