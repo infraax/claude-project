@@ -56,6 +56,10 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('claudeProject.sync', cmdSync),
     vscode.commands.registerCommand('claudeProject.injectMcp', cmdInjectMcp),
     vscode.commands.registerCommand('claudeProject.openMemory', cmdOpenMemory),
+    vscode.commands.registerCommand('claudeProject.showEvents', cmdShowEvents),
+    vscode.commands.registerCommand('claudeProject.listDispatches', cmdListDispatches),
+    vscode.commands.registerCommand('claudeProject.daemonStatus', cmdDaemonStatus),
+    vscode.commands.registerCommand('claudeProject.openRegistry', cmdOpenRegistry),
   );
 
   // Auto-inject MCP if configured
@@ -275,8 +279,36 @@ function cmdOpenMemory(): void {
     return;
   }
 
-  // Open in VS Code's file explorer
   vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(diaryPath));
+}
+
+function cmdShowEvents(): void {
+  const terminal = vscode.window.createTerminal('Claude Project Events');
+  terminal.show();
+  terminal.sendText('claude-project mcp-status && echo "" && echo "Event log:" && claude-project status');
+}
+
+function cmdListDispatches(): void {
+  const terminal = vscode.window.createTerminal('Claude Project Dispatches');
+  terminal.show();
+  terminal.sendText('claude-project status');
+}
+
+function cmdDaemonStatus(): void {
+  const terminal = vscode.window.createTerminal('Claude Project Daemon');
+  terminal.show();
+  terminal.sendText('claude-project daemon status');
+}
+
+function cmdOpenRegistry(): void {
+  const registryPath = path.join(os.homedir(), '.claude', 'registry.json');
+  if (!fs.existsSync(registryPath)) {
+    vscode.window.showWarningMessage(
+      'Registry not found. Run: claude-project init <name> to create your first project.',
+    );
+    return;
+  }
+  vscode.commands.executeCommand('vscode.open', vscode.Uri.file(registryPath));
 }
 
 // ── Auto-inject ───────────────────────────────────────────────────────────────

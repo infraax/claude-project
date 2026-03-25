@@ -304,11 +304,14 @@ mcp = FastMCP(
     name="claude-diary",
     instructions=(
         "Persistent memory, project context, and Obsidian sync for Claude across all sessions. "
-        "Part of @claudelab/project v3 — .claude-project schema v3. "
+        "Part of @claudelab/project v4 — .claude-project schema v4. "
         "START every session with get_context. "
         "END every session with journal_append + wakeup_update_section. "
         "Every entry is automatically attributed to its source device and synced to Obsidian. "
-        "In a new project directory, call init_project first to create .claude-project."
+        "In a new project directory, call init_project first to create .claude-project. "
+        "Use log_event to record any significant action. "
+        "Use create_dispatch / list_dispatches to manage the task queue. "
+        "Use list_projects to see all known projects on this machine."
     ),
     host="127.0.0.1",
     port=8765,
@@ -349,8 +352,8 @@ def init_project(name: str, description: str = "") -> str:
     diary_path = str(Path.home() / ".claude" / "projects" / f"project-{project_id[:8]}" / "memory")
 
     data = {
-        "$schema": "https://raw.githubusercontent.com/infraax/claude-project/main/schema/claude-project.schema.json",
-        "version": "3",
+        "$schema": "https://cdn.jsdelivr.net/npm/@claudelab/project/schema/claude-project.schema.json",
+        "version": "4",
         "project_id": project_id,
         "name": name,
         "description": description,
@@ -895,6 +898,451 @@ def update_dexter_profile(section: str, note: str) -> str:
         updated = text.rstrip() + f"\n\n## {section}\n\n- *[{ts} · {source}]* {note.strip()}\n"
     dexter_file.write_text(updated, encoding="utf-8")
     return f"DEXTER.md updated: '{section}' ({source})."
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# v4: REGISTRY HELPERS  (reads ~/.claude/registry.json)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _get_registry_path() -> Path:
+    return Path(os.environ.get("CLAUDE_REGISTRY_PATH", str(Path.home() / ".claude" / "registry.json")))
+
+
+def _read_registry() -> dict:
+    rp = _get_registry_path()
+    if not rp.exists():
+        return {"version": "1", "projects": {}}
+    try:
+        return json.loads(rp.read_text(encoding="utf-8"))
+    except Exception:
+        return {"version": "1", "projects": {}}
+
+
+def _write_registry(reg: dict) -> None:
+    rp = _get_registry_path()
+    rp.parent.mkdir(parents=True, exist_ok=True)
+    reg["updated"] = _now()
+    rp.write_text(json.dumps(reg, indent=2) + "\n", encoding="utf-8")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# v4: EVENT LOG HELPERS  (appends to <project-XXXX>/events.jsonl)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _get_events_path(ctx: dict | None) -> Path | None:
+    """Returns path to events.jsonl for the current project context."""
+    if not ctx:
+        return None
+    diary_path = ctx.get("diary_path")
+    if not diary_path:
+        return None
+    memory_dir = Path(diary_path).expanduser()
+    # diary_path ends with /memory — events.jsonl is one level up
+    return memory_dir.parent / "events.jsonl"
+
+
+def _append_event_py(event_type: str, data: dict, tags: list[str] | None = None) -> dict:
+    """Appends an event to the project's events.jsonl. Never raises."""
+    ctx = _find_project_context()
+    event = {
+        "id": str(uuid.uuid4())[:8],
+        "ts": _now(),
+        "type": event_type,
+        "source": _get_source(),
+        "project_id": ctx.get("project_id", "default")[:8] if ctx else "default",
+        "data": data,
+    }
+    if tags:
+        event["tags"] = tags
+    try:
+        events_path = _get_events_path(ctx)
+        if events_path:
+            events_path.parent.mkdir(parents=True, exist_ok=True)
+            with events_path.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(event) + "\n")
+    except Exception:
+        pass
+    return event
+
+
+def _get_dispatches_dir(ctx: dict | None) -> Path | None:
+    """Returns path to dispatches/ for the current project context."""
+    if not ctx:
+        return None
+    diary_path = ctx.get("diary_path")
+    if not diary_path:
+        return None
+    memory_dir = Path(diary_path).expanduser()
+    return memory_dir.parent / "dispatches"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# v4: PROJECT INFO & REGISTRY TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+@mcp.tool()
+def get_project_info() -> str:
+    """
+    Returns full v4 project context including agents, services, automations, tools,
+    monitoring config, and runtime paths. More detailed than get_source_info.
+    Call when you need the complete project configuration.
+    """
+    ctx = _find_project_context()
+    if not ctx:
+        return "No .claude-project found in this directory or any parent."
+
+    memory_dir, obsidian_vault, obsidian_folder = _resolve_paths()
+    events_path = _get_events_path(ctx)
+    dispatches_dir = _get_dispatches_dir(ctx)
+
+    # Count events
+    event_count = 0
+    if events_path and events_path.exists():
+        try:
+            event_count = sum(1 for _ in events_path.open(encoding="utf-8"))
+        except Exception:
+            pass
+
+    # Count dispatches
+    pending_dispatches = 0
+    if dispatches_dir and dispatches_dir.exists():
+        try:
+            pending_dispatches = len(list(dispatches_dir.glob("*.json")))
+        except Exception:
+            pass
+
+    lines = [
+        f"## Project: {ctx.get('name')} (v{ctx.get('version', '3')})",
+        f"**ID:** `{ctx.get('project_id', '?')[:8]}`",
+        f"**Description:** {ctx.get('description', '(none)')}",
+        f"**Stage:** {ctx.get('stage', '(none)')}",
+        f"**Created:** {ctx.get('created', '?')} by {ctx.get('created_by', '?')}",
+        "",
+        "### Runtime Paths",
+        f"- Memory: `{memory_dir}`",
+        f"- Events: `{events_path}` ({event_count} events)",
+        f"- Dispatches: `{dispatches_dir}` ({pending_dispatches} pending)",
+        f"- Obsidian: `{obsidian_vault}/{obsidian_folder}`",
+        "",
+    ]
+
+    # Agents
+    agents = ctx.get("agents", {})
+    if agents:
+        lines.append(f"### Agents ({len(agents)})")
+        for aname, adef in agents.items():
+            lines.append(f"- **{aname}**: {adef.get('role', '?')} ({adef.get('model', 'default model')})")
+        lines.append("")
+
+    # Services
+    services = ctx.get("services", {})
+    if services:
+        lines.append(f"### Services ({len(services)})")
+        for sname, sdef in services.items():
+            lines.append(f"- **{sname}**: {sdef.get('type', '?')} — {sdef.get('url', sdef.get('command', '?'))} — {sdef.get('description', '')}")
+        lines.append("")
+
+    # Automations
+    automations = ctx.get("automations", [])
+    if automations:
+        lines.append(f"### Automations ({len(automations)})")
+        for auto in automations:
+            enabled = "✓" if auto.get("enabled", True) else "✗"
+            lines.append(f"- {enabled} **{auto.get('id', '?')}**: {auto.get('description', '?')}")
+        lines.append("")
+
+    # Tools
+    tools = ctx.get("tools", {})
+    if tools:
+        lines.append(f"### Tools ({len(tools)})")
+        for tname, tdef in tools.items():
+            lines.append(f"- **{tname}**: `{tdef.get('command', '?')}` — {tdef.get('description', '')}")
+        lines.append("")
+
+    # Monitoring
+    monitoring = ctx.get("monitoring", {})
+    if monitoring:
+        lines.append("### Monitoring")
+        lines.append(f"- Enabled: {monitoring.get('enabled', True)}")
+        lines.append(f"- Log retention: {monitoring.get('log_retention_days', 90)} days")
+        lines.append(f"- Health interval: {monitoring.get('healthcheck_interval_seconds', 60)}s")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def list_projects() -> str:
+    """
+    Lists all Claude projects registered on this machine (from ~/.claude/registry.json).
+    Much faster than a filesystem scan. Updated by 'claude-project daemon' or 'init'.
+    """
+    reg = _read_registry()
+    projects = reg.get("projects", {})
+
+    if not projects:
+        return (
+            "No projects in registry yet.\n"
+            "Run: claude-project init <name>\n"
+            "Or:  claude-project daemon install  (to auto-populate via daemon)"
+        )
+
+    # Sort by last_seen descending
+    sorted_projects = sorted(
+        projects.values(),
+        key=lambda p: p.get("last_seen", ""),
+        reverse=True,
+    )
+
+    lines = [
+        f"## {len(sorted_projects)} project(s) on {reg.get('machine', 'this machine')}",
+        f"Registry: `{_get_registry_path()}`",
+        f"Updated: {reg.get('updated', '?')}",
+        "",
+    ]
+    for p in sorted_projects:
+        stage = f"  [{p['stage']}]" if p.get("stage") else ""
+        lines.append(f"### ⬡ {p['name']}  ({p['project_id'][:8]}){stage}")
+        lines.append(f"- **Description:** {p.get('description', '(none)')}")
+        lines.append(f"- **Path:** `{p.get('project_dir', '?')}`")
+        lines.append(f"- **Version:** v{p.get('version', '3')}")
+        lines.append(f"- **Last seen:** {p.get('last_seen', '?')}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# v4: EVENT LOG TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+@mcp.tool()
+def log_event(event_type: str, summary: str, tags: str = "") -> str:
+    """
+    Appends a structured event to the project's append-only event log (events.jsonl).
+    Use this to record any significant action, decision, tool call, or state change.
+
+    Args:
+        event_type: Type identifier, e.g. 'tool_call', 'session_start', 'deploy', 'custom'
+        summary:    Human-readable description of what happened
+        tags:       Optional comma-separated tags for filtering, e.g. 'deploy,prod'
+    """
+    for val, name, lim in [
+        (event_type, "event_type", _SHORT),
+        (summary, "summary", _MEDIUM),
+        (tags, "tags", _SHORT),
+    ]:
+        err = _check(val, name, lim)
+        if err:
+            return err
+
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags.strip() else []
+    event = _append_event_py(event_type, {"summary": summary}, tag_list if tag_list else None)
+    return f"Event `{event['id']}` logged: [{event_type}] {summary} ({event['source']})"
+
+
+@mcp.tool()
+def get_events(limit: int = 20, event_type: str = "") -> str:
+    """
+    Returns the most recent events from the project's event log.
+    Optionally filter by event_type.
+
+    Args:
+        limit:      Number of events to return (max 100, default 20)
+        event_type: Filter to only this type, e.g. 'session_start' (empty = all types)
+    """
+    limit = min(max(int(limit), 1), 100)
+    ctx = _find_project_context()
+    events_path = _get_events_path(ctx)
+
+    if not events_path or not events_path.exists():
+        return "No events log found for this project. Log events with log_event()."
+
+    try:
+        lines = events_path.read_text(encoding="utf-8").strip().split("\n")
+        events = []
+        for line in lines:
+            if not line.strip():
+                continue
+            try:
+                e = json.loads(line)
+                events.append(e)
+            except Exception:
+                pass
+
+        if event_type.strip():
+            events = [e for e in events if e.get("type") == event_type.strip()]
+
+        recent = events[-limit:]
+        recent.reverse()  # newest first
+
+        if not recent:
+            filter_note = f" of type '{event_type}'" if event_type.strip() else ""
+            return f"No events{filter_note} found."
+
+        result_lines = [f"## Last {len(recent)} event(s)", ""]
+        for e in recent:
+            tags = f"  [{', '.join(e['tags'])}]" if e.get("tags") else ""
+            summary = e.get("data", {}).get("summary", json.dumps(e.get("data", {}))[:80])
+            result_lines.append(
+                f"- `{e['id']}` **{e['type']}**{tags}  {e['ts'][:19]}  _{e['source']}_\n"
+                f"  {summary}"
+            )
+
+        return "\n".join(result_lines)
+
+    except Exception as ex:
+        return f"Error reading events: {ex}"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# v4: DISPATCH QUEUE TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+@mcp.tool()
+def create_dispatch(title: str, body: str, priority: str = "normal") -> str:
+    """
+    Creates a task dispatch — a queued unit of work for Claude or a sub-agent.
+    Stored as a JSON file in the project's dispatches/ directory.
+    Use this to queue tasks that should happen asynchronously or in a future session.
+
+    Args:
+        title:    Short task title, e.g. 'Review API docs', 'Run integration tests'
+        body:     Full task description with context and acceptance criteria
+        priority: 'low', 'normal', or 'high' (default: 'normal')
+    """
+    for val, name, lim in [
+        (title, "title", _SHORT),
+        (body, "body", _LONG),
+        (priority, "priority", 20),
+    ]:
+        err = _check(val, name, lim)
+        if err:
+            return err
+
+    if priority not in ("low", "normal", "high"):
+        priority = "normal"
+
+    ctx = _find_project_context()
+    dispatches_dir = _get_dispatches_dir(ctx)
+    if not dispatches_dir:
+        return "No .claude-project found. Cannot create dispatch without project context."
+
+    dispatches_dir.mkdir(parents=True, exist_ok=True)
+
+    dispatch_id = _short_uuid()
+    ts = _now()
+    source = _get_source()
+
+    dispatch = {
+        "id": dispatch_id,
+        "created_at": ts,
+        "created_by": source,
+        "status": "pending",
+        "priority": priority,
+        "title": title,
+        "body": body,
+        "project_id": ctx.get("project_id", "")[:8] if ctx else "",
+    }
+
+    dispatch_file = dispatches_dir / f"{dispatch_id}.json"
+    dispatch_file.write_text(json.dumps(dispatch, indent=2) + "\n", encoding="utf-8")
+
+    _append_event_py("dispatch_created", {"dispatch_id": dispatch_id, "title": title, "priority": priority})
+
+    return (
+        f"Dispatch `{dispatch_id}` created (priority: {priority})\n"
+        f"Title: {title}\n"
+        f"File:  {dispatch_file}"
+    )
+
+
+@mcp.tool()
+def list_dispatches(status: str = "pending") -> str:
+    """
+    Lists task dispatches in the project's dispatch queue.
+
+    Args:
+        status: Filter by status — 'pending', 'completed', 'failed', or 'all' (default: 'pending')
+    """
+    ctx = _find_project_context()
+    dispatches_dir = _get_dispatches_dir(ctx)
+
+    if not dispatches_dir or not dispatches_dir.exists():
+        return "No dispatches directory found. Create one with create_dispatch()."
+
+    files = sorted(dispatches_dir.glob("*.json"), key=lambda f: f.stat().st_mtime, reverse=True)
+    dispatches = []
+    for f in files:
+        try:
+            d = json.loads(f.read_text(encoding="utf-8"))
+            dispatches.append(d)
+        except Exception:
+            pass
+
+    if status != "all":
+        dispatches = [d for d in dispatches if d.get("status") == status]
+
+    if not dispatches:
+        return f"No {status} dispatches found."
+
+    lines = [f"## {len(dispatches)} {status} dispatch(es)", ""]
+    for d in dispatches:
+        pri_icon = {"high": "🔴", "normal": "🟡", "low": "🔵"}.get(d.get("priority", "normal"), "⚪")
+        lines.append(
+            f"- `{d['id']}` {pri_icon} **{d.get('title', '?')}**  "
+            f"[{d.get('status', '?')}]  {d.get('created_at', '?')[:19]}"
+        )
+        if d.get("body"):
+            lines.append(f"  {d['body'][:120]}{'...' if len(d.get('body','')) > 120 else ''}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+def complete_dispatch(dispatch_id: str, outcome: str = "") -> str:
+    """
+    Marks a dispatch as completed and records the outcome.
+
+    Args:
+        dispatch_id: The 8-char ID of the dispatch (from list_dispatches)
+        outcome:     Optional description of what was done / the result
+    """
+    err = _check(dispatch_id, "dispatch_id", 20)
+    if err:
+        return err
+
+    ctx = _find_project_context()
+    dispatches_dir = _get_dispatches_dir(ctx)
+
+    if not dispatches_dir or not dispatches_dir.exists():
+        return "No dispatches directory found."
+
+    # Find the file
+    matches = list(dispatches_dir.glob(f"{dispatch_id}*.json"))
+    if not matches:
+        return f"Dispatch `{dispatch_id}` not found."
+
+    dispatch_file = matches[0]
+    try:
+        d = json.loads(dispatch_file.read_text(encoding="utf-8"))
+    except Exception as ex:
+        return f"Could not read dispatch file: {ex}"
+
+    d["status"] = "completed"
+    d["completed_at"] = _now()
+    d["completed_by"] = _get_source()
+    if outcome.strip():
+        d["outcome"] = outcome.strip()
+
+    dispatch_file.write_text(json.dumps(d, indent=2) + "\n", encoding="utf-8")
+    _append_event_py("dispatch_completed", {
+        "dispatch_id": dispatch_id,
+        "title": d.get("title", ""),
+        "outcome": outcome,
+    })
+
+    return f"Dispatch `{dispatch_id}` marked as completed ({_get_source()})."
 
 
 # ══════════════════════════════════════════════════════════════════════════════

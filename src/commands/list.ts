@@ -2,6 +2,42 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ClaudeProject, shortId } from '../lib/project.js';
 import { getSearchRoots } from '../lib/paths.js';
+import { listRegistry, registerProject, getRegistryPath } from '../lib/registry.js';
+
+export interface ListOptions {
+  scan?: boolean;
+}
+
+// ── Registry-based list (fast) ────────────────────────────────────────────────
+
+function listFromRegistry(): void {
+  const entries = listRegistry();
+
+  if (entries.length === 0) {
+    console.log(
+      '\n  Registry is empty.\n\n' +
+      `  Registry: ${getRegistryPath()}\n\n` +
+      '  Run: claude-project init <name>   to create a project\n' +
+      '  Run: claude-project list --scan   to discover existing projects\n' +
+      '  Run: claude-project daemon install to keep the registry hot automatically\n',
+    );
+    return;
+  }
+
+  console.log(`\n  ${entries.length} project(s) in registry:\n`);
+  for (const e of entries) {
+    const stage = e.stage ? `  [${e.stage}]` : '';
+    const version = `v${e.version ?? '3'}`;
+    console.log(`  ⬡  ${e.name}  (${e.project_id.slice(0, 8)})  ${version}${stage}`);
+    console.log(`       ${e.description || '(no description)'}`);
+    console.log(`       ${e.project_dir}`);
+    console.log(`       last seen: ${e.last_seen.slice(0, 19)}\n`);
+  }
+
+  console.log(`  Registry: ${getRegistryPath()}\n`);
+}
+
+// ── Filesystem scan (slow, updates registry) ──────────────────────────────────
 
 interface Found {
   filePath: string;
@@ -45,23 +81,41 @@ function findAllProjects(roots: string[]): Found[] {
   return results;
 }
 
-export function list(): void {
+function listFromScan(): void {
   const roots = getSearchRoots();
+  console.log('\n  Scanning filesystem (this may take a moment)...\n');
   const found = findAllProjects(roots);
 
   if (found.length === 0) {
     console.log(
-      '\n  No .claude-project files found.\n\n' +
+      '  No .claude-project files found.\n\n' +
       '  Run: claude-project init <name>\n',
     );
     return;
   }
 
-  console.log(`\n  Found ${found.length} project(s):\n`);
+  console.log(`  Found ${found.length} project(s):\n`);
   for (const { filePath, project } of found) {
     const stage = project.stage ? `  [${project.stage}]` : '';
-    console.log(`  ⬡  ${project.name}  (${shortId(project)})${stage}`);
+    const version = `v${project.version ?? '3'}`;
+    console.log(`  ⬡  ${project.name}  (${shortId(project)})  ${version}${stage}`);
     console.log(`       ${project.description || '(no description)'}`);
     console.log(`       ${filePath}\n`);
+
+    // Update registry while we're at it
+    const projectDir = path.dirname(filePath);
+    registerProject(project, projectDir);
+  }
+
+  console.log(`  Registry updated: ${getRegistryPath()}\n`);
+}
+
+// ── Entry point ───────────────────────────────────────────────────────────────
+
+export function list(options: ListOptions = {}): void {
+  if (options.scan) {
+    listFromScan();
+  } else {
+    listFromRegistry();
   }
 }
