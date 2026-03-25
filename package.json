@@ -1,8 +1,8 @@
 {
   "name": "claude-project",
   "displayName": "Claude Project",
-  "version": "3.0.0",
-  "description": "Project context system for Claude Code — .claude-project file, diary MCP, CLI, VS Code integration",
+  "version": "4.1.0",
+  "description": "Project brain for Claude Code — .claude-project v4, event log, registry, dispatch queue, agent orchestration, daemon, .claudep file type, diary MCP, CLI, VS Code integration",
   "author": "claudelab",
   "license": "MIT",
   "repository": {
@@ -22,7 +22,12 @@
     "ai",
     "project-context",
     "anthropic",
-    "diary"
+    "diary",
+    "agent-orchestration",
+    "event-log",
+    "registry",
+    "dispatch-queue",
+    "claudep"
   ],
   "engines": {
     "vscode": "^1.85.0",
@@ -88,6 +93,26 @@
         "command": "claudeProject.openMemory",
         "title": "Open Memory Folder",
         "category": "Claude Project"
+      },
+      {
+        "command": "claudeProject.showEvents",
+        "title": "Show Event Log",
+        "category": "Claude Project"
+      },
+      {
+        "command": "claudeProject.listDispatches",
+        "title": "List Dispatches",
+        "category": "Claude Project"
+      },
+      {
+        "command": "claudeProject.daemonStatus",
+        "title": "Daemon Status",
+        "category": "Claude Project"
+      },
+      {
+        "command": "claudeProject.openRegistry",
+        "title": "Open Project Registry",
+        "category": "Claude Project"
       }
     ],
     "configuration": {
@@ -116,6 +141,8 @@
     "build:watch": "tsc -p tsconfig.json --watch",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prepublishOnly": "npm run clean && npm run build",
     "link": "npm run build && npm link",
     "package": "vsce package",
@@ -124,12 +151,14 @@
     "publish:all": "npm run build && npm run publish:npm && npm run publish:vsce"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.54.0",
     "commander": "^12.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.0.0",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "vitest": "^4.1.1"
   }
 }
