@@ -14,10 +14,13 @@ export interface McpServerConfig {
 export interface AgentDefinition {
   role: string;
   model?: string;
+  backend?: 'claude' | 'ollama' | 'openai' | 'local';
   instructions?: string;
+  system_prompt?: string;
   tools?: string[];
   max_tokens?: number;
   tags?: string[];
+  trigger?: string;
 }
 
 export interface ServiceDefinition {
