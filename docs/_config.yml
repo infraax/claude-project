@@ -1,0 +1,30 @@
+title: claude-project
+description: Project brain for Claude Code — persistent memory, event log, agent dispatch, automations, MCP server, and auto-generated CLAUDE.md.
+url: "https://infraax.github.io"
+baseurl: "/claude-project"
+
+# Theme — using Cayman as base, overridden by our custom index.html
+remote_theme: pages-themes/cayman@v0.2.0
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# SEO
+author: infraax
+twitter:
+  username: infraax
+social:
+  name: claude-project
+  links:
+    - https://github.com/infraax/claude-project
+    - https://www.npmjs.com/package/claude-project
+
+# Navigation
+header_pages:
+  - index.html
+
+# Exclude from processing
+exclude:
+  - node_modules
+  - "*.log"

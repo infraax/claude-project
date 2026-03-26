@@ -1,34 +1,77 @@
-# claude-project
+<div align="center">
 
-**v4.1** — Project brain for Claude Code. Drop a `.claude-project` file in any directory to give Claude persistent memory, a registry, event log, agent orchestration, dispatch queue, session hooks, automation engine, and auto-generated `CLAUDE.md`.
+# 🧠 claude-project
+
+**Project brain for Claude Code**
+
+Drop a `.claude-project` file in any directory to give Claude persistent memory, an event log, agent dispatch, automations, session hooks, and auto-generated `CLAUDE.md`.
+
+[![npm version](https://img.shields.io/npm/v/claude-project?style=flat-square&color=f78166)](https://www.npmjs.com/package/claude-project)
+[![npm downloads](https://img.shields.io/npm/dm/claude-project?style=flat-square&color=79c0ff)](https://www.npmjs.com/package/claude-project)
+[![CI](https://img.shields.io/github/actions/workflow/status/infraax/claude-project/release.yml?style=flat-square&label=CI)](https://github.com/infraax/claude-project/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-56d364?style=flat-square)](LICENSE.txt)
+[![Node ≥18](https://img.shields.io/badge/node-%E2%89%A518-brightgreen?style=flat-square)](https://nodejs.org)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-orange?style=flat-square)](https://claude.ai/code)
+[![VS Code](https://img.shields.io/visual-studio-marketplace/v/claudelab.claude-project?style=flat-square&label=VS%20Code&color=007acc)](https://marketplace.visualstudio.com/items?itemName=claudelab.claude-project)
+
+[**Docs**](https://infraax.github.io/claude-project/) · [npm](https://www.npmjs.com/package/claude-project) · [GitHub Packages](https://github.com/infraax/claude-project/pkgs/npm/claude-project) · [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=claudelab.claude-project) · [Discussions](https://github.com/infraax/claude-project/discussions)
+
+</div>
+
+---
+
+## What it does
+
+| Capability | What you get |
+|---|---|
+| **Persistent memory** | Structured `.md` files Claude reads at session start |
+| **Event log** | Append-only JSONL log of every session, dispatch, and automation |
+| **Automation engine** | Trigger actions on events, cron, file changes, or service health |
+| **Agent dispatch** | Queue tasks for Claude agents — full tool loop, sandboxed to your project |
+| **Auto CLAUDE.md** | Generated and refreshed automatically from your live project brain |
+| **Session hooks** | Fire on SessionStart/Stop — sync Obsidian, log events, run automations |
+| **MCP server** | Memory, journal, events, dispatch, and registry tools for Claude Code |
+| **Project registry** | Global `~/.claude/registry.json` — instant lookup, no filesystem scans |
+| **Background daemon** | macOS launchd — refreshes registry + fires scheduled automations every 5 min |
+| **VS Code extension** | Status bar, syntax highlighting, schema validation, command palette |
+
+---
 
 ## Install
 
 ```bash
+# npm (recommended)
 npm install -g claude-project
+
+# GitHub Packages
+npm install -g claude-project --registry https://npm.pkg.github.com
+
+# VS Code extension — search "claudelab.claude-project"
 ```
 
-Or install the VS Code extension: search `claudelab.claude-project` in the Extensions panel.
+**Open in Codespaces** — zero setup dev environment:
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/infraax/claude-project)
 
 ---
 
 ## Quick Start
 
 ```bash
-# Initialise a project in the current directory
-claude-project init "MyProject" -d "What it does" -s "Planning"
+# 1. Initialise a project
+claude-project init "My Project" -d "What it does" -s "Planning"
 
-# Show full project context
-claude-project status
-
-# Sync memory → Obsidian vault
-claude-project sync
-
-# Add the MCP server to ~/.mcp.json
+# 2. Add MCP server to Claude Code (~/.mcp.json)
 claude-project inject
 
-# Start the MCP server (stdio)
-claude-project mcp
+# 3. Install session hooks
+claude-project hooks install --global
+
+# 4. Start the background daemon (macOS)
+claude-project daemon install
+
+# 5. Check status
+claude-project status
 ```
 
 ---
@@ -37,114 +80,111 @@ claude-project mcp
 
 ### Core
 
-| Command | Description |
-|---------|-------------|
-| `init <name>` | Create a `.claude-project` in the current directory |
-| `status` | Show registry, events, dispatches, agents, services |
-| `list [--scan]` | List all known projects |
-| `sync` | Copy memory `.md` files → Obsidian vault |
-| `generate-claude-md` | Regenerate `CLAUDE.md` from the project brain |
-| `log-event <type> [summary]` | Append an event to the project event log |
+```bash
+claude-project init <name>                 # create .claude-project
+claude-project status                      # show full project brain
+claude-project list [--scan]              # list all known projects
+claude-project sync                        # memory → Obsidian vault
+claude-project generate-claude-md         # regenerate CLAUDE.md
+claude-project log-event <type> [summary] # append event to log
+```
 
 ### Automation Engine
 
-Automations are defined in `.claude-project` under `automations[]`. They fire automatically via the daemon or hooks, or manually via the CLI.
+```bash
+claude-project automation list            # list automations + last-fired time
+claude-project automation run <id>        # manually trigger an automation
+```
+
+**Trigger types:** `event` · `schedule` (cron) · `manual` · `file_change` · `service_up` · `service_down`
+
+**Action types:** `run_command` · `dispatch_agent` · `write_event` · `send_notification` · `sync_obsidian` · `call_webhook`
 
 ```jsonc
-// .claude-project (excerpt)
+// .claude-project
 "automations": [
   {
     "id": "sync-on-session-end",
     "trigger": { "type": "event", "event_type": "session_end" },
-    "action": { "type": "sync_obsidian" }
+    "action":  { "type": "sync_obsidian" }
   },
   {
-    "id": "daily-summary",
-    "trigger": { "type": "schedule", "cron": "0 9 * * *" },
-    "action": { "type": "dispatch_agent", "agent": "summariser", "prompt": "Summarise yesterday's events." }
+    "id": "daily-standup",
+    "trigger": { "type": "schedule", "cron": "0 9 * * 1-5" },
+    "action":  { "type": "dispatch_agent", "agent": "summariser",
+                 "prompt": "Summarise yesterday's events and flag blockers." }
+  },
+  {
+    "id": "alert-on-api-down",
+    "trigger": { "type": "service_down", "service": "api" },
+    "action":  { "type": "send_notification", "message": "API is down!" }
   }
 ]
 ```
 
-**Trigger types:** `event`, `schedule` (cron), `manual`, `file_change`, `service_up`, `service_down`
-
-**Action types:** `run_command`, `dispatch_agent`, `write_event`, `send_notification`, `sync_obsidian`, `call_webhook`
-
-| Command | Description |
-|---------|-------------|
-| `automation list` | List all automations with last-fired time and fire count |
-| `automation run <id>` | Manually fire an automation by ID |
-
 ### Agent Dispatch
 
-Dispatches are tasks queued for a Claude agent. They run serially and support a full tool loop (read/write files, run shell commands, log events).
-
 ```bash
-# Create a dispatch
-claude-project dispatch create "Review PR #42" --agent reviewer --body "Check for security issues."
+# Create
+claude-project dispatch create "Review PR #42" --agent reviewer \
+  --body "Check for security issues."
 
-# List pending dispatches
-claude-project dispatch list --status pending
+# List
+claude-project dispatch list
+claude-project dispatch list --status pending --agent reviewer
 
-# Run all pending (requires ANTHROPIC_API_KEY)
+# Run (requires ANTHROPIC_API_KEY)
 export ANTHROPIC_API_KEY=sk-ant-...
-claude-project dispatch run --all
+claude-project dispatch run --all           # all pending
+claude-project dispatch run dispatch-abc12  # specific
+claude-project dispatch run --dry-run       # preview
 
-# Run one by ID
-claude-project dispatch run dispatch-abc12345
-
-# Show result
-claude-project dispatch show dispatch-abc12345
+# Inspect
+claude-project dispatch show dispatch-abc12
 ```
 
-Agents are defined in `.claude-project` under `agents{}`:
+**Built-in agent tools:** `read_file` · `list_files` · `write_file` · `bash` · `log_event`
+
+All file ops are sandboxed to the project directory.
 
 ```jsonc
 "agents": {
   "reviewer": {
     "role": "Code reviewer",
     "model": "claude-sonnet-4-6",
-    "instructions": "You are a thorough code reviewer. Focus on correctness and security.",
+    "instructions": "You are a thorough code reviewer.",
     "tools": ["read_file", "list_files", "bash", "log_event"],
     "max_tokens": 4096
   }
 }
 ```
 
-**Built-in agent tools:** `read_file`, `list_files`, `write_file`, `bash`, `log_event`
+### Session Hooks
 
-All file tool calls are sandboxed to the project directory (path traversal is blocked).
+```bash
+claude-project hooks install           # local settings
+claude-project hooks install --global  # global (~/.claude/settings.json)
+claude-project hooks uninstall
+claude-project hooks status
+```
 
 ### Daemon
 
-The daemon runs every 5 minutes via macOS launchd. It refreshes the project registry, regenerates `CLAUDE.md`, and fires scheduled automations.
-
 ```bash
-claude-project daemon install    # install + start launchd service
-claude-project daemon uninstall  # stop + remove
-claude-project daemon status     # show whether it's running
-claude-project daemon run        # run one scan cycle manually
-```
-
-### Session Hooks
-
-Hooks wire Claude Code session lifecycle events into the project brain — logging `session_start`/`session_end` events, syncing Obsidian, regenerating `CLAUDE.md`, and firing event-triggered automations.
-
-```bash
-claude-project hooks install     # add hooks to settings.json
-claude-project hooks install --global  # add to ~/.claude/settings.json
-claude-project hooks uninstall
-claude-project hooks status
+claude-project daemon install    # install + start launchd (macOS)
+claude-project daemon uninstall
+claude-project daemon status
+claude-project daemon run        # one manual scan cycle
 ```
 
 ### MCP Server
 
 ```bash
-claude-project mcp               # start stdio MCP server
-claude-project mcp --http        # start HTTP/SSE MCP server
-claude-project inject            # add claude-diary entry to ~/.mcp.json
-claude-project eject             # remove it
-claude-project mcp-status        # check if configured
+claude-project mcp               # stdio (for Claude Code)
+claude-project mcp --http        # HTTP/SSE on port 8765
+claude-project inject            # add to ~/.mcp.json
+claude-project eject
+claude-project mcp-status
 ```
 
 Add to `~/.mcp.json`:
@@ -167,7 +207,7 @@ Add to `~/.mcp.json`:
 ```jsonc
 {
   "version": "4",
-  "project_id": "unique-id",
+  "project_id": "auto-generated",
   "name": "My Project",
   "description": "What this project does",
   "stage": "Planning",
@@ -175,26 +215,25 @@ Add to `~/.mcp.json`:
   "obsidian_vault": "~/Documents/Obsidian",
   "obsidian_folder": "Projects/MyProject",
 
-  // v4: Agents for dispatch tasks
   "agents": {
     "reviewer": {
       "role": "Code reviewer",
       "model": "claude-sonnet-4-6",
       "instructions": "...",
-      "tools": ["read_file", "list_files", "bash"]
+      "tools": ["read_file", "list_files", "bash"],
+      "max_tokens": 4096
     }
   },
 
-  // v4: Automations (triggers + actions)
   "automations": [
     {
-      "id": "sync-on-end",
+      "id": "my-automation",
+      "enabled": true,
       "trigger": { "type": "event", "event_type": "session_end" },
-      "action": { "type": "sync_obsidian" }
+      "action":  { "type": "sync_obsidian" }
     }
   ],
 
-  // v4: Services with health checks
   "services": {
     "api": {
       "type": "http",
@@ -203,7 +242,6 @@ Add to `~/.mcp.json`:
     }
   },
 
-  // v4: Monitoring config
   "monitoring": {
     "enabled": true,
     "notify": {
@@ -219,40 +257,65 @@ Add to `~/.mcp.json`:
 ## Environment Variables
 
 | Variable | Default | Purpose |
-|----------|---------|---------|
-| `ANTHROPIC_API_KEY` | *(required for dispatch run)* | Claude API key |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | *(required for dispatch)* | Claude API key |
 | `CLAUDE_OBSIDIAN_VAULT` | `~/.claude/obsidian` | Obsidian vault path |
 | `CLAUDE_DIARY_PATH` | `~/.claude/memory` | Default diary directory |
 | `CLAUDE_DIARY_BASE` | `~/.claude/projects` | Base dir for per-project diaries |
-| `CLAUDE_PROJECTS_ROOT` | *(none)* | Extra root for `claude-project list` |
-| `CLAUDE_MCP_JSON` | `~/.mcp.json` | Override `.mcp.json` path |
+| `CLAUDE_PROJECTS_ROOT` | *(none)* | Extra root for daemon + list |
+| `CLAUDE_MCP_JSON` | `~/.mcp.json` | Override MCP config path |
+
+---
+
+## Integrations & Registries
+
+| Registry / Platform | Install |
+|---|---|
+| **npm** | `npm install -g claude-project` |
+| **GitHub Packages** | `npm install -g claude-project --registry https://npm.pkg.github.com` |
+| **VS Code Marketplace** | Search `claudelab.claude-project` |
+| **Claude Code MCP** | `claude-project inject` |
+| **Obsidian** | Auto-synced via `sync_obsidian` action |
+| **macOS launchd** | `claude-project daemon install` |
+
+---
+
+## Contributing
+
+See [CONTRIBUTING.md](.github/CONTRIBUTING.md). All contributions welcome.
+
+```bash
+git clone https://github.com/infraax/claude-project.git
+cd claude-project && npm install && npm run build && npm link
+npm test       # 25 Vitest tests
+npm run lint   # TypeScript type-check
+```
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/infraax/claude-project)
 
 ---
 
 ## Changelog
 
 ### v4.1.0
-- **Automation engine** — event, schedule, manual, file_change, service_up/down triggers; run_command, dispatch_agent, write_event, send_notification, sync_obsidian, call_webhook actions; idempotent state tracking
-- **Real agent dispatch** — `dispatch run` calls the Claude API with a multi-turn tool loop (read_file, list_files, write_file, bash, log_event); path traversal guard; dispatch lifecycle pending→running→completed|failed
+- **Automation engine** — event, schedule, manual, file_change, service_up/down triggers; 6 action types; idempotent state per automation
+- **Agent dispatch** — Claude API tool loop (MAX 10 iterations), path traversal guard, full dispatch lifecycle
 - **CLI**: `dispatch list/show/create/run`, `automation list/run`
-- Daemon fires scheduled automations every 5 minutes
-- Session hooks fire event-triggered automations on session_start/end
+- **Tests**: 25 Vitest tests — idempotency, path traversal, lifecycle, tool loop
+- **CI**: tests on every push/PR; GitHub Packages publishing; `production` environment gate
+- **Docs**: GitHub Pages site, devcontainer, issue templates, CONTRIBUTING, SECURITY, dependabot
 
 ### v4.0.0
-- `.claude-project` v4 schema with agents, services, automations, tools, monitoring
-- Project registry (`~/.claude/registry.json`) with daemon support
-- Append-only JSONL event log
-- Dispatch queue (JSON files in runtimeDir/dispatches/)
-- `CLAUDE.md` auto-generation from project brain
-- Session hooks (SessionStart, Stop)
-- VS Code extension, `.claudep` file type
-- MCP server with full diary/events/dispatch/registry tools
+- v4 schema: agents, services, automations, monitoring
+- Project registry + background daemon
+- JSONL event log, dispatch queue, CLAUDE.md auto-generation
+- Session hooks, VS Code extension, MCP server
 
 ### v3.0.0
-- Initial release with persistent memory, Obsidian sync, MCP server
+- Initial release — persistent memory, Obsidian sync, MCP server
 
 ---
 
 ## License
 
-MIT
+[MIT](LICENSE.txt) © [infraax](https://github.com/infraax/claude-project)

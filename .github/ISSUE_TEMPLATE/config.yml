@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions — Q&A
+    url: https://github.com/infraax/claude-project/discussions/categories/q-a
+    about: Ask questions and get help from the community
+  - name: Discussions — Ideas
+    url: https://github.com/infraax/claude-project/discussions/categories/ideas
+    about: Share ideas before opening a feature request
+  - name: npm package
+    url: https://www.npmjs.com/package/claude-project
+    about: View the published npm package
