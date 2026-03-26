@@ -360,8 +360,8 @@ npm run lint   # TypeScript type-check
 
 ### v5.0.0
 - **Schema v5**: `memory_path` canonical (deprecates `diary_path`); removed `obsidian_vault`, `obsidian_folder`, `devices`, `shared_paths`; added `optimizations`, `telemetry`
-- MCP server renamed `claude-diary` → `claude-project` — **update `~/.mcp.json` key**
-- Removed 10 legacy MCP tools (WAKEUP.md / journal / Dexter profile)
+- MCP server renamed _(legacy name, now claude-project)_ — **update `~/.mcp.json` key**
+- Removed 10 legacy MCP tools (legacy session file / journal / Dexter profile)
 - All machine-specific paths removed; Obsidian sync opt-in via `CLAUDE_OBSIDIAN_VAULT`
 - Research instrumentation, Protocol Documents, typed dispatch, Clarity Layer, prompt cache, semantic memory
 
