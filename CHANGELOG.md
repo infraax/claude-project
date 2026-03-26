@@ -7,6 +7,60 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [4.2.0] — 2026-03-26
+
+### Added
+- **Research instrumentation** (`src/lib/research-db.ts`)
+  - SQLite database (WAL mode) recording every API dispatch as a `DispatchObservation`
+  - Captures: input/output/cache_write/cache_read tokens, latency_ms, task_type, dispatch_format, protocol condition, encoding compression ratio
+  - Tables: `dispatch_observations`, `pd_registry`, `pd_usage_log`, `file_summaries`, `interaction_counts`, `pd_research_results`
+  - DB stored per-project at `~/.claude/projects/{id}/research.db`
+- **Task classifier** (`src/lib/task-classifier.ts`)
+  - 8 task types via regex patterns: `code_gen`, `refactor`, `test_gen`, `pipeline`, `analysis`, `retrieval`, `planning`, `documentation`
+  - Pattern order fix: `pipeline` (etl/transform) matched before `code_gen` (build) to prevent false positives
+  - `classifyTaskType(title, body): TaskType`
+  - `inferInteractionPair(agentName?, callerContext?): string`
+- **Format encoder** (`src/lib/format-encoder.ts`)
+  - `selectFormat(taskType, protocolCondition): DispatchFormat`
+  - `encodeDispatchBody(body, taskType, format): EncodedDispatch`
+  - Formats: `typed_pseudocode` (code/refactor/test), `dsl` (pipeline tasks), `toon` (analysis/retrieval), `codeact` (XML actions), `natural_language` (passthrough)
+- **Research-aware dispatch runner** (`src/lib/dispatch-runner.ts` extended)
+  - Classifies task type before every API call; selects and encodes dispatch format
+  - Writes full `DispatchObservation` to SQLite on success and failure
+  - Increments `interaction_counts` table; warns at ≥3 interactions for same pair
+  - Extended `DispatchFile`: `protocol_id`, `protocol_condition`, `session_id`, `task_type`, `dispatch_format`, `encoded_chars`, `original_chars`, `compression_ratio`, cache token fields
+- **Protocol Documents (PD) registry** (`mcp/pd_registry.py`)
+  - Content-addressed deduplication via `SHA-256(full_text)[:16]`
+  - `register_pd_entry` — idempotent insert; returns `{id, is_new, use_count}`
+  - `search_pd_entries` — filter by task_type + interaction_pair; ordered by use_count DESC
+  - `log_pd_use`, `deprecate_pd`, `increment_interaction_count`
+- **MCP server — 13 new tools** (`mcp/server.py`)
+  - Memory tools: `store_memory`, `query_memory`, `get_context` (typed), `set_context`, `set_file_summary`, `get_file_summary`, `find_related_files`
+  - PD tools: `register_pd`, `get_pd`, `search_pd`, `log_pd_usage`, `check_negotiation_threshold`
+  - Dispatch tool: `dispatch_task` — full pipeline (clarity → classify → compress → create dispatch file)
+  - LanceDB semantic memory (384-dim, all-MiniLM-L6-v2 embeddings)
+- **Clarity Layer** (`mcp/clarity_layer.py`)
+  - Ollama/Qwen2.5-7B local pre-processor — fixes typos, expands abbreviations, resolves pronouns
+  - Passthrough when Ollama unavailable or input < 50 chars — never blocks
+  - Returns `{output, passthrough, latency_ms, input_chars, output_chars}`
+- **Prompt cache tracker** (`mcp/prompt_cache.py`)
+  - `build_stable_prefix()` — deterministic system blocks tagged `cache_control: ephemeral`
+  - `record_cache_event()` / `get_cache_hit_rate()` — tracks hit/miss and tokens saved in SQLite
+- **Python task classifier** (`mcp/task_classifier_py.py`)
+  - Python port of `task-classifier.ts` with same pattern ordering
+  - Used in `server.py` and the clarity pipeline
+- **Python research requirements** (`requirements-research.txt`)
+  - `lancedb`, `sentence-transformers`, `llmlingua`, `kuzu`, `mcp`, `fastmcp`
+- **Agent `backend` field** (`src/lib/project.ts`)
+  - `AgentDefinition.backend`: `'claude' | 'ollama' | 'openai' | 'local'`
+  - `AgentDefinition.system_prompt`, `AgentDefinition.trigger` fields added
+
+### Changed
+- Dispatch runner now measures end-to-end latency and records observations regardless of success/failure
+- `get_context` MCP tool returns typed structured dict (replaces prose WAKEUP.md output); legacy tool retained as `get_context_legacy`
+
+---
+
 ## [4.1.0] — 2026-03-26
 
 ### Added
@@ -79,6 +133,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - `inject` / `eject` commands for `~/.mcp.json` management
 - VS Code extension (basic) — language support for `.claude-project`
 
+[4.2.0]: https://github.com/infraax/claude-project/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/infraax/claude-project/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/infraax/claude-project/compare/v3.0.0...v4.0.0
 [3.0.0]: https://github.com/infraax/claude-project/releases/tag/v3.0.0
