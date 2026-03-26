@@ -22,6 +22,12 @@ import Anthropic from '@anthropic-ai/sdk';
 import { ClaudeProject } from './project.js';
 import { resolvePaths } from './paths.js';
 import { appendEvent } from './events.js';
+import { initResearchDb, writeObservation, getResearchDbPath, DispatchObservation } from './research-db.js';
+import { classifyTaskType, inferInteractionPair } from './task-classifier.js';
+import { selectFormat, encodeDispatchBody, DispatchFormat } from './format-encoder.js';
+
+// Approximate token cost of sending BUILTIN_TOOLS to the API (measured: 5 tools ≈ 350 tokens).
+const BUILTIN_TOOLS_TOKEN_COUNT = 350;
 
 // ── Dispatch file schema ──────────────────────────────────────────────────────
 
@@ -39,7 +45,20 @@ export interface DispatchFile {
   result?: string;
   error?: string;
   tool_calls?: Array<{ tool: string; input: unknown; output_summary: string }>;
-  usage?: { input_tokens: number; output_tokens: number };
+  usage?: {
+    input_tokens: number;
+    output_tokens: number;
+    cache_creation_input_tokens?: number;
+    cache_read_input_tokens?: number;
+  };
+  protocol_id?: string;
+  protocol_condition?: 'natural_language' | 'typed_schema' | 'pd_negotiated';
+  session_id?: string;
+  task_type?: string;
+  dispatch_format?: DispatchFormat;
+  encoded_chars?: number;
+  original_chars?: number;
+  compression_ratio?: number;
 }
 
 // ── Built-in tool definitions sent to the Claude API ─────────────────────────
@@ -203,10 +222,16 @@ export async function runDispatch(
     return;
   }
 
+  const sessionId = process.env['CLAUDE_SESSION_ID'] ?? process.env['CP_SESSION_ID'] ?? randomUUID().slice(0, 8);
+  const taskStart = Date.now();
+  const timings = { clarity_layer: 0, compression: 0, pd_lookup: 0, inference: 0, tool_execution: 0, total: 0 };
+  let lastResponse: Anthropic.Messages.Message | undefined;
+
   // Claim the dispatch immediately
   writeDispatch(dispatchFilePath, {
     status: 'running',
     started_at: new Date().toISOString(),
+    session_id: sessionId,
   });
 
   const client = new Anthropic({ apiKey });
@@ -220,6 +245,20 @@ export async function runDispatch(
   const maxTokens = agentDef?.max_tokens ?? 4096;
   const agentTools = agentDef?.tools ?? [];
 
+  // ── Format encoding ─────────────────────────────────────────────────────────
+  const taskType = classifyTaskType(dispatch.title, dispatch.body ?? '');
+  const protocolCondition = dispatch.protocol_id ? 'pd_negotiated' : 'natural_language';
+  const selectedFormat = selectFormat(taskType, protocolCondition);
+  const encodingStart = Date.now();
+  const encoded = encodeDispatchBody(dispatch.body ?? '', taskType, selectedFormat);
+  timings.compression = Date.now() - encodingStart;
+  dispatch.task_type = taskType;
+  dispatch.dispatch_format = selectedFormat;
+  dispatch.encoded_chars = encoded.encoded_chars;
+  dispatch.original_chars = encoded.original_chars;
+  dispatch.compression_ratio = encoded.compression_ratio;
+  const messageBody = encoded.encoded_body;
+
   const toolCallLog: DispatchFile['tool_calls'] = [];
   let totalUsage = { input_tokens: 0, output_tokens: 0 };
 
@@ -228,12 +267,15 @@ export async function runDispatch(
 
     if (agentTools.length === 0) {
       // ── Simple mode: single API call ────────────────────────────────────────
+      const inferStart = Date.now();
       const response = await client.messages.create({
         model,
         max_tokens: maxTokens,
         system: systemPrompt,
-        messages: [{ role: 'user', content: dispatch.body }],
+        messages: [{ role: 'user', content: messageBody }],
       });
+      timings.inference = Date.now() - inferStart;
+      lastResponse = response;
       totalUsage.input_tokens += response.usage.input_tokens;
       totalUsage.output_tokens += response.usage.output_tokens;
       resultText = response.content
@@ -247,7 +289,7 @@ export async function runDispatch(
         .map((n) => BUILTIN_TOOLS[n]!);
 
       const messages: Anthropic.Messages.MessageParam[] = [
-        { role: 'user', content: dispatch.body },
+        { role: 'user', content: messageBody },
       ];
 
       const MAX_ITERATIONS = 10;
@@ -255,6 +297,7 @@ export async function runDispatch(
 
       while (iterations < MAX_ITERATIONS) {
         iterations++;
+        const iterStart = Date.now();
         const response = await client.messages.create({
           model,
           max_tokens: maxTokens,
@@ -262,6 +305,8 @@ export async function runDispatch(
           messages,
           tools: allowedTools,
         });
+        timings.inference += Date.now() - iterStart;
+        lastResponse = response;
 
         totalUsage.input_tokens += response.usage.input_tokens;
         totalUsage.output_tokens += response.usage.output_tokens;
@@ -316,7 +361,71 @@ export async function runDispatch(
       result: resultText,
       tool_calls: toolCallLog,
       usage: totalUsage,
+      task_type: classifyTaskType(dispatch.title, dispatch.body ?? ''),
     });
+
+    // Record research observation + increment interaction pair counter
+    try {
+      timings.total = Date.now() - taskStart;
+      const dbPath = getResearchDbPath(project, projectDir);
+      const db = initResearchDb(dbPath);
+
+      // Increment interaction count for this pair (PD negotiation threshold tracking)
+      const pair = inferInteractionPair(dispatch.agent);
+      const projectId = project.project_id ?? project.name ?? 'unknown';
+      const now = new Date().toISOString();
+      const existingCount = db.prepare(
+        'SELECT count FROM interaction_counts WHERE pair=? AND project_id=?'
+      ).get(pair, projectId) as { count: number } | undefined;
+      const newCount = (existingCount?.count ?? 0) + 1;
+      if (existingCount) {
+        db.prepare('UPDATE interaction_counts SET count=?, last_seen=? WHERE pair=? AND project_id=?')
+          .run(newCount, now, pair, projectId);
+      } else {
+        db.prepare('INSERT INTO interaction_counts (pair, project_id, count, last_seen) VALUES (?,?,?,?)')
+          .run(pair, projectId, 1, now);
+      }
+      if (newCount >= 3) {
+        console.log(`[research] Interaction pair "${pair}" hit threshold (${newCount}) — consider PD negotiation`);
+      }
+      const usage = lastResponse?.usage ?? { input_tokens: 0, output_tokens: 0 };
+      const obs: DispatchObservation = {
+        id: randomUUID().slice(0, 8),
+        dispatch_id: dispatch.id,
+        session_id: sessionId,
+        interaction_pair: inferInteractionPair(dispatch.agent),
+        task_type: classifyTaskType(dispatch.title, dispatch.body ?? ''),
+        protocol_condition: dispatch.protocol_id ? 'pd_negotiated' : 'natural_language',
+        protocol_id: dispatch.protocol_id,
+        pd_was_cached: false,
+        tokens: {
+          system_prompt: 0,
+          project_context: 0,
+          tool_schemas: BUILTIN_TOOLS_TOKEN_COUNT,
+          user_message: 0,
+          tool_outputs: 0,
+          total_input: totalUsage.input_tokens,
+          output: totalUsage.output_tokens,
+          cache_write: (usage as Record<string, unknown>)['cache_creation_input_tokens'] as number ?? 0,
+          cache_read: (usage as Record<string, unknown>)['cache_read_input_tokens'] as number ?? 0,
+        },
+        latency_ms: timings,
+        compression: {
+          input_raw_chars: dispatch.original_chars ?? dispatch.body?.length ?? 0,
+          input_post_clarity: dispatch.original_chars ?? 0,
+          input_post_lingua: dispatch.encoded_chars ?? 0,
+          compression_ratio: dispatch.compression_ratio ?? 0,
+        },
+        outcome: 'success',
+        iterations: toolCallLog.length,
+        task_completed: true,
+        ts: new Date().toISOString(),
+      };
+      writeObservation(db, obs);
+      db.close();
+    } catch (obsErr) {
+      console.error('[research] Failed to write observation:', obsErr);
+    }
 
     appendEvent(project, 'dispatch_completed', {
       summary: `Dispatch ${dispatch.id} completed`,
@@ -332,6 +441,36 @@ export async function runDispatch(
       completed_at: new Date().toISOString(),
       error: String(err),
     });
+
+    // Record failure observation
+    try {
+      timings.total = Date.now() - taskStart;
+      const dbPath = getResearchDbPath(project, projectDir);
+      const db = initResearchDb(dbPath);
+      const obs: DispatchObservation = {
+        id: randomUUID().slice(0, 8),
+        dispatch_id: dispatch.id,
+        session_id: sessionId,
+        interaction_pair: inferInteractionPair(dispatch.agent),
+        task_type: classifyTaskType(dispatch.title, dispatch.body ?? ''),
+        protocol_condition: dispatch.protocol_id ? 'pd_negotiated' : 'natural_language',
+        protocol_id: dispatch.protocol_id,
+        pd_was_cached: false,
+        tokens: {
+          system_prompt: 0, project_context: 0, tool_schemas: BUILTIN_TOOLS_TOKEN_COUNT,
+          user_message: 0, tool_outputs: 0,
+          total_input: totalUsage.input_tokens, output: totalUsage.output_tokens,
+          cache_write: 0, cache_read: 0,
+        },
+        latency_ms: timings,
+        outcome: 'failure',
+        iterations: toolCallLog.length,
+        task_completed: false,
+        ts: new Date().toISOString(),
+      };
+      writeObservation(db, obs);
+      db.close();
+    } catch { /* observation failure must not mask original error */ }
 
     appendEvent(project, 'dispatch_failed', {
       summary: `Dispatch ${dispatch.id} failed: ${String(err).slice(0, 200)}`,
