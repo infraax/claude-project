@@ -1,0 +1,381 @@
+{
+  "computed_at": "2026-03-26T21:00:52.707972+00:00",
+  "total_observations": 206,
+  "conditions_run": [
+    "baseline",
+    "cache_only",
+    "format_only",
+    "clarity_only",
+    "llmlingua_only",
+    "pd_only",
+    "full_system"
+  ],
+  "per_condition": {
+    "baseline": {
+      "n_observations": 26,
+      "tokens_input": {
+        "n": 26,
+        "mean": 80.6,
+        "median": 82.0,
+        "stdev": 8.4,
+        "min": 67,
+        "max": 99
+      },
+      "tokens_output": {
+        "n": 26,
+        "mean": 1043.8,
+        "median": 956.5,
+        "stdev": 595.3,
+        "min": 139,
+        "max": 2048
+      },
+      "cache_read": {
+        "n": 26,
+        "mean": 0,
+        "median": 0.0,
+        "stdev": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "latency_ms": {
+        "n": 26,
+        "mean": 6840.0,
+        "median": 6701.0,
+        "stdev": 2829.6,
+        "min": 2494,
+        "max": 14260
+      },
+      "compression_ratio": null,
+      "success_rate": 100.0,
+      "cache_hit_rate": 0.0
+    },
+    "cache_only": {
+      "n_observations": 30,
+      "tokens_input": {
+        "n": 30,
+        "mean": 79.4,
+        "median": 80.5,
+        "stdev": 8.9,
+        "min": 61,
+        "max": 99
+      },
+      "tokens_output": {
+        "n": 30,
+        "mean": 1052.9,
+        "median": 856.0,
+        "stdev": 640.2,
+        "min": 199,
+        "max": 2048
+      },
+      "cache_read": {
+        "n": 30,
+        "mean": 0,
+        "median": 0.0,
+        "stdev": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "latency_ms": {
+        "n": 30,
+        "mean": 6677.2,
+        "median": 5809.5,
+        "stdev": 3224.8,
+        "min": 2154,
+        "max": 13505
+      },
+      "compression_ratio": null,
+      "success_rate": 100.0,
+      "cache_hit_rate": 0.0
+    },
+    "format_only": {
+      "n_observations": 30,
+      "tokens_input": {
+        "n": 30,
+        "mean": 141.4,
+        "median": 165.0,
+        "stdev": 55.7,
+        "min": 74,
+        "max": 215
+      },
+      "tokens_output": {
+        "n": 30,
+        "mean": 1028.3,
+        "median": 870.0,
+        "stdev": 663.8,
+        "min": 114,
+        "max": 2048
+      },
+      "cache_read": {
+        "n": 30,
+        "mean": 0,
+        "median": 0.0,
+        "stdev": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "latency_ms": {
+        "n": 30,
+        "mean": 6747.7,
+        "median": 5333.0,
+        "stdev": 4218.8,
+        "min": 1389,
+        "max": 18485
+      },
+      "compression_ratio": null,
+      "success_rate": 100.0,
+      "cache_hit_rate": 0.0
+    },
+    "clarity_only": {
+      "n_observations": 30,
+      "tokens_input": {
+        "n": 30,
+        "mean": 111.3,
+        "median": 80.0,
+        "stdev": 89.5,
+        "min": 65,
+        "max": 465
+      },
+      "tokens_output": {
+        "n": 30,
+        "mean": 849.7,
+        "median": 668.5,
+        "stdev": 566.6,
+        "min": 135,
+        "max": 2048
+      },
+      "cache_read": {
+        "n": 30,
+        "mean": 0,
+        "median": 0.0,
+        "stdev": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "latency_ms": {
+        "n": 30,
+        "mean": 14724.7,
+        "median": 8705.5,
+        "stdev": 12692.6,
+        "min": 3937,
+        "max": 44162
+      },
+      "compression_ratio": null,
+      "success_rate": 100.0,
+      "cache_hit_rate": 0.0
+    },
+    "llmlingua_only": {
+      "n_observations": 30,
+      "tokens_input": {
+        "n": 30,
+        "mean": 79.4,
+        "median": 80.5,
+        "stdev": 8.9,
+        "min": 61,
+        "max": 99
+      },
+      "tokens_output": {
+        "n": 30,
+        "mean": 1002.3,
+        "median": 744.5,
+        "stdev": 680.0,
+        "min": 135,
+        "max": 2048
+      },
+      "cache_read": {
+        "n": 30,
+        "mean": 0,
+        "median": 0.0,
+        "stdev": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "latency_ms": {
+        "n": 30,
+        "mean": 6564.8,
+        "median": 5208.0,
+        "stdev": 3729.4,
+        "min": 1520,
+        "max": 15682
+      },
+      "compression_ratio": null,
+      "success_rate": 100.0,
+      "cache_hit_rate": 0.0
+    },
+    "pd_only": {
+      "n_observations": 30,
+      "tokens_input": {
+        "n": 30,
+        "mean": 79.4,
+        "median": 80.5,
+        "stdev": 8.9,
+        "min": 61,
+        "max": 99
+      },
+      "tokens_output": {
+        "n": 30,
+        "mean": 1050.7,
+        "median": 902.5,
+        "stdev": 667.3,
+        "min": 100,
+        "max": 2048
+      },
+      "cache_read": {
+        "n": 30,
+        "mean": 0,
+        "median": 0.0,
+        "stdev": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "latency_ms": {
+        "n": 30,
+        "mean": 6744.8,
+        "median": 6012.0,
+        "stdev": 3400.3,
+        "min": 1236,
+        "max": 13456
+      },
+      "compression_ratio": null,
+      "success_rate": 100.0,
+      "cache_hit_rate": 0.0
+    },
+    "full_system": {
+      "n_observations": 30,
+      "tokens_input": {
+        "n": 30,
+        "mean": 154.8,
+        "median": 166.0,
+        "stdev": 99.0,
+        "min": 74,
+        "max": 581
+      },
+      "tokens_output": {
+        "n": 30,
+        "mean": 884.4,
+        "median": 687.0,
+        "stdev": 662.6,
+        "min": 113,
+        "max": 2048
+      },
+      "cache_read": {
+        "n": 30,
+        "mean": 0,
+        "median": 0.0,
+        "stdev": 0.0,
+        "min": 0,
+        "max": 0
+      },
+      "latency_ms": {
+        "n": 30,
+        "mean": 19728.5,
+        "median": 15400.5,
+        "stdev": 14073.0,
+        "min": 3732,
+        "max": 44674
+      },
+      "compression_ratio": null,
+      "success_rate": 100.0,
+      "cache_hit_rate": 0.0
+    }
+  },
+  "vs_baseline": {
+    "baseline": null,
+    "cache_only": {
+      "reduction_pct": 1.5,
+      "tokens_saved_mean": 1.2
+    },
+    "format_only": {
+      "reduction_pct": -75.4,
+      "tokens_saved_mean": -60.8
+    },
+    "clarity_only": {
+      "reduction_pct": -38.1,
+      "tokens_saved_mean": -30.7
+    },
+    "llmlingua_only": {
+      "reduction_pct": 1.5,
+      "tokens_saved_mean": 1.2
+    },
+    "pd_only": {
+      "reduction_pct": 1.5,
+      "tokens_saved_mean": 1.2
+    },
+    "full_system": {
+      "reduction_pct": -92.1,
+      "tokens_saved_mean": -74.2
+    }
+  },
+  "per_task_type_full_system": {
+    "planning": {
+      "n_baseline": 1,
+      "n_optimized": 3,
+      "baseline_mean": 86,
+      "optimized_mean": 77.7,
+      "reduction_pct": 9.7
+    },
+    "code_gen": {
+      "n_baseline": 6,
+      "n_optimized": 6,
+      "baseline_mean": 84,
+      "optimized_mean": 206,
+      "reduction_pct": -145.2
+    },
+    "documentation": {
+      "n_baseline": 3,
+      "n_optimized": 3,
+      "baseline_mean": 83.3,
+      "optimized_mean": 83.7,
+      "reduction_pct": -0.4
+    },
+    "analysis": {
+      "n_baseline": 4,
+      "n_optimized": 4,
+      "baseline_mean": 76.8,
+      "optimized_mean": 84,
+      "reduction_pct": -9.4
+    },
+    "retrieval": {
+      "n_baseline": 1,
+      "n_optimized": 3,
+      "baseline_mean": 77,
+      "optimized_mean": 83.3,
+      "reduction_pct": -8.2
+    },
+    "test_gen": {
+      "n_baseline": 4,
+      "n_optimized": 4,
+      "baseline_mean": 80.5,
+      "optimized_mean": 289.8,
+      "reduction_pct": -259.9
+    },
+    "pipeline": {
+      "n_baseline": 3,
+      "n_optimized": 3,
+      "baseline_mean": 79,
+      "optimized_mean": 168.7,
+      "reduction_pct": -113.5
+    },
+    "refactor": {
+      "n_baseline": 3,
+      "n_optimized": 3,
+      "baseline_mean": 76,
+      "optimized_mean": 196.3,
+      "reduction_pct": -158.3
+    },
+    "unknown": {
+      "n_baseline": 1,
+      "n_optimized": 1,
+      "baseline_mean": 84,
+      "optimized_mean": 85,
+      "reduction_pct": -1.2
+    }
+  },
+  "n_breakeven_pd_negotiation": null,
+  "summary": {
+    "baseline_mean_tokens": 80.6,
+    "full_system_mean_tokens": 154.8,
+    "overall_reduction_pct": -92.1,
+    "biggest_single_win": "cache_only",
+    "biggest_single_win_pct": 1.5
+  }
+}

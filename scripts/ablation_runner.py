@@ -102,10 +102,10 @@ def run_dispatch(task: dict, condition_name: str, dry_run: bool) -> dict:
 
     start = time.monotonic()
 
-    # Create dispatch via CLI
+    # Create dispatch via CLI  (title is a positional arg, not a flag)
     create_result = subprocess.run(
         ["node", "dist/cli.js", "dispatch", "create",
-         "--title", task["title"],
+         task["title"],
          "--body",  task["body"],
          "--agent", "main"],
         capture_output=True, text=True, timeout=30
@@ -183,6 +183,10 @@ def main():
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--condition", type=int, default=None,
                         help="Run only this condition index (0-6)")
+    parser.add_argument("--max-tasks", type=int, default=None,
+                        help="Limit tasks per condition (for validation runs)")
+    parser.add_argument("--reset", action="store_true",
+                        help="Delete checkpoint and start fresh")
     args = parser.parse_args()
 
     if not TASKS_FILE.exists():
@@ -193,8 +197,14 @@ def main():
         print("ERROR: .claude-project not found. Run: claude-project init")
         sys.exit(1)
 
+    if args.reset and CHECKPOINT.exists():
+        CHECKPOINT.unlink()
+        print("Checkpoint deleted — starting fresh.")
+
     RESULTS_DIR.mkdir(exist_ok=True)
     tasks = load_tasks()
+    if args.max_tasks:
+        tasks = tasks[:args.max_tasks]
     checkpoint = load_checkpoint()
 
     conditions_to_run = CONDITIONS
@@ -248,14 +258,19 @@ def main():
         all_results.extend(condition_results)
 
         if not args.dry_run:
-            checkpoint["completed_conditions"].append(cname)
-            checkpoint[f"condition_{cname}_completed_at"] = \
-                datetime.now(timezone.utc).isoformat()
-            checkpoint[f"condition_{cname}_obs_count"] = \
-                count_observations_for_condition(cname)
-            save_checkpoint(checkpoint)
-            print(f"  Checkpoint saved ✓")
-            print(f"  Observations in DB: {checkpoint[f'condition_{cname}_obs_count']}")
+            obs_count = count_observations_for_condition(cname)
+            success_count = sum(1 for r in condition_results if r["status"] == "success")
+            if success_count == 0:
+                print(f"  WARNING: 0/{len(tasks)} dispatches succeeded — skipping checkpoint for {cname}")
+                print(f"  Check that ANTHROPIC_API_KEY is set and dist/cli.js is built.")
+            else:
+                checkpoint["completed_conditions"].append(cname)
+                checkpoint[f"condition_{cname}_completed_at"] = \
+                    datetime.now(timezone.utc).isoformat()
+                checkpoint[f"condition_{cname}_obs_count"] = obs_count
+                save_checkpoint(checkpoint)
+                print(f"  Checkpoint saved ✓  ({success_count}/{len(tasks)} success, {obs_count} obs)")
+                print(f"  Observations in DB: {obs_count}")
 
     if not args.dry_run:
         restore_optimizations()

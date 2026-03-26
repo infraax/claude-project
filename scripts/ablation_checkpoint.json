@@ -1,0 +1,23 @@
+{
+  "completed_conditions": [
+    "cache_only",
+    "format_only",
+    "clarity_only",
+    "llmlingua_only",
+    "pd_only",
+    "full_system"
+  ],
+  "started_at": "2026-03-26T20:23:16.001932+00:00",
+  "condition_cache_only_completed_at": "2026-03-26T20:27:41.029236+00:00",
+  "condition_cache_only_obs_count": 30,
+  "condition_format_only_completed_at": "2026-03-26T20:32:07.622435+00:00",
+  "condition_format_only_obs_count": 30,
+  "condition_clarity_only_completed_at": "2026-03-26T20:40:34.686038+00:00",
+  "condition_clarity_only_obs_count": 30,
+  "condition_llmlingua_only_completed_at": "2026-03-26T20:44:55.983565+00:00",
+  "condition_llmlingua_only_obs_count": 30,
+  "condition_pd_only_completed_at": "2026-03-26T20:49:22.717105+00:00",
+  "condition_pd_only_obs_count": 30,
+  "condition_full_system_completed_at": "2026-03-26T21:00:25.539355+00:00",
+  "condition_full_system_obs_count": 30
+}

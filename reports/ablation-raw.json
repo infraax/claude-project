@@ -1,1472 +1,1622 @@
 [
   {
-    "condition": "baseline",
-    "task_id": "cg1",
-    "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "cg2",
-    "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "cg3",
-    "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "cg4",
-    "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "cg5",
-    "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "cg6",
-    "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "rf1",
-    "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "rf2",
-    "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "rf3",
-    "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "rf4",
-    "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "tg1",
-    "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "tg2",
-    "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "tg3",
-    "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "tg4",
-    "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "an1",
-    "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "an2",
-    "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "an3",
-    "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "an4",
-    "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "an5",
-    "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "pl1",
-    "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "pl2",
-    "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "pl3",
-    "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "dc1",
-    "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "dc2",
-    "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "dc3",
-    "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "pt1",
-    "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "pt2",
-    "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "pt3",
-    "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "rt1",
-    "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
-    "condition": "baseline",
-    "task_id": "rt2",
-    "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
-  },
-  {
     "condition": "cache_only",
     "task_id": "cg1",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-e519c227",
+    "elapsed_s": 4.9,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "cg2",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-6377df65",
+    "elapsed_s": 6.8,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "cg3",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-d4567eba",
+    "elapsed_s": 9.3,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "cg4",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-540d5004",
+    "elapsed_s": 6.3,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "cg5",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-7b72d049",
+    "elapsed_s": 8.8,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "cg6",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-15344ddf",
+    "elapsed_s": 4.1,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "rf1",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-5a6d653e",
+    "elapsed_s": 4.0,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "rf2",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-4247b9bf",
+    "elapsed_s": 3.4,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "rf3",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-35a38cea",
+    "elapsed_s": 5.9,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "rf4",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-c1cac920",
+    "elapsed_s": 8.3,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "tg1",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-9a525a63",
+    "elapsed_s": 10.2,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "tg2",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-ecbed40e",
+    "elapsed_s": 11.3,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "tg3",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-ede10890",
+    "elapsed_s": 10.7,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "tg4",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-8c3f1b43",
+    "elapsed_s": 9.7,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "an1",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-4ebfc5fc",
+    "elapsed_s": 3.7,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "an2",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-4187a89c",
+    "elapsed_s": 5.3,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "an3",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-906e9751",
+    "elapsed_s": 2.4,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "an4",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-5ad4fe20",
+    "elapsed_s": 3.4,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "an5",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-fb18e1b8",
+    "elapsed_s": 9.4,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "pl1",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-2a922e17",
+    "elapsed_s": 5.6,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "pl2",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-c8835539",
+    "elapsed_s": 5.0,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "pl3",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-82cdb90f",
+    "elapsed_s": 6.1,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "dc1",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-56d38ee8",
+    "elapsed_s": 4.6,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "dc2",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-91962f2a",
+    "elapsed_s": 8.4,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "dc3",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-e81556db",
+    "elapsed_s": 2.9,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "pt1",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-ad2be569",
+    "elapsed_s": 13.2,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "pt2",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-c6aaf760",
+    "elapsed_s": 11.5,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "pt3",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-142afed2",
+    "elapsed_s": 13.7,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "rt1",
     "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-5e143d9d",
+    "elapsed_s": 4.2,
+    "returncode": 0
   },
   {
     "condition": "cache_only",
     "task_id": "rt2",
     "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-19a092ae",
+    "elapsed_s": 3.9,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "cg1",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-840a7b7e",
+    "elapsed_s": 3.3,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "cg2",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-5d23a403",
+    "elapsed_s": 1.8,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "cg3",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-c76b3984",
+    "elapsed_s": 3.9,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "cg4",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-2c29e1fc",
+    "elapsed_s": 3.4,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "cg5",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-b671894a",
+    "elapsed_s": 4.2,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "cg6",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-477aa837",
+    "elapsed_s": 1.7,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "rf1",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-41b6c5c3",
+    "elapsed_s": 3.6,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "rf2",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-6f9ece6a",
+    "elapsed_s": 2.1,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "rf3",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-0762779c",
+    "elapsed_s": 3.0,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "rf4",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-bd62e891",
+    "elapsed_s": 6.6,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "tg1",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-2c410f66",
+    "elapsed_s": 8.8,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "tg2",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-55cb39a1",
+    "elapsed_s": 8.7,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "tg3",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-5d813a2b",
+    "elapsed_s": 11.2,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "tg4",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-ea7e9a16",
+    "elapsed_s": 5.2,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "an1",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-694f40ea",
+    "elapsed_s": 5.4,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "an2",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-738a9a67",
+    "elapsed_s": 11.6,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "an3",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-48a5f698",
+    "elapsed_s": 12.2,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "an4",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-626a25a5",
+    "elapsed_s": 5.5,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "an5",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-3659fab0",
+    "elapsed_s": 11.4,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "pl1",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-6ddc397b",
+    "elapsed_s": 10.6,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "pl2",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-567733d5",
+    "elapsed_s": 6.5,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "pl3",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-b0f17c0b",
+    "elapsed_s": 7.2,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "dc1",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-7e1fc4bd",
+    "elapsed_s": 3.8,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "dc2",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-e72dc218",
+    "elapsed_s": 10.1,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "dc3",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-3c3fa191",
+    "elapsed_s": 1.7,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "pt1",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-88298304",
+    "elapsed_s": 13.6,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "pt2",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-e7b41106",
+    "elapsed_s": 11.6,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "pt3",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-acff8a84",
+    "elapsed_s": 18.7,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "rt1",
     "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-55f27a6a",
+    "elapsed_s": 5.3,
+    "returncode": 0
   },
   {
     "condition": "format_only",
     "task_id": "rt2",
     "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-013f46fc",
+    "elapsed_s": 5.6,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "cg1",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-9d738100",
+    "elapsed_s": 11.9,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "cg2",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-38e20772",
+    "elapsed_s": 9.7,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "cg3",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-21ee97a8",
+    "elapsed_s": 7.3,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "cg4",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-77a1f187",
+    "elapsed_s": 7.8,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "cg5",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-7894056f",
+    "elapsed_s": 10.5,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "cg6",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-635c3310",
+    "elapsed_s": 5.2,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "rf1",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-2d2aefa6",
+    "elapsed_s": 8.3,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "rf2",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-42c45d9b",
+    "elapsed_s": 6.5,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "rf3",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-a612d1f4",
+    "elapsed_s": 7.9,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "rf4",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-0f144a70",
+    "elapsed_s": 6.7,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "tg1",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-205fb373",
+    "elapsed_s": 23.5,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "tg2",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-02b54538",
+    "elapsed_s": 42.6,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "tg3",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-3da1245f",
+    "elapsed_s": 42.0,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "tg4",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-78c3e8d2",
+    "elapsed_s": 21.9,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "an1",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-f7a81642",
+    "elapsed_s": 11.7,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "an2",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-3cf48cad",
+    "elapsed_s": 7.8,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "an3",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-e18ab5e2",
+    "elapsed_s": 5.1,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "an4",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-e65bd070",
+    "elapsed_s": 4.1,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "an5",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-2dfafac4",
+    "elapsed_s": 15.3,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "pl1",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-7d3de24e",
+    "elapsed_s": 9.2,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "pl2",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-6f3967c7",
+    "elapsed_s": 8.3,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "pl3",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-4f6c8802",
+    "elapsed_s": 9.5,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "dc1",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-d6996945",
+    "elapsed_s": 21.1,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "dc2",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-a44a2a66",
+    "elapsed_s": 32.0,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "dc3",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-fdaaf775",
+    "elapsed_s": 8.7,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "pt1",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-6e26fc2c",
+    "elapsed_s": 6.2,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "pt2",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-1cf34555",
+    "elapsed_s": 41.6,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "pt3",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-023b8163",
+    "elapsed_s": 44.4,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "rt1",
     "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-47e8735b",
+    "elapsed_s": 6.3,
+    "returncode": 0
   },
   {
     "condition": "clarity_only",
     "task_id": "rt2",
     "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-1fd4709e",
+    "elapsed_s": 5.7,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "cg1",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-250555f0",
+    "elapsed_s": 5.2,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "cg2",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-f4a3a23d",
+    "elapsed_s": 7.2,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "cg3",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-c972e3d7",
+    "elapsed_s": 5.4,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "cg4",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-96ba7906",
+    "elapsed_s": 4.6,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "cg5",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-8cd19afc",
+    "elapsed_s": 8.5,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "cg6",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-cef15823",
+    "elapsed_s": 3.7,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "rf1",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-eb175c53",
+    "elapsed_s": 5.9,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "rf2",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-5ad39656",
+    "elapsed_s": 3.4,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "rf3",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-99d1cd78",
+    "elapsed_s": 4.9,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "rf4",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-460cbbfe",
+    "elapsed_s": 3.4,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "tg1",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-4a10362f",
+    "elapsed_s": 10.2,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "tg2",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-fd58b856",
+    "elapsed_s": 11.6,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "tg3",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-3e49e718",
+    "elapsed_s": 10.1,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "tg4",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-7ff65600",
+    "elapsed_s": 11.1,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "an1",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-32ce12f4",
+    "elapsed_s": 2.1,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "an2",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-d04bbf37",
+    "elapsed_s": 6.7,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "an3",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-aaa7e019",
+    "elapsed_s": 2.2,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "an4",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-6f453d6d",
+    "elapsed_s": 2.3,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "an5",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-0d2d79c1",
+    "elapsed_s": 11.4,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "pl1",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-2260a70d",
+    "elapsed_s": 4.9,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "pl2",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-c088cf17",
+    "elapsed_s": 5.7,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "pl3",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-d4ea9f29",
+    "elapsed_s": 4.9,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "dc1",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-eb29bf3a",
+    "elapsed_s": 5.1,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "dc2",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-fc78abf8",
+    "elapsed_s": 9.6,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "dc3",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-924f764f",
+    "elapsed_s": 1.8,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "pt1",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-e77d3207",
+    "elapsed_s": 13.5,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "pt2",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-f5e626da",
+    "elapsed_s": 11.9,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "pt3",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-fd92a169",
+    "elapsed_s": 15.9,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "rt1",
     "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-cf710b83",
+    "elapsed_s": 4.4,
+    "returncode": 0
   },
   {
     "condition": "llmlingua_only",
     "task_id": "rt2",
     "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-8b0768d2",
+    "elapsed_s": 5.4,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "cg1",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-51e73446",
+    "elapsed_s": 5.5,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "cg2",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-7e80eb9d",
+    "elapsed_s": 7.2,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "cg3",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-e246907b",
+    "elapsed_s": 7.8,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "cg4",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-0a2f271c",
+    "elapsed_s": 5.2,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "cg5",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-618af47c",
+    "elapsed_s": 8.2,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "cg6",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-5cc26c5f",
+    "elapsed_s": 4.7,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "rf1",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-8fb33a37",
+    "elapsed_s": 4.3,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "rf2",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-3f74a02f",
+    "elapsed_s": 3.4,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "rf3",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-94e7bf15",
+    "elapsed_s": 7.0,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "rf4",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-99689bae",
+    "elapsed_s": 7.4,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "tg1",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-f1be49af",
+    "elapsed_s": 9.7,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "tg2",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-adc1c010",
+    "elapsed_s": 10.5,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "tg3",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-1de89763",
+    "elapsed_s": 11.1,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "tg4",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-93dd5c63",
+    "elapsed_s": 10.6,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "an1",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-22d5f267",
+    "elapsed_s": 5.3,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "an2",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-a0e2ddc5",
+    "elapsed_s": 6.0,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "an3",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-084b9445",
+    "elapsed_s": 2.3,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "an4",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-4974b1dd",
+    "elapsed_s": 2.5,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "an5",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-032d3c89",
+    "elapsed_s": 13.6,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "pl1",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-5dfa78bd",
+    "elapsed_s": 6.4,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "pl2",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-f1feb22a",
+    "elapsed_s": 4.2,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "pl3",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-1df180e7",
+    "elapsed_s": 4.5,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "dc1",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-e71f6eb8",
+    "elapsed_s": 4.3,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "dc2",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-2cd6e6ec",
+    "elapsed_s": 7.8,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "dc3",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-eeb0f9f6",
+    "elapsed_s": 1.4,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "pt1",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-ff2434d0",
+    "elapsed_s": 13.5,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "pt2",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-b561f6f6",
+    "elapsed_s": 11.1,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "pt3",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-a07f7bb7",
+    "elapsed_s": 13.2,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "rt1",
     "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-68f45608",
+    "elapsed_s": 4.8,
+    "returncode": 0
   },
   {
     "condition": "pd_only",
     "task_id": "rt2",
     "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-ab20e2be",
+    "elapsed_s": 4.7,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "cg1",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-6674f0b5",
+    "elapsed_s": 14.6,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "cg2",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-9f3518d5",
+    "elapsed_s": 6.1,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "cg3",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-19ec6955",
+    "elapsed_s": 4.4,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "cg4",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-fe0e82c6",
+    "elapsed_s": 5.5,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "cg5",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-20c64c98",
+    "elapsed_s": 9.3,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "cg6",
     "task_type": "code_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-357851f3",
+    "elapsed_s": 3.9,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "rf1",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-7c92d9cf",
+    "elapsed_s": 5.2,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "rf2",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-eb17282d",
+    "elapsed_s": 4.4,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "rf3",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-c4d5126e",
+    "elapsed_s": 4.1,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "rf4",
     "task_type": "refactor",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-244a57ce",
+    "elapsed_s": 10.9,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "tg1",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-7107872e",
+    "elapsed_s": 23.7,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "tg2",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-fdedb653",
+    "elapsed_s": 37.8,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "tg3",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-ecf80ed3",
+    "elapsed_s": 39.4,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "tg4",
     "task_type": "test_gen",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-14bd8b6c",
+    "elapsed_s": 37.7,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "an1",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-85af9e20",
+    "elapsed_s": 5.9,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "an2",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-ecd15c6d",
+    "elapsed_s": 8.9,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "an3",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-1c3a59ac",
+    "elapsed_s": 10.9,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "an4",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-829f8ee0",
+    "elapsed_s": 7.2,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "an5",
     "task_type": "analysis",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-73d08a97",
+    "elapsed_s": 14.2,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "pl1",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-c7217ae7",
+    "elapsed_s": 16.6,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "pl2",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-47748e63",
+    "elapsed_s": 34.2,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "pl3",
     "task_type": "pipeline",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-785a0474",
+    "elapsed_s": 24.9,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "dc1",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-b069c4ae",
+    "elapsed_s": 36.9,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "dc2",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-071a4243",
+    "elapsed_s": 40.5,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "dc3",
     "task_type": "documentation",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-6e071457",
+    "elapsed_s": 28.5,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "pt1",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-1f2739c5",
+    "elapsed_s": 29.2,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "pt2",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-54f13175",
+    "elapsed_s": 44.9,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "pt3",
     "task_type": "planning",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-0db65ae6",
+    "elapsed_s": 45.5,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "rt1",
     "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-5a05e182",
+    "elapsed_s": 19.5,
+    "returncode": 0
   },
   {
     "condition": "full_system",
     "task_id": "rt2",
     "task_type": "retrieval",
-    "status": "dry_run",
-    "elapsed_s": 0
+    "status": "success",
+    "dispatch_id": "dispatch-bfd176a3",
+    "elapsed_s": 29.8,
+    "returncode": 0
   }
 ]
