@@ -87,18 +87,18 @@
     }
   },
   "phase11_telemetry": {
-    "status": "pending",
+    "status": "complete",
     "steps": {
-      "step_11_1_telemetry_ts":          "pending",
-      "step_11_2_telemetry_wired":       "pending",
-      "step_11_3_optin_prompt":          "pending",
-      "step_11_4_preview_tool":          "pending",
-      "step_11_5_worker_created":        "pending",
-      "step_11_6_wrangler_config":       "pending",
-      "step_11_7_daemon_threshold_pull": "pending",
-      "build_passing":                   false,
-      "tests_passing":                   false,
-      "opt_in_gate_verified":            false
+      "step_11_1_telemetry_ts":          "complete",
+      "step_11_2_telemetry_wired":       "complete",
+      "step_11_3_optin_prompt":          "complete",
+      "step_11_4_preview_tool":          "complete",
+      "step_11_5_worker_created":        "complete",
+      "step_11_6_wrangler_config":       "complete",
+      "step_11_7_daemon_threshold_pull": "complete",
+      "build_passing":                   true,
+      "tests_passing":                   true,
+      "opt_in_gate_verified":            true
     }
   },
   "phase12_ablation": {

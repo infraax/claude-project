@@ -1210,6 +1210,57 @@ def query_memory(query: str, category: Optional[str] = None, limit: int = 5) -> 
 
 
 @mcp.tool()
+def telemetry_preview() -> dict:
+    """
+    Show exactly what would be sent to the telemetry endpoint for the last dispatch.
+    Call this to verify what data is shared before enabling telemetry.
+    Returns the exact JSON payload — no surprises.
+    """
+    import sqlite3 as _sqlite3
+    import hashlib as _hashlib
+    memory_dir, _, db_path = _resolve_paths()
+    research_db = db_path.parent / "research.db"
+
+    if not research_db.exists():
+        return {"error": "No research.db found — run a dispatch first"}
+
+    conn = _sqlite3.connect(str(research_db))
+    conn.row_factory = _sqlite3.Row
+    row = conn.execute("""
+        SELECT task_type, protocol_condition, tokens_total_input, tokens_output,
+               tokens_cache_read, tokens_cache_write, compression_ratio,
+               latency_total_ms, outcome, iterations
+        FROM dispatch_observations
+        ORDER BY ts DESC LIMIT 1
+    """).fetchone()
+    conn.close()
+
+    if not row:
+        return {"error": "No observations yet — run a dispatch first"}
+
+    raw = f"{socket.gethostname()}:{os.environ.get('USER', 'unknown')}"
+    installation_id = _hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+    return {
+        "installation_id": installation_id,
+        "project_id": "[sha256 of project path]",
+        "schema_version": "1.0",
+        "task_type": row["task_type"],
+        "protocol_condition": row["protocol_condition"],
+        "tokens_input": row["tokens_total_input"],
+        "tokens_output": row["tokens_output"],
+        "tokens_cache_read": row["tokens_cache_read"],
+        "tokens_cache_write": row["tokens_cache_write"],
+        "compression_ratio": row["compression_ratio"],
+        "latency_total_ms": row["latency_total_ms"],
+        "outcome": row["outcome"],
+        "iterations": row["iterations"],
+        "ts": "[date only — no sub-second]",
+        "_note": "This is ALL that gets sent. No code, no prompts, no paths.",
+    }
+
+
+@mcp.tool()
 def get_context() -> dict:
     """
     Compact typed session state. Call at every session start.

@@ -40,6 +40,7 @@ Drop a `.claude-project` file in any directory to give Claude persistent memory,
 | **Clarity Layer** | Local Ollama pre-processor cleans and completes input — passthrough when unavailable |
 | **Prompt cache** | Deterministic stable prefix with `cache_control: ephemeral` — 90% prefix cost reduction |
 | **Semantic memory** | LanceDB vector store (384-dim embeddings) for `find_related_files` queries |
+| **Federated telemetry** | Opt-in anonymous metrics → Cloudflare Worker → community threshold learning |
 
 ---
 
@@ -90,7 +91,7 @@ claude-project status
 claude-project init <name>                 # create .claude-project
 claude-project status                      # show full project brain
 claude-project list [--scan]              # list all known projects
-claude-project sync                        # memory → Obsidian vault
+claude-project sync                        # show sync status (Obsidian optional via CLAUDE_OBSIDIAN_VAULT)
 claude-project generate-claude-md         # regenerate CLAUDE.md
 claude-project log-event <type> [summary] # append event to log
 ```
@@ -104,16 +105,11 @@ claude-project automation run <id>        # manually trigger an automation
 
 **Trigger types:** `event` · `schedule` (cron) · `manual` · `file_change` · `service_up` · `service_down`
 
-**Action types:** `run_command` · `dispatch_agent` · `write_event` · `send_notification` · `sync_obsidian` · `call_webhook`
+**Action types:** `run_command` · `dispatch_agent` · `write_event` · `send_notification` · `call_webhook`
 
 ```jsonc
 // .claude-project
 "automations": [
-  {
-    "id": "sync-on-session-end",
-    "trigger": { "type": "event", "event_type": "session_end" },
-    "action":  { "type": "sync_obsidian" }
-  },
   {
     "id": "daily-standup",
     "trigger": { "type": "schedule", "cron": "0 9 * * 1-5" },
@@ -357,6 +353,18 @@ npm run lint   # TypeScript type-check
 - **CI**: tests on every push/PR; GitHub Packages publishing; `production` environment gate
 - **Docs**: GitHub Pages site, devcontainer, issue templates, CONTRIBUTING, SECURITY, dependabot
 
+### v5.1.0
+- Anonymous federated telemetry (opt-in) — token metrics → Cloudflare Worker → community thresholds
+- `telemetry_preview` MCP tool — inspect exact payload before enabling
+- Daemon: daily community threshold pull into `.claude-project._community_thresholds`
+
+### v5.0.0
+- **Schema v5**: `memory_path` canonical (deprecates `diary_path`); removed `obsidian_vault`, `obsidian_folder`, `devices`, `shared_paths`; added `optimizations`, `telemetry`
+- MCP server renamed `claude-diary` → `claude-project` — **update `~/.mcp.json` key**
+- Removed 10 legacy MCP tools (WAKEUP.md / journal / Dexter profile)
+- All machine-specific paths removed; Obsidian sync opt-in via `CLAUDE_OBSIDIAN_VAULT`
+- Research instrumentation, Protocol Documents, typed dispatch, Clarity Layer, prompt cache, semantic memory
+
 ### v4.0.0
 - v4 schema: agents, services, automations, monitoring
 - Project registry + background daemon
@@ -364,7 +372,7 @@ npm run lint   # TypeScript type-check
 - Session hooks, VS Code extension, MCP server
 
 ### v3.0.0
-- Initial release — persistent memory, Obsidian sync, MCP server
+- Initial release — persistent memory, MCP server
 
 ---
 

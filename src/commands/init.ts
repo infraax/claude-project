@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as readline from 'readline';
 import {
   buildProject,
   ensureDir,
@@ -11,6 +12,7 @@ import { resolvePaths } from '../lib/paths.js';
 import { registerProject } from '../lib/registry.js';
 import { appendEvent } from '../lib/events.js';
 import { generateClaudeMd } from './generate-claude-md.js';
+import { generateInstallationId } from '../lib/telemetry.js';
 
 export interface InitOptions {
   description: string;
@@ -19,7 +21,26 @@ export interface InitOptions {
   claudeMd?: boolean;  // default true — set false via --no-claude-md
 }
 
-export function init(name: string, options: InitOptions): void {
+async function promptTelemetryOptIn(): Promise<boolean> {
+  if (!process.stdin.isTTY) return false;
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    console.log('\n  ┌─────────────────────────────────────────────────────┐');
+    console.log('  │  Share anonymous token usage metrics?               │');
+    console.log('  │                                                     │');
+    console.log('  │  Sends ONLY: token counts, latency, task types.     │');
+    console.log('  │  NEVER sends: code, prompts, file names, results.   │');
+    console.log('  │  Opt out anytime: set telemetry.enabled=false       │');
+    console.log('  │  in .claude-project                                 │');
+    console.log('  └─────────────────────────────────────────────────────┘');
+    rl.question('\n  Enable? [y/N]: ', (answer) => {
+      rl.close();
+      resolve(answer.trim().toLowerCase() === 'y');
+    });
+  });
+}
+
+export async function init(name: string, options: InitOptions): Promise<void> {
   // Guard: already inside a project?
   const existing = findProject();
   if (existing) {
@@ -106,6 +127,20 @@ export function init(name: string, options: InitOptions): void {
     } catch {
       // Non-fatal — init succeeded, CLAUDE.md generation failed silently
     }
+  }
+
+  // ── Telemetry opt-in ────────────────────────────────────────────────────────
+  const optIn = await promptTelemetryOptIn();
+  if (optIn) {
+    project.telemetry = {
+      enabled: true,
+      installation_id: generateInstallationId(),
+      opted_in_at: new Date().toISOString(),
+    };
+    fs.writeFileSync(filePath, JSON.stringify(project, null, 2) + '\n', 'utf-8');
+    console.log('\n  Telemetry enabled — thank you!\n');
+  } else {
+    console.log('\n  Telemetry disabled. Enable later in .claude-project\n');
   }
 
   console.log(
