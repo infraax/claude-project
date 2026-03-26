@@ -26,11 +26,11 @@
 ```json
 {
   "current_batch": 3,
-  "current_phase": "phase10_cleanup",
-  "current_file": "10_CLEANUP_FULL_REPO.md",
-  "current_step": "cleanup_paths_ts",
-  "overall_progress": "Phases 1-9 complete. Batch 3 starting.",
-  "last_updated": "UPDATE_ON_EACH_WRITE"
+  "current_phase": "phase12_ablation",
+  "current_file": "12_ABLATION_STUDY.md",
+  "current_step": "step_12_6_ablation_run",
+  "overall_progress": "Phases 1-11 complete. Phase 12 scaffolding done — ready for live ablation run.",
+  "last_updated": "2026-03-26T20:37:00Z"
 }
 ```
 
@@ -102,13 +102,13 @@
     }
   },
   "phase12_ablation": {
-    "status": "pending",
+    "status": "in_progress",
     "steps": {
-      "step_12_1_tasks_created":    "pending",
-      "step_12_2_ablation_runner":  "pending",
-      "step_12_3_compute_script":   "pending",
-      "step_12_4_ablation_field":   "pending",
-      "step_12_5_dry_run":          "pending",
+      "step_12_1_tasks_created":    "complete",
+      "step_12_2_ablation_runner":  "complete",
+      "step_12_3_compute_script":   "complete",
+      "step_12_4_ablation_field":   "complete",
+      "step_12_5_dry_run":          "complete",
       "step_12_6_ablation_run_complete": false,
       "step_12_7_results_committed": false,
       "total_observations":         0,

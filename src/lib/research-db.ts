@@ -47,6 +47,7 @@ export interface DispatchObservation {
   outcome: 'success' | 'failure' | 'partial';
   iterations: number;
   task_completed: boolean;
+  ablation_condition?: string | null;
   ts: string;
 }
 
@@ -92,6 +93,7 @@ export function initResearchDb(dbPath: string): Database.Database {
       outcome TEXT NOT NULL,
       iterations INTEGER NOT NULL DEFAULT 0,
       task_completed INTEGER NOT NULL DEFAULT 0,
+      ablation_condition TEXT,
       ts TEXT NOT NULL
     );
 
@@ -173,7 +175,7 @@ export function writeObservation(db: Database.Database, obs: DispatchObservation
       @latency_clarity_ms, @latency_compression_ms, @latency_pd_lookup_ms,
       @latency_inference_ms, @latency_tool_exec_ms, @latency_total_ms,
       @compression_ratio, @compression_input_raw, @compression_post_clarity,
-      @compression_post_lingua, @outcome, @iterations, @task_completed, @ts
+      @compression_post_lingua, @outcome, @iterations, @task_completed, @ablation_condition, @ts
     )
   `);
   stmt.run({
@@ -207,6 +209,7 @@ export function writeObservation(db: Database.Database, obs: DispatchObservation
     outcome: obs.outcome,
     iterations: obs.iterations,
     task_completed: obs.task_completed ? 1 : 0,
+    ablation_condition: obs.ablation_condition ?? null,
     ts: obs.ts,
   });
 }
