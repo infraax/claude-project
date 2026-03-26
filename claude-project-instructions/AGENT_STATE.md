@@ -26,11 +26,11 @@
 ```json
 {
   "current_batch": 3,
-  "current_phase": "phase12_ablation",
-  "current_file": "12_ABLATION_STUDY.md",
-  "current_step": "step_12_6_ablation_run",
-  "overall_progress": "Phases 1-11 complete. Phase 12 scaffolding done — ready for live ablation run.",
-  "last_updated": "2026-03-26T20:37:00Z"
+  "current_phase": "complete",
+  "current_file": "none",
+  "current_step": "all_phases_done",
+  "overall_progress": "ALL PHASES 1-12 COMPLETE. Batch 3 done. Ablation study run. Results committed.",
+  "last_updated": "2026-03-26T22:00:00Z"
 }
 ```
 
@@ -102,18 +102,19 @@
     }
   },
   "phase12_ablation": {
-    "status": "in_progress",
+    "status": "complete",
     "steps": {
       "step_12_1_tasks_created":    "complete",
       "step_12_2_ablation_runner":  "complete",
       "step_12_3_compute_script":   "complete",
       "step_12_4_ablation_field":   "complete",
       "step_12_5_dry_run":          "complete",
-      "step_12_6_ablation_run_complete": false,
-      "step_12_7_results_committed": false,
-      "total_observations":         0,
-      "overall_reduction_pct":      null,
-      "n_breakeven":                null
+      "step_12_6_ablation_run_complete": true,
+      "step_12_7_results_committed": true,
+      "total_observations":         206,
+      "overall_reduction_pct":      "N/A — format+clarity expand tokens at this scale",
+      "n_breakeven":                null,
+      "commit":                     "9477830"
     }
   }
 }
