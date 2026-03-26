@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "claude-project": {
+      "command": "/Users/gebruiker/CP/claude-project/.venv-research/bin/python3",
+      "args": ["mcp/server.py"],
+      "env": {
+        "CLAUDE_PROJECT_DIR": "/Users/gebruiker/CP/claude-project",
+        "PYTHONPATH": "/Users/gebruiker/CP/claude-project/mcp"
+      }
+    }
+  }
+}
