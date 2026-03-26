@@ -50,9 +50,21 @@ Key (public):
 ```
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMhv2p4uvF2QxG1P7c5PA5H2DGxYd6mq84j3hWd4yJYF claude-project-github-deploy
 ```
-Allow write access: **No** (read-only is sufficient for CI checkout)
+Allow write access: **Yes** (configured — allows CI to push tags and release commits)
 
-Store the private key in `DEPLOY_KEY` Actions secret if you need SSH-based checkout in workflows.
+To use in Actions workflows, store the private key as a `DEPLOY_KEY` secret, then:
+```yaml
+- uses: webfactory/ssh-agent@v0.9.0
+  with:
+    ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+```
+
+To test locally:
+```bash
+ssh -i ~/.ssh/claude-project-deploy -T git@github.com
+# Expected: Hi infraax/claude-project! You've successfully authenticated...
+GIT_SSH_COMMAND="ssh -i ~/.ssh/claude-project-deploy" git push git@github.com:infraax/claude-project.git main
+```
 
 ---
 
