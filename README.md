@@ -30,10 +30,16 @@ Drop a `.claude-project` file in any directory to give Claude persistent memory,
 | **Agent dispatch** | Queue tasks for Claude agents — full tool loop, sandboxed to your project |
 | **Auto CLAUDE.md** | Generated and refreshed automatically from your live project brain |
 | **Session hooks** | Fire on SessionStart/Stop — sync Obsidian, log events, run automations |
-| **MCP server** | Memory, journal, events, dispatch, and registry tools for Claude Code |
+| **MCP server** | Memory, journal, events, dispatch, registry, and Protocol Document tools |
 | **Project registry** | Global `~/.claude/registry.json` — instant lookup, no filesystem scans |
 | **Background daemon** | macOS launchd — refreshes registry + fires scheduled automations every 5 min |
 | **VS Code extension** | Status bar, syntax highlighting, schema validation, command palette |
+| **Research instrumentation** | Every API call recorded to SQLite — tokens, latency, cache hit rate, task type |
+| **Protocol Documents** | Content-addressed reusable instruction blocks with deduplication |
+| **Typed dispatch** | Input encoded to `typed_pseudocode`, `dsl`, `toon`, or `codeact` by task type |
+| **Clarity Layer** | Local Ollama pre-processor cleans and completes input — passthrough when unavailable |
+| **Prompt cache** | Deterministic stable prefix with `cache_control: ephemeral` — 90% prefix cost reduction |
+| **Semantic memory** | LanceDB vector store (384-dim embeddings) for `find_related_files` queries |
 
 ---
 
@@ -200,6 +206,38 @@ Add to `~/.mcp.json`:
 }
 ```
 
+#### MCP Tools — Full Reference (39 tools)
+
+**Memory & Context**
+
+| Tool | Description |
+|---|---|
+| `store_memory` | Store a memory entry (category: `decision`, `discovery`, `context`, `task`) |
+| `query_memory` | Semantic search over stored memories via LanceDB |
+| `get_context` | Return typed project context: stage, session summary, recent decisions |
+| `set_context` | Update project stage and session summary at session end |
+| `set_file_summary` | Cache a structured summary for a file path |
+| `get_file_summary` | Retrieve cached file summary — call before reading any file |
+| `find_related_files` | Semantic search for files related to a query |
+
+**Protocol Documents (PD)**
+
+| Tool | Description |
+|---|---|
+| `register_pd` | Register a reusable instruction block; deduplicates by SHA-256 |
+| `get_pd` | Retrieve a PD by ID |
+| `search_pd` | Search PDs by task_type and/or interaction_pair |
+| `log_pd_usage` | Record a PD use and tokens saved |
+| `check_negotiation_threshold` | Returns `true` if interaction pair ≥ 3 (triggers negotiation) |
+
+**Dispatch**
+
+| Tool | Description |
+|---|---|
+| `dispatch_task` | Full pipeline: clarity → classify → compress → create dispatch file |
+
+**Legacy tools** (project events, registry, journal, automations, daemon) remain available unchanged.
+
 ---
 
 ## `.claude-project` Schema
@@ -264,6 +302,8 @@ Add to `~/.mcp.json`:
 | `CLAUDE_DIARY_BASE` | `~/.claude/projects` | Base dir for per-project diaries |
 | `CLAUDE_PROJECTS_ROOT` | *(none)* | Extra root for daemon + list |
 | `CLAUDE_MCP_JSON` | `~/.mcp.json` | Override MCP config path |
+| `OLLAMA_HOST` | `http://localhost:11434` | Ollama endpoint for Clarity Layer |
+| `CLARITY_MODEL` | `qwen2.5:7b` | Local model for input pre-processing |
 
 ---
 
@@ -287,7 +327,8 @@ See [CONTRIBUTING.md](.github/CONTRIBUTING.md). All contributions welcome.
 ```bash
 git clone https://github.com/infraax/claude-project.git
 cd claude-project && npm install && npm run build && npm link
-npm test       # 25 Vitest tests
+npm test                          # 25 Vitest tests (TypeScript)
+python scripts/test_full_pipeline.py  # 5 pipeline integration tests (Python)
 npm run lint   # TypeScript type-check
 ```
 
@@ -296,6 +337,17 @@ npm run lint   # TypeScript type-check
 ---
 
 ## Changelog
+
+### v4.2.0
+- **Research instrumentation** — SQLite `DispatchObservation` recording every API call (tokens, latency, cache hit, task type, format, compression ratio)
+- **Task classifier** — 8 task types via regex; pipeline patterns before code_gen to prevent false positives
+- **Format encoder** — `typed_pseudocode`, `dsl`, `toon`, `codeact`, `natural_language` selected by task type
+- **Protocol Documents** — content-addressed reusable instruction blocks, SHA-256 deduplication, use tracking
+- **13 new MCP tools** — `store_memory`, `query_memory`, `get_context`, `set_context`, `set_file_summary`, `get_file_summary`, `find_related_files`, `register_pd`, `get_pd`, `search_pd`, `log_pd_usage`, `check_negotiation_threshold`, `dispatch_task`
+- **Clarity Layer** — Ollama/Qwen2.5-7B input pre-processor; passthrough when unavailable
+- **Prompt cache** — stable prefix builder with `cache_control: ephemeral`; SQLite hit-rate tracker
+- **LanceDB semantic memory** — 384-dim all-MiniLM-L6-v2 embeddings for `find_related_files`
+- **Python research requirements** — `lancedb`, `sentence-transformers`, `llmlingua`, `kuzu`, `mcp`, `fastmcp`
 
 ### v4.1.0
 - **Automation engine** — event, schedule, manual, file_change, service_up/down triggers; 6 action types; idempotent state per automation
