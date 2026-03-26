@@ -25,6 +25,7 @@ import { appendEvent } from './events.js';
 import { initResearchDb, writeObservation, getResearchDbPath, DispatchObservation } from './research-db.js';
 import { classifyTaskType, inferInteractionPair } from './task-classifier.js';
 import { selectFormat, encodeDispatchBody, DispatchFormat } from './format-encoder.js';
+import { sendTelemetryAsync } from './telemetry.js';
 
 // Approximate token cost of sending BUILTIN_TOOLS to the API (measured: 5 tools ≈ 350 tokens).
 const BUILTIN_TOOLS_TOKEN_COUNT = 350;
@@ -422,6 +423,16 @@ export async function runDispatch(
         ts: new Date().toISOString(),
       };
       writeObservation(db, obs);
+      // Fire-and-forget telemetry — never awaited, never blocks dispatch
+      const optimizationFlags = {
+        cache:         project.optimizations?.cache_prefix   ?? true,
+        format_encode: project.optimizations?.format_encode  ?? true,
+        clarity:       project.optimizations?.clarity_layer  ?? true,
+        llmlingua:     project.optimizations?.llmlingua      ?? true,
+        pd:            project.optimizations?.pd_registry    ?? true,
+      };
+      sendTelemetryAsync(obs, project, projectDir, optimizationFlags,
+        (dispatch as any).ablation_condition ?? null);
       db.close();
     } catch (obsErr) {
       console.error('[research] Failed to write observation:', obsErr);
@@ -469,6 +480,15 @@ export async function runDispatch(
         ts: new Date().toISOString(),
       };
       writeObservation(db, obs);
+      const optimizationFlagsErr = {
+        cache:         project.optimizations?.cache_prefix   ?? true,
+        format_encode: project.optimizations?.format_encode  ?? true,
+        clarity:       project.optimizations?.clarity_layer  ?? true,
+        llmlingua:     project.optimizations?.llmlingua      ?? true,
+        pd:            project.optimizations?.pd_registry    ?? true,
+      };
+      sendTelemetryAsync(obs, project, projectDir, optimizationFlagsErr,
+        (dispatch as any).ablation_condition ?? null);
       db.close();
     } catch { /* observation failure must not mask original error */ }
 

@@ -7,6 +7,45 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [5.1.0] — 2026-03-26
+
+### Added
+- **Anonymous federated telemetry** (`src/lib/telemetry.ts`)
+  - Opt-in only — never sends without `telemetry.enabled: true` in `.claude-project`
+  - Sends ONLY: token counts, latency_ms, task_type, compression_ratio, outcome, iterations
+  - NEVER sends: code, prompts, file names, results, or any string > 30 chars
+  - Installation ID: `sha256(hostname:user)[:16]` — irreversible hash, stable across sessions
+  - Project ID: `sha256(project-path)[:12]` — not reversible
+  - 3s timeout, silent fail — never blocks dispatch
+- **Telemetry wired into dispatch-runner** — fires `setImmediate` after every `writeObservation`
+- **Opt-in prompt in `init` command** — interactive TTY prompt with privacy details; skipped in non-TTY
+- **`telemetry_preview` MCP tool** — shows exact payload that would be sent; zero surprises
+- **Cloudflare Worker** (`workers/telemetry-ingest.ts`)
+  - POST `/ingest` — validates schema, rejects strings > 30 chars, writes to D1
+  - GET `/thresholds` — public JSON; per-task-type breakeven / cache hit rates (last 30 days, n≥10)
+  - GET `/stats` — aggregate health check
+- **D1 schema** (`workers/schema.sql`) and **wrangler config** (`workers/wrangler.toml`)
+- **Daemon threshold pull** — `daemon run` fetches community thresholds once/day into `.claude-project._community_thresholds`
+
+### Changed (schema v5 — **breaking from v4**)
+- `.claude-project` uses `memory_path` (canonical) instead of `diary_path` (now deprecated read-only)
+- Removed: `obsidian_vault`, `obsidian_folder`, `devices`, `shared_paths`
+- Added: `optimizations`, `telemetry` fields
+- `$schema` URL updated to `https://cdn.jsdelivr.net/npm/claude-project/schema/...`
+- MCP server renamed `claude-diary` → `claude-project` — **update your `~/.mcp.json` key**
+- Removed 10 legacy MCP tools: `get_context_legacy`, `wakeup_read`, `wakeup_update_section`, `journal_append`, `list_sessions`, `get_today`, `memory_append_thought`, `read_memory_file`, `update_dexter_profile`, `get_source_info`
+- `init_project` MCP tool now writes v5 schema with `memory_path`
+- Publisher: `claudelab` → `infraax`
+- VS Code `claudeProject.sync` command: "Sync Status" (was "Sync Memory → Obsidian")
+- Removed `claudeProject.obsidianVault` VS Code setting
+
+### Fixed
+- All legacy machine-specific paths (`local-device / <user>`, `<robot-platform>`, `<local-app>`) removed
+- `CLAUDE_DIARY_PATH` env var → `CLAUDE_PROJECT_DIR`
+- Certification script `scripts/certify_clean.sh` created; passes on all 12 files
+
+---
+
 ## [4.2.0] — 2026-03-26
 
 ### Added

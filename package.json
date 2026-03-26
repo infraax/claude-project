@@ -1,7 +1,7 @@
 {
   "name": "claude-project",
   "displayName": "Claude Project",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "description": "Project brain for Claude Code — .claude-project v5, event log, registry, dispatch queue, agent orchestration, daemon, MCP memory server, CLI, VS Code integration, research instrumentation, Protocol Documents, typed dispatch, prompt caching",
   "author": "infraax",
   "license": "MIT",

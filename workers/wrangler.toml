@@ -1,0 +1,11 @@
+name = "claude-project-telemetry"
+main = "telemetry-ingest.ts"
+compatibility_date = "2026-03-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "claude-project-telemetry"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+[triggers]
+crons = ["0 2 * * *"]  # Daily at 02:00 UTC

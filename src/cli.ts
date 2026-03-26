@@ -39,8 +39,8 @@ program
   .option('--diary <path>',           'Override diary memory path')
   .option('-s, --stage <text>',       'Set initial stage label')
   .option('--no-claude-md',           'Skip generating CLAUDE.md')
-  .action((name: string, options) => {
-    init(name, options);
+  .action(async (name: string, options) => {
+    await init(name, options);
   });
 
 // ── status ────────────────────────────────────────────────────────────────────
