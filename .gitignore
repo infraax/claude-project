@@ -9,3 +9,4 @@ __pycache__/
 *.pyc
 *.pyo
 claude-project-instructions/INSTRUCTIONS.md
+claude-project-instructions/key.md
