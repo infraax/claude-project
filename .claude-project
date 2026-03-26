@@ -3,7 +3,7 @@
   "version": "5.0",
   "project_id": "0bf67307-092a-4e2b-98da-c4bec5bc68e7",
   "name": "claude-project",
-  "description": "MCP memory and dispatch server — self-hosted",
+  "description": "MCP memory and dispatch server \u2014 self-hosted",
   "created": "2026-03-26",
   "created_by": "mac.home / gebruiker",
   "memory_path": "/Users/gebruiker/.claude/projects/project-0bf67307/memory",
@@ -13,5 +13,20 @@
     "notify": {
       "macos_notifications": true
     }
+  },
+  "agents": {
+    "main": {
+      "instructions": "You are a helpful coding agent. Complete the given task clearly and concisely. Write working code when asked, analyze code when asked, and produce well-structured output.",
+      "model": "claude-haiku-4-5-20251001",
+      "max_tokens": 2048,
+      "tools": []
+    }
+  },
+  "optimizations": {
+    "cache_prefix": true,
+    "format_encode": true,
+    "clarity_layer": true,
+    "llmlingua": true,
+    "pd_registry": true
   }
 }

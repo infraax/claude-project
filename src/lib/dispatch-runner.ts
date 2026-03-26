@@ -202,6 +202,60 @@ function writeDispatch(filePath: string, data: Partial<DispatchFile>): void {
   fs.writeFileSync(filePath, JSON.stringify(updated, null, 2) + '\n', 'utf-8');
 }
 
+// ── Python compressor helper ──────────────────────────────────────────────────
+
+function callPythonCompressor(
+  mode: string,
+  text: string,
+  projectDir: string,
+): { output: string; latency_ms: number } {
+  try {
+    const venvPython = path.join(projectDir, '.venv-research', 'bin', 'python3');
+    const python = fs.existsSync(venvPython) ? venvPython : 'python3';
+    const scriptPath = path.join(projectDir, 'mcp', 'compress_cli.py');
+
+    const t0 = Date.now();
+    const result = spawnSync(python, [scriptPath], {
+      input: JSON.stringify({ mode, text }),
+      encoding: 'utf-8',
+      timeout: 30_000,
+      env: { ...process.env },
+    });
+    const latency_ms = Date.now() - t0;
+
+    if (result.status !== 0 || result.error) {
+      return { output: text, latency_ms };
+    }
+    const parsed = JSON.parse(result.stdout.trim()) as { output?: string };
+    return {
+      output: typeof parsed.output === 'string' && parsed.output.length > 0
+        ? parsed.output : text,
+      latency_ms,
+    };
+  } catch {
+    return { output: text, latency_ms: 0 };
+  }
+}
+
+// ── PD registry lookup helper ─────────────────────────────────────────────────
+
+function lookupPD(
+  db: import('better-sqlite3').Database,
+  taskType: string,
+  _interactionPair: string,
+): { id: string; text: string } | null {
+  try {
+    const row = db.prepare(
+      `SELECT id, text FROM pd_registry
+       WHERE (task_type=? OR task_type IS NULL) AND deprecated=0
+       ORDER BY use_count DESC LIMIT 1`
+    ).get(taskType) as { id: string; text: string } | undefined;
+    return row ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // ── Main entry: run one dispatch ──────────────────────────────────────────────
 
 export async function runDispatch(
@@ -222,6 +276,14 @@ export async function runDispatch(
     console.log(`dispatch-runner: skipping ${dispatch.id} (status=${dispatch.status})`);
     return;
   }
+
+  // ── Optimization flags ───────────────────────────────────────────────────────
+  const opts = project.optimizations ?? {};
+  const useFormatEncode = opts.format_encode  ?? true;
+  const useCache        = opts.cache_prefix   ?? true;
+  const useClarity      = opts.clarity_layer  ?? true;
+  const useLLMlingua    = opts.llmlingua      ?? true;
+  const usePdRegistry   = opts.pd_registry    ?? true;
 
   const sessionId = process.env['CLAUDE_SESSION_ID'] ?? process.env['CP_SESSION_ID'] ?? randomUUID().slice(0, 8);
   const taskStart = Date.now();
@@ -246,19 +308,77 @@ export async function runDispatch(
   const maxTokens = agentDef?.max_tokens ?? 4096;
   const agentTools = agentDef?.tools ?? [];
 
-  // ── Format encoding ─────────────────────────────────────────────────────────
+  // ── Classify task ────────────────────────────────────────────────────────────
   const taskType = classifyTaskType(dispatch.title, dispatch.body ?? '');
-  const protocolCondition = dispatch.protocol_id ? 'pd_negotiated' : 'natural_language';
-  const selectedFormat = selectFormat(taskType, protocolCondition);
-  const encodingStart = Date.now();
-  const encoded = encodeDispatchBody(dispatch.body ?? '', taskType, selectedFormat);
-  timings.compression = Date.now() - encodingStart;
   dispatch.task_type = taskType;
-  dispatch.dispatch_format = selectedFormat;
-  dispatch.encoded_chars = encoded.encoded_chars;
-  dispatch.original_chars = encoded.original_chars;
+  const protocolCondition = dispatch.protocol_id ? 'pd_negotiated' : 'natural_language';
+
+  // ── Processing pipeline: clarity → format-encode → llmlingua → PD ───────────
+
+  // (a) Raw body
+  const bodyRaw = dispatch.body ?? '';
+
+  // (b/c) Clarity layer
+  let postClarityBody = bodyRaw;
+  if (useClarity) {
+    const clarityStart = Date.now();
+    postClarityBody = callPythonCompressor('clarity', bodyRaw, projectDir).output;
+    timings.clarity_layer = Date.now() - clarityStart;
+  }
+
+  // (d/e/f) Format encoding — gated by flag; passthrough object when disabled
+  const selectedFormat = useFormatEncode
+    ? selectFormat(taskType, protocolCondition)
+    : 'natural_language' as const;
+  const encodingStart = Date.now();
+  const encoded = useFormatEncode
+    ? encodeDispatchBody(postClarityBody, taskType, selectedFormat)
+    : {
+        format: 'natural_language' as const,
+        encoded_body: postClarityBody,
+        original_chars: postClarityBody.length,
+        encoded_chars: postClarityBody.length,
+        compression_ratio: 0,
+      };
+  timings.compression = Date.now() - encodingStart;
+
+  dispatch.dispatch_format = selectedFormat as DispatchFormat;
+  dispatch.original_chars  = encoded.original_chars;
+  dispatch.encoded_chars   = encoded.encoded_chars;
   dispatch.compression_ratio = encoded.compression_ratio;
-  const messageBody = encoded.encoded_body;
+
+  // (g/h/i) LLMlingua compression
+  let messageBody = encoded.encoded_body;
+  let postLinguaChars = messageBody.length;
+  if (useLLMlingua && messageBody.length > 100) {
+    const linguaResult = callPythonCompressor('llmlingua', messageBody, projectDir);
+    messageBody = linguaResult.output;
+    postLinguaChars = messageBody.length;
+  }
+
+  // (j) PD registry lookup
+  let pdId: string | null = null;
+  let effectiveSystemPrompt = systemPrompt;
+  if (usePdRegistry) {
+    const pdLookupStart = Date.now();
+    try {
+      const dbPath = getResearchDbPath(project, projectDir);
+      const dbForPd = initResearchDb(dbPath);
+      const pd = lookupPD(dbForPd, taskType, inferInteractionPair(dispatch.agent));
+      dbForPd.close();
+      if (pd) {
+        pdId = pd.id;
+        effectiveSystemPrompt = `${systemPrompt}\n\n---\n${pd.text}`;
+        dispatch.protocol_id = pdId;
+      }
+    } catch { /* pd lookup must never block dispatch */ }
+    timings.pd_lookup = Date.now() - pdLookupStart;
+  }
+
+  // (k) Build system: cached block array or plain string
+  const system: string | Anthropic.Messages.TextBlockParam[] = useCache
+    ? [{ type: 'text' as const, text: effectiveSystemPrompt, cache_control: { type: 'ephemeral' as const } }]
+    : effectiveSystemPrompt;
 
   const toolCallLog: DispatchFile['tool_calls'] = [];
   let totalUsage = { input_tokens: 0, output_tokens: 0 };
@@ -412,10 +532,13 @@ export async function runDispatch(
         },
         latency_ms: timings,
         compression: {
-          input_raw_chars: dispatch.original_chars ?? dispatch.body?.length ?? 0,
-          input_post_clarity: dispatch.original_chars ?? 0,
-          input_post_lingua: dispatch.encoded_chars ?? 0,
-          compression_ratio: dispatch.compression_ratio ?? 0,
+          input_raw_chars:    bodyRaw.length,
+          input_post_clarity: postClarityBody.length,
+          input_post_lingua:  postLinguaChars,
+          // Ratio measures llmlingua's effect only (0 = no compression, 0.4 = 40% smaller)
+          compression_ratio:  encoded.encoded_chars > 0
+            ? parseFloat(((1 - postLinguaChars / encoded.encoded_chars)).toFixed(4))
+            : 0,
         },
         outcome: 'success',
         iterations: toolCallLog.length,
@@ -426,11 +549,11 @@ export async function runDispatch(
       writeObservation(db, obs);
       // Fire-and-forget telemetry — never awaited, never blocks dispatch
       const optimizationFlags = {
-        cache:         project.optimizations?.cache_prefix   ?? true,
-        format_encode: project.optimizations?.format_encode  ?? true,
-        clarity:       project.optimizations?.clarity_layer  ?? true,
-        llmlingua:     project.optimizations?.llmlingua      ?? true,
-        pd:            project.optimizations?.pd_registry    ?? true,
+        cache:         useCache,
+        format_encode: useFormatEncode,
+        clarity:       useClarity,
+        llmlingua:     useLLMlingua,
+        pd:            usePdRegistry,
       };
       sendTelemetryAsync(obs, project, projectDir, optimizationFlags,
         (dispatch as any).ablation_condition ?? null);
@@ -483,11 +606,11 @@ export async function runDispatch(
       };
       writeObservation(db, obs);
       const optimizationFlagsErr = {
-        cache:         project.optimizations?.cache_prefix   ?? true,
-        format_encode: project.optimizations?.format_encode  ?? true,
-        clarity:       project.optimizations?.clarity_layer  ?? true,
-        llmlingua:     project.optimizations?.llmlingua      ?? true,
-        pd:            project.optimizations?.pd_registry    ?? true,
+        cache:         useCache,
+        format_encode: useFormatEncode,
+        clarity:       useClarity,
+        llmlingua:     useLLMlingua,
+        pd:            usePdRegistry,
       };
       sendTelemetryAsync(obs, project, projectDir, optimizationFlagsErr,
         (dispatch as any).ablation_condition ?? null);
