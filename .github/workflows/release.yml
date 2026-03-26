@@ -157,7 +157,7 @@ jobs:
 
             **MCP server (add to `~/.mcp.json`):**
             ```json
-            { "mcpServers": { "claude-diary": { "command": "claude-project", "args": ["mcp"] } } }
+            { "mcpServers": { "claude-project": { "command": "claude-project", "args": ["mcp"] } } }
             ```
 
             ---

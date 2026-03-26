@@ -41,9 +41,7 @@ function makeProject(tmpDir: string) {
     description: '',
     created: new Date().toISOString(),
     created_by: 'test',
-    obsidian_vault: '',
-    obsidian_folder: '',
-    diary_path: memoryDir,
+    memory_path: memoryDir,
     agents: {
       helper: {
         role: 'Helper',

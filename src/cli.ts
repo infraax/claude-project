@@ -149,9 +149,9 @@ hooks
 program
   .command('mcp')
   .description(
-    'Start the claude-diary MCP server (stdio by default).\n' +
+    'Start the claude-project MCP server (stdio by default).\n' +
     'Provides: memory, journal, events, dispatches, registry, and project info tools.\n' +
-    'Add to ~/.mcp.json:  { "claude-diary": { "command": "claude-project", "args": ["mcp"] } }',
+    'Add to ~/.mcp.json:  { "claude-project": { "command": "claude-project", "args": ["mcp"] } }',
   )
   .option('--http',         'Run in HTTP/SSE mode instead of stdio')
   .option('--port <port>',  'HTTP port (default 8765)', (v) => parseInt(v, 10), 8765)
@@ -163,17 +163,17 @@ program
 
 program
   .command('inject')
-  .description('Add the claude-diary MCP entry to ~/.mcp.json')
+  .description('Add the claude-project MCP entry to ~/.mcp.json')
   .action(() => { injectCmd(); });
 
 program
   .command('eject')
-  .description('Remove the claude-diary MCP entry from ~/.mcp.json')
+  .description('Remove the claude-project MCP entry from ~/.mcp.json')
   .action(() => { ejectCmd(); });
 
 program
   .command('mcp-status')
-  .description('Show whether the claude-diary MCP is configured in ~/.mcp.json')
+  .description('Show whether the claude-project MCP is configured in ~/.mcp.json')
   .action(() => { mcpStatusCmd(); });
 
 // ── daemon ────────────────────────────────────────────────────────────────────

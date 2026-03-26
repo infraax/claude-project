@@ -36,9 +36,7 @@ function makeProject(id = 'test-proj', overrides: Record<string, unknown> = {}) 
       description: '',
       created: new Date().toISOString(),
       created_by: 'test',
-      obsidian_vault: '',
-      obsidian_folder: '',
-      diary_path: memoryDir,
+      memory_path: memoryDir,
       automations: [],
       agents: {},
       ...overrides,
@@ -102,9 +100,7 @@ describe('automation state — read/write round-trip', () => {
       description: '',
       created: new Date().toISOString(),
       created_by: 'test',
-      obsidian_vault: '',
-      obsidian_folder: '',
-      diary_path: memoryDir,
+      memory_path: memoryDir,
       automations: [],
     };
 
@@ -127,9 +123,7 @@ describe('automation state — read/write round-trip', () => {
       description: '',
       created: new Date().toISOString(),
       created_by: 'test',
-      obsidian_vault: '',
-      obsidian_folder: '',
-      diary_path: memoryDir,
+      memory_path: memoryDir,
       automations: [
         {
           id: 'my-auto',
@@ -181,9 +175,7 @@ describe('event trigger — idempotency', () => {
       description: '',
       created: new Date().toISOString(),
       created_by: 'test',
-      obsidian_vault: '',
-      obsidian_folder: '',
-      diary_path: memoryDir,
+      memory_path: memoryDir,
       automations: [
         {
           id: 'on-session-end',
@@ -284,9 +276,7 @@ describe('disabled automations', () => {
       description: '',
       created: new Date().toISOString(),
       created_by: 'test',
-      obsidian_vault: '',
-      obsidian_folder: '',
-      diary_path: memoryDir,
+      memory_path: memoryDir,
       automations: [
         {
           id: 'should-skip',
@@ -321,9 +311,7 @@ describe('unknown action type', () => {
       description: '',
       created: new Date().toISOString(),
       created_by: 'test',
-      obsidian_vault: '',
-      obsidian_folder: '',
-      diary_path: memoryDir,
+      memory_path: memoryDir,
       automations: [
         {
           id: 'bad-action',
@@ -361,9 +349,7 @@ describe('listAutomationsWithState', () => {
       description: '',
       created: new Date().toISOString(),
       created_by: 'test',
-      obsidian_vault: '',
-      obsidian_folder: '',
-      diary_path: memoryDir,
+      memory_path: memoryDir,
       automations: [
         { id: 'a1', trigger: { type: 'manual' }, action: { type: 'write_event', event_type: 'x' } },
         { id: 'a2', trigger: { type: 'schedule', cron: '@daily' }, action: { type: 'run_command', command: 'echo hi' } },

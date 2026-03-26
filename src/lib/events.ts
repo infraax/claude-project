@@ -1,18 +1,16 @@
 /**
  * events.ts
  * Append-only JSONL event log per project.
- * Stored at: <diary_path>/../events.jsonl
+ * Stored at: <memory_path>/../events.jsonl
  * (one level above the memory/ dir, inside the project-XXXX folder)
- *
- * Every entry is a single JSON line:
- *   {"id":"abc12345","ts":"2026-03-23T...","type":"session_start","source":"MacBook/user","project_id":"a1b2c3d4","data":{...}}
  */
 
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { randomUUID } from 'crypto';
-import { ClaudeProject, expandHome } from './project.js';
+import { ClaudeProject } from './project.js';
+import { resolvePaths } from './paths.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -31,9 +29,9 @@ export type EventType =
   | 'service_up'
   | 'service_down'
   | 'automation_fired'
-  | 'sync_obsidian'
   | 'daemon_scan'
   | 'custom';
+  // sync_obsidian REMOVED — use `claude-project sync` instead
 
 export interface ProjectEvent {
   id: string;
@@ -47,29 +45,15 @@ export interface ProjectEvent {
 
 // ── Path resolution ───────────────────────────────────────────────────────────
 
-/**
- * Returns the path to events.jsonl for a project.
- * Sits at: <diary_path_parent>/events.jsonl
- * e.g. ~/.claude/projects/project-a1b2c3d4/events.jsonl
- *      (diary_path is ~/.claude/projects/project-a1b2c3d4/memory)
- */
 export function getEventsPath(project: ClaudeProject): string {
-  const diaryDir = expandHome(project.diary_path);
-  // diary_path ends with /memory — go up one level to the project folder
-  return path.join(path.dirname(diaryDir), 'events.jsonl');
+  const { eventsFile } = resolvePaths(project);
+  return eventsFile;
 }
 
 // ── Source attribution ────────────────────────────────────────────────────────
 
 function getSource(): string {
   const user = process.env['USER'] ?? os.userInfo().username;
-  const hostname = os.hostname().toLowerCase();
-  if (hostname.includes('macbook') || hostname.endsWith('.local')) {
-    return `MacBook / ${user}`;
-  }
-  if (hostname.includes('pi') || hostname.includes('raspberry')) {
-    return `Pi / ${user}`;
-  }
   return `${os.hostname()} / ${user}`;
 }
 
@@ -97,7 +81,6 @@ export function appendEvent(
 
   try {
     const eventsPath = getEventsPath(project);
-    // Ensure parent dir exists
     fs.mkdirSync(path.dirname(eventsPath), { recursive: true });
     fs.appendFileSync(eventsPath, JSON.stringify(event) + '\n', 'utf-8');
   } catch {
@@ -162,7 +145,7 @@ export function purgeOldEvents(project: ClaudeProject, retentionDays: number): n
         const e = JSON.parse(line) as ProjectEvent;
         return new Date(e.ts).getTime() >= cutoff;
       } catch {
-        return true; // keep malformed lines rather than lose data
+        return true;
       }
     });
     const removed = lines.length - kept.length;

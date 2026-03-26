@@ -251,7 +251,7 @@ export function createClaudepStub(outputName?: string): void {
   const outputPath = path.join(projectDir, filename);
 
   const stub = {
-    $schema: 'https://cdn.jsdelivr.net/npm/@claudelab/project/schema/claudep.schema.json',
+    $schema: 'https://cdn.jsdelivr.net/npm/claude-project/schema/claudep.schema.json',
     project_id: project.project_id,
     name: project.name,
     description: project.description,

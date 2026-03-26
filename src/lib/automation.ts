@@ -22,7 +22,7 @@
  *   dispatch_agent   — create a dispatch JSON → processed by dispatch-runner
  *   write_event      — append a custom event to the event log
  *   send_notification — macOS/webhook notification
- *   sync_obsidian    — copy memory → Obsidian
+ *   sync_obsidian    — DEPRECATED, use `claude-project sync` + CLAUDE_OBSIDIAN_VAULT
  *   call_webhook     — HTTP POST to a URL
  */
 
@@ -283,21 +283,11 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
     return `Notification sent: ${msg}`;
   },
 
-  sync_obsidian: (_action, ctx) => {
-    const paths = resolvePaths(ctx.project, ctx.projectDir);
-    if (!fs.existsSync(paths.obsidianVault)) return 'Obsidian vault not found — skipped';
-    if (!fs.existsSync(paths.memoryDir)) return 'Memory dir not found — skipped';
-    fs.mkdirSync(paths.obsidianProjectDir, { recursive: true });
-    let count = 0;
-    for (const f of fs.readdirSync(paths.memoryDir).filter(f => f.endsWith('.md'))) {
-      fs.writeFileSync(
-        path.join(paths.obsidianProjectDir, f),
-        fs.readFileSync(path.join(paths.memoryDir, f), 'utf-8'),
-        'utf-8',
-      );
-      count++;
-    }
-    return `Synced ${count} files to Obsidian`;
+  sync_obsidian: (_action, _ctx) => {
+    // Deprecated — use CLAUDE_OBSIDIAN_VAULT env var and `claude-project sync` instead
+    const vault = process.env['CLAUDE_OBSIDIAN_VAULT'];
+    if (!vault) return 'sync_obsidian: CLAUDE_OBSIDIAN_VAULT not set — skipped';
+    return 'sync_obsidian: use `claude-project sync` CLI command instead';
   },
 
   call_webhook: (action, _ctx) => {

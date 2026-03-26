@@ -1,6 +1,6 @@
 /**
  * mcp-inject.ts
- * Manages the claude-diary entry in ~/.mcp.json.
+ * Manages the claude-project entry in ~/.mcp.json.
  * Pure logic — no VS Code or CLI dependencies.
  * Used by both the extension (extension.ts) and the CLI (commands/inject.ts).
  */
@@ -30,7 +30,7 @@ export type InjectResult =
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const MCP_ENTRY_KEY = 'claude-diary';
+const MCP_ENTRY_KEY = 'claude-project';
 
 const MCP_ENTRY_VALUE: McpServerEntry = {
   command: 'claude-project',
@@ -57,7 +57,7 @@ function writeConfig(filePath: string, config: McpConfig): void {
 // ── Public API ────────────────────────────────────────────────────────────────
 
 /**
- * Checks if the claude-diary MCP entry exists in ~/.mcp.json.
+ * Checks if the claude-project MCP entry exists in ~/.mcp.json.
  */
 export function isInjected(): boolean {
   try {
@@ -69,7 +69,7 @@ export function isInjected(): boolean {
 }
 
 /**
- * Adds the claude-diary entry to ~/.mcp.json.
+ * Adds the claude-project entry to ~/.mcp.json.
  * Creates the file if it does not exist.
  * Returns a result describing what happened — never throws.
  */
@@ -105,7 +105,7 @@ export function inject(): InjectResult {
 }
 
 /**
- * Removes the claude-diary entry from ~/.mcp.json.
+ * Removes the claude-project entry from ~/.mcp.json.
  * Returns true if it was removed, false if it was not present.
  */
 export function eject(): boolean {

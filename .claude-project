@@ -1,0 +1,17 @@
+{
+  "$schema": "https://cdn.jsdelivr.net/npm/claude-project/schema/claude-project.schema.json",
+  "version": "5.0",
+  "project_id": "0bf67307-092a-4e2b-98da-c4bec5bc68e7",
+  "name": "claude-project",
+  "description": "MCP memory and dispatch server — self-hosted",
+  "created": "2026-03-26",
+  "created_by": "mac.home / <user>",
+  "memory_path": "~/.claude/projects/project-0bf67307/memory",
+  "monitoring": {
+    "enabled": true,
+    "log_retention_days": 90,
+    "notify": {
+      "macos_notifications": true
+    }
+  }
+}

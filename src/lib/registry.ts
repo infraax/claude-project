@@ -17,7 +17,7 @@ export interface RegistryEntry {
   name: string;
   description: string;
   project_dir: string;
-  diary_path: string;
+  memory_path: string;
   created: string;
   created_by: string;
   stage?: string;
@@ -88,11 +88,11 @@ export function registerProject(project: ClaudeProject, projectDir: string): voi
     name: project.name,
     description: project.description ?? '',
     project_dir: projectDir,
-    diary_path: expandHome(project.diary_path),
-    created: project.created,
-    created_by: project.created_by,
+    memory_path: expandHome(project.memory_path ?? (project as any).diary_path ?? ''),
+    created: project.created ?? '',
+    created_by: project.created_by ?? '',
     stage: project.stage,
-    version: project.version,
+    version: project.version ?? '5.0',
     registered_at: existing?.registered_at ?? now,
     last_seen: now,
   };

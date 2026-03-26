@@ -14,8 +14,7 @@ import { generateClaudeMd } from './generate-claude-md.js';
 
 export interface InitOptions {
   description: string;
-  obsidian?: string;
-  diary?: string;
+  diary?: string;   // kept for CLI backward compat — maps to memory_path
   stage?: string;
   claudeMd?: boolean;  // default true — set false via --no-claude-md
 }
@@ -37,20 +36,16 @@ export function init(name: string, options: InitOptions): void {
   const project = buildProject(name, options.description);
 
   // Apply overrides from flags
-  if (options.obsidian) project.obsidian_vault = options.obsidian;
-  if (options.diary)    project.diary_path     = options.diary;
-  if (options.stage)    project.stage          = options.stage;
+  if (options.diary)  project.memory_path = options.diary;
+  if (options.stage)  project.stage       = options.stage;
 
   const targetDir = process.cwd();
   const filePath  = writeProject(targetDir, project);
   const paths     = resolvePaths(project, targetDir);
 
   // ── Machine-local runtime dirs ──────────────────────────────────────────────
-  // memory/ — WAKEUP.md, SESSION_JOURNAL.md (existing)
   ensureDir(paths.memoryDir);
-  // sessions/ — per-session transcripts
   ensureDir(paths.sessionsDir);
-  // dispatches/ — task queue
   ensureDir(paths.dispatchesDir);
 
   // ── Project config dirs (alongside .claude-project, committable) ────────────
@@ -59,18 +54,17 @@ export function init(name: string, options: InitOptions): void {
   ensureDir(paths.automationsDir);
   ensureDir(paths.toolsDir);
 
-  // Seed WAKEUP.md
-  const wakeupPath = path.join(paths.memoryDir, 'WAKEUP.md');
-  if (!fs.existsSync(wakeupPath)) {
-    fs.writeFileSync(
-      wakeupPath,
-      `# WAKEUP — ${name}\n\n` +
-      `## Current Stage\n${project.stage ?? '(not set)'}\n\n` +
-      `## Last Session Summary\n(none yet)\n\n` +
-      `## Open Questions / Pending Decisions\n\n` +
-      `## Critical Facts\n\n`,
-      'utf-8',
-    );
+  // Seed initial context.json for get_context() MCP tool
+  const contextPath = path.join(paths.runtimeDir, 'context.json');
+  if (!fs.existsSync(contextPath)) {
+    fs.writeFileSync(contextPath, JSON.stringify({
+      stage: 'initialized',
+      summary: `Project ${name} initialized.`,
+      blockers: [],
+      critical_facts: [],
+      next_steps: [],
+      updated_at: new Date().toISOString(),
+    }, null, 2) + '\n', 'utf-8');
   }
 
   // Seed .claude/README.md so the directory is self-documenting
@@ -93,27 +87,6 @@ export function init(name: string, options: InitOptions): void {
     );
   }
 
-  // Create Obsidian project folder + README if vault exists
-  if (fs.existsSync(project.obsidian_vault)) {
-    ensureDir(paths.obsidianProjectDir);
-    const readmePath = path.join(paths.obsidianProjectDir, 'README.md');
-    if (!fs.existsSync(readmePath)) {
-      fs.writeFileSync(
-        readmePath,
-        `# ${name}\n\n` +
-        `${options.description}\n\n` +
-        `| Field | Value |\n` +
-        `|-------|-------|\n` +
-        `| **Project ID** | \`${project.project_id}\` |\n` +
-        `| **Created** | ${project.created} |\n` +
-        `| **Created by** | ${project.created_by} |\n` +
-        `| **Diary** | \`${paths.memoryDir}\` |\n` +
-        `| **Runtime** | \`${paths.runtimeDir}\` |\n`,
-        'utf-8',
-      );
-    }
-  }
-
   // ── Register in global registry ─────────────────────────────────────────────
   registerProject(project, targetDir);
 
@@ -126,7 +99,6 @@ export function init(name: string, options: InitOptions): void {
   });
 
   // ── Auto-generate CLAUDE.md ─────────────────────────────────────────────────
-  // Default true; skipped only if --no-claude-md is passed.
   let claudeMdPath = '';
   if (options.claudeMd !== false) {
     try {
@@ -141,11 +113,13 @@ export function init(name: string, options: InitOptions): void {
     `    ID:        ${project.project_id}\n` +
     `    Version:   ${project.version}\n` +
     `    File:      ${filePath}\n` +
-    `    Diary:     ${paths.memoryDir}\n` +
+    `    Memory:    ${paths.memoryDir}\n` +
     `    Runtime:   ${paths.runtimeDir}\n` +
     `    Config:    ${paths.dotClaudeDir}/\n` +
-    `    Obsidian:  ${paths.obsidianProjectDir}\n` +
+    `    Context:   ${contextPath}\n` +
     `    CLAUDE.md: ${claudeMdPath || '(skipped)'}\n` +
-    `    Source:    ${project.created_by}\n`,
+    `    Source:    ${project.created_by}\n\n` +
+    `  MCP config (add to ~/.mcp.json):\n` +
+    `  { "mcpServers": { "claude-project": { "command": "claude-project", "args": ["mcp"] } } }\n`,
   );
 }

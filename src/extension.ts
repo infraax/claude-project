@@ -1,11 +1,11 @@
 /**
- * extension.ts — VS Code extension entry point for @claudelab/project
+ * extension.ts — VS Code extension entry point for claude-project
  *
  * Activates when a .claude-project file is present anywhere in the workspace.
  * Provides:
  *   - Status bar: ⬡ ProjectName  [current stage]
  *   - Commands palette (Cmd+Shift+P → "Claude Project: ...")
- *   - Auto-inject claude-diary MCP into ~/.mcp.json on first activation
+ *   - Auto-inject claude-project MCP into ~/.mcp.json on first activation
  *   - JSON schema validation for .claude-project files
  */
 
@@ -154,18 +154,16 @@ function cmdStatus(): void {
     return;
   }
 
-  const diaryPath = project.diary_path.replace('~', os.homedir());
-  const diaryOk   = fs.existsSync(diaryPath)  ? '✓' : '✗';
-  const vaultOk   = fs.existsSync(project.obsidian_vault) ? '✓' : '✗';
+  const memPath = (project.memory_path ?? (project as any).diary_path ?? '').replace('~', os.homedir());
+  const memOk   = fs.existsSync(memPath) ? '✓' : '✗';
 
   const details = [
     `**${project.name}** (${project.project_id.slice(0, 8)})`,
     ``,
     `Stage: ${project.stage ?? '(none)'}`,
-    `Created: ${project.created} by ${project.created_by}`,
+    `Created: ${project.created ?? ''} by ${project.created_by ?? ''}`,
     ``,
-    `${diaryOk} Diary: ${diaryPath}`,
-    `${vaultOk} Obsidian: ${project.obsidian_vault}`,
+    `${memOk} Memory: ${memPath}`,
     ``,
     `File: ${filePath}`,
   ].join('\n');
@@ -224,13 +222,6 @@ function cmdSync(): void {
     return;
   }
 
-  if (!fs.existsSync(project.obsidian_vault)) {
-    vscode.window.showWarningMessage(
-      `Obsidian vault not found at: ${project.obsidian_vault}\n\nMount your vault drive or update the obsidian_vault path in .claude-project.`,
-    );
-    return;
-  }
-
   const terminal = vscode.window.createTerminal('Claude Project Sync');
   terminal.show();
   terminal.sendText('claude-project sync');
@@ -242,14 +233,14 @@ function cmdInjectMcp(): void {
   switch (result.status) {
     case 'already_present':
       vscode.window.showInformationMessage(
-        'claude-diary MCP is already configured in ~/.mcp.json.',
+        'claude-project MCP is already configured in ~/.mcp.json.',
       );
       break;
 
     case 'injected':
     case 'created':
       vscode.window.showInformationMessage(
-        `claude-diary MCP added to ${result.path}. Restart Claude Code to activate.`,
+        `claude-project MCP added to ${result.path}. Restart Claude Code to activate.`,
         'Open ~/.mcp.json',
       ).then((choice) => {
         if (choice === 'Open ~/.mcp.json') {
@@ -271,15 +262,15 @@ function cmdOpenMemory(): void {
     return;
   }
 
-  const diaryPath = project.diary_path.replace('~', os.homedir());
-  if (!fs.existsSync(diaryPath)) {
+  const memPath = (project.memory_path ?? (project as any).diary_path ?? '').replace('~', os.homedir());
+  if (!fs.existsSync(memPath)) {
     vscode.window.showWarningMessage(
-      `Memory directory not found: ${diaryPath}\n\nRun 'claude-project init' to initialise it.`,
+      `Memory directory not found: ${memPath}\n\nRun 'claude-project init' to initialise it.`,
     );
     return;
   }
 
-  vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(diaryPath));
+  vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(memPath));
 }
 
 function cmdShowEvents(): void {
@@ -327,7 +318,7 @@ function runAutoInject(context: vscode.ExtensionContext): void {
   if (!project) return; // no .claude-project — don't nag
 
   vscode.window.showInformationMessage(
-    `Claude Project detected: **${project.name}**\nAdd the claude-diary MCP server to ~/.mcp.json?`,
+    `Claude Project detected: **${project.name}**\nAdd the claude-project MCP server to ~/.mcp.json?`,
     { modal: false },
     'Add MCP',
     'Not now',
