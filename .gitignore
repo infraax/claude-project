@@ -4,3 +4,8 @@ dist/
 *.d.ts.map
 .DS_Store
 *.vsix
+.venv-research/
+__pycache__/
+*.pyc
+*.pyo
+claude-project-instructions/INSTRUCTIONS.md
