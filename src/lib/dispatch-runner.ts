@@ -420,6 +420,7 @@ export async function runDispatch(
         outcome: 'success',
         iterations: toolCallLog.length,
         task_completed: true,
+        ablation_condition: (dispatch as any).ablation_condition ?? null,
         ts: new Date().toISOString(),
       };
       writeObservation(db, obs);
@@ -477,6 +478,7 @@ export async function runDispatch(
         outcome: 'failure',
         iterations: toolCallLog.length,
         task_completed: false,
+        ablation_condition: (dispatch as any).ablation_condition ?? null,
         ts: new Date().toISOString(),
       };
       writeObservation(db, obs);
