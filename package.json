@@ -1,8 +1,8 @@
 {
   "name": "claude-project",
   "displayName": "Claude Project",
-  "version": "4.1.0",
-  "description": "Project brain for Claude Code — .claude-project v4, event log, registry, dispatch queue, agent orchestration, daemon, .claudep file type, diary MCP, CLI, VS Code integration",
+  "version": "4.2.0",
+  "description": "Project brain for Claude Code — .claude-project v4, event log, registry, dispatch queue, agent orchestration, daemon, .claudep file type, diary MCP, CLI, VS Code integration, research instrumentation, Protocol Documents, typed dispatch, prompt caching",
   "author": "claudelab",
   "license": "MIT",
   "repository": {
