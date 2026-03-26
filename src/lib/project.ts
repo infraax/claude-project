@@ -42,7 +42,8 @@ export interface AutomationTrigger {
 }
 
 export interface AutomationAction {
-  type: 'run_command' | 'dispatch_agent' | 'write_event' | 'send_notification' | 'sync_obsidian' | 'call_webhook';
+  // sync_obsidian REMOVED — use CLAUDE_OBSIDIAN_VAULT env var + `claude-project sync` instead
+  type: 'run_command' | 'dispatch_agent' | 'write_event' | 'send_notification' | 'call_webhook';
   command?: string;
   agent?: string;
   prompt?: string;
@@ -79,27 +80,39 @@ export interface MonitoringConfig {
 }
 
 export interface ClaudeProject {
-  version: '3' | '4';
+  $schema?: string;
+  version?: string;
   project_id: string;
   name: string;
-  description: string;
-  created: string;
-  created_by: string;
-  obsidian_vault: string;
-  obsidian_folder: string;
-  diary_path: string;
+  description?: string;
+  created?: string;
+  created_by?: string;
+  // v5: canonical memory field
+  memory_path?: string;
+  // DEPRECATED — kept for backward-compat read-only; prefer memory_path
+  diary_path?: string;
+  // REMOVED: obsidian_vault, obsidian_folder
   stage?: string;
-  shared_paths?: Record<string, string>;
-  devices?: Record<string, string>;
   mcp?: {
     servers?: Record<string, McpServerConfig>;
   };
-  // v4 fields
   agents?: Record<string, AgentDefinition>;
   services?: Record<string, ServiceDefinition>;
   automations?: Automation[];
   tools?: Record<string, ToolDefinition>;
   monitoring?: MonitoringConfig;
+  optimizations?: {
+    cache_prefix?: boolean;
+    format_encode?: boolean;
+    clarity_layer?: boolean;
+    llmlingua?: boolean;
+    pd_registry?: boolean;
+  };
+  telemetry?: {
+    enabled?: boolean;
+    installation_id?: string;
+    opted_in_at?: string;
+  };
 }
 
 export interface FoundProject {
@@ -111,15 +124,11 @@ export interface FoundProject {
 // ── Defaults ──────────────────────────────────────────────────────────────────
 
 export const DEFAULTS = {
-  obsidianVault: process.env['CLAUDE_OBSIDIAN_VAULT']
-    ?? path.join(os.homedir(), '.claude', 'obsidian'),
-
-  diaryBase: process.env['CLAUDE_DIARY_BASE']
-    ?? path.join(os.homedir(), '.claude', 'projects'),
-
-  // jsdelivr CDN — enterprise-trusted, backed by npm package, no raw GitHub
   schemaUrl:
-    'https://cdn.jsdelivr.net/npm/@claudelab/project/schema/claude-project.schema.json',
+    'https://cdn.jsdelivr.net/npm/claude-project/schema/claude-project.schema.json',
+  memoryBase:
+    process.env['CLAUDE_PROJECT_DIR'] ??
+    path.join(os.homedir(), '.claude', 'projects'),
 } as const;
 
 // ── Core: find .claude-project walking up ─────────────────────────────────────
@@ -146,30 +155,44 @@ export function findProject(): FoundProject | null {
   return null;
 }
 
-// ── Core: create a new project ────────────────────────────────────────────────
+// ── Alias used by init.ts ─────────────────────────────────────────────────────
+
+export const loadProject = findProject;
+
+// ── Core: create a new v5 project ────────────────────────────────────────────
 
 export function buildProject(name: string, description: string): ClaudeProject {
   const projectId = randomUUID();
   const shortId = projectId.slice(0, 8);
-  const diaryPath = path.join(DEFAULTS.diaryBase, `project-${shortId}`, 'memory');
+  const memoryPath = path.join(DEFAULTS.memoryBase, `project-${shortId}`, 'memory');
 
   return {
-    version: '4',
+    $schema: DEFAULTS.schemaUrl,
+    version: '5.0',
     project_id: projectId,
     name,
     description,
     created: new Date().toISOString().split('T')[0],
     created_by: `${os.hostname()} / ${os.userInfo().username}`,
-    obsidian_vault: DEFAULTS.obsidianVault,
-    obsidian_folder: `Projects/${name}`,
-    diary_path: diaryPath,
+    memory_path: memoryPath,
     monitoring: {
       enabled: true,
       log_retention_days: 90,
       notify: { macos_notifications: true },
     },
+    optimizations: {
+      cache_prefix: true,
+      format_encode: true,
+      clarity_layer: true,
+      llmlingua: true,
+      pd_registry: true,
+    },
+    telemetry: { enabled: false },
   };
 }
+
+// Alias used by Phase 10 spec
+export const createDefaultProject = buildProject;
 
 // ── Core: write .claude-project ───────────────────────────────────────────────
 

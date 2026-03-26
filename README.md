@@ -198,7 +198,7 @@ Add to `~/.mcp.json`:
 ```json
 {
   "mcpServers": {
-    "claude-diary": {
+    "claude-project": {
       "command": "claude-project",
       "args": ["mcp"]
     }
@@ -298,7 +298,7 @@ Add to `~/.mcp.json`:
 |---|---|---|
 | `ANTHROPIC_API_KEY` | *(required for dispatch)* | Claude API key |
 | `CLAUDE_OBSIDIAN_VAULT` | `~/.claude/obsidian` | Obsidian vault path |
-| `CLAUDE_DIARY_PATH` | `~/.claude/memory` | Default diary directory |
+| `CLAUDE_PROJECT_DIR` | `~/.claude/memory` | Default diary directory |
 | `CLAUDE_DIARY_BASE` | `~/.claude/projects` | Base dir for per-project diaries |
 | `CLAUDE_PROJECTS_ROOT` | *(none)* | Extra root for daemon + list |
 | `CLAUDE_MCP_JSON` | `~/.mcp.json` | Override MCP config path |

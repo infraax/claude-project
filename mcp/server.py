@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """
-Claude Diary — MCP Memory Server v3
-=====================================
-Persistent memory, project context, and Obsidian sync for Claude across all surfaces.
-Bundled inside @claudelab/project — invoked via: claude-project mcp
+Claude Project — MCP Memory & Dispatch Server v5
+=================================================
+Persistent memory, project context, and research instrumentation for Claude Code.
+Bundled inside claude-project — invoked via: claude-project mcp
 
 Features:
-  • Source attribution  — every entry records who/where wrote it
-                          (MacBook/gebruiker, MacBook/lab, SSH→Pi5, Thinkpad/direct, etc.)
-  • UUID per entry      — every journal/discovery/decision/milestone gets a short UUID
-  • Project context     — reads .claude-project v3 from CWD upward (like .git)
-  • Obsidian sync       — every write mirrors to the Obsidian vault, silently
+  • Source attribution  — every entry records hostname/user
+  • UUID per entry      — every memory/decision/milestone gets a short UUID
+  • Project context     — reads .claude-project v5 from CWD upward (like .git)
+  • Obsidian sync       — opt-in only via CLAUDE_OBSIDIAN_VAULT env var
   • Dynamic MEMORY_DIR  — routes to the right project's memory folder automatically
-  • Schema v3           — .claude-project files validated against claude-project.schema.json
+  • Schema v5           — memory_path, optimizations, telemetry; no diary_path required
 
 Run modes:
   python3 server.py              → stdio (default, for Claude Code)
@@ -20,10 +19,8 @@ Run modes:
   claude-project mcp             → same as stdio, invoked by the CLI
 
 Memory files live in:
-  Per project:  <project.diary_path>/   (from .claude-project)
-  Default:      ~/.claude/projects/-Users-gebruiker-WirePod/memory/
-
-Obsidian vault: /Volumes/ClaudeLab/Knowledge/obsidian-vault/
+  Per project:  <project.memory_path>/   (from .claude-project)
+  Default:      ~/.claude/projects/default/memory/
 """
 
 import argparse
@@ -41,17 +38,20 @@ from mcp.server.fastmcp import FastMCP
 
 # ── Defaults (all resolved from env vars — nothing machine-specific) ───────────
 # Override any of these with environment variables:
-#   CLAUDE_DIARY_PATH       — default memory directory when no .claude-project found
-#   CLAUDE_OBSIDIAN_VAULT   — path to your Obsidian vault root
+#   CLAUDE_PROJECT_DIR      — default memory directory when no .claude-project found
+#   CLAUDE_OBSIDIAN_VAULT   — enable optional Obsidian sync (disabled by default)
 #   CLAUDE_OBSIDIAN_FOLDER  — default subfolder inside the vault
 
 _DEFAULT_MEMORY_DIR = Path(
-    os.environ.get("CLAUDE_DIARY_PATH", str(Path.home() / ".claude" / "memory"))
+    os.environ.get("CLAUDE_PROJECT_DIR", str(Path.home() / ".claude" / "projects" / "default" / "memory"))
 )
 _DEFAULT_OBSIDIAN_VAULT = Path(
     os.environ.get("CLAUDE_OBSIDIAN_VAULT", str(Path.home() / ".claude" / "obsidian"))
 )
 _DEFAULT_OBSIDIAN_FOLDER = os.environ.get("CLAUDE_OBSIDIAN_FOLDER", "Projects/Unsorted")
+
+# Obsidian sync is opt-in — only enabled when CLAUDE_OBSIDIAN_VAULT is explicitly set
+_OBSIDIAN_ENABLED = bool(os.environ.get("CLAUDE_OBSIDIAN_VAULT", ""))
 
 SERVER_DIR = Path.home() / ".claude" / "memory_mcp"
 TOKEN_FILE   = SERVER_DIR / ".mcp_token"
@@ -72,13 +72,8 @@ _LONG   = 8192
 def _get_source() -> str:
     """
     Detect where this MCP call originates.
-    Returns a human-readable source label for Obsidian entries:
-      MacBook / gebruiker
-      MacBook / lab
-      SSH → Pi5 (192.168.x.x)
-      SSH → Thinkpad (192.168.x.x)
-      Pi5 / direct
-      Thinkpad / direct
+    Returns a human-readable source label: hostname / user.
+    SSH connections are detected via SSH_CLIENT env var.
     """
     user = os.getenv("USER", "unknown")
     hostname = socket.gethostname().lower()
@@ -97,10 +92,10 @@ def _get_source() -> str:
 
     # Local machine detection
     if any(k in hostname for k in ("macbook", "mac-", "imac", "apple")):
-        return f"MacBook / {user}"
+        return f"mac / {user}"
     elif hostname.endswith(".local"):
         # macOS default — hostname is <name>.local
-        return f"MacBook / {user}"
+        return f"mac / {user}"
     elif any(k in hostname for k in ("pi", "raspberry")):
         return f"Pi5 / {user}"
     elif any(k in hostname for k in ("thinkpad", "think", "lenovo")):
@@ -129,27 +124,26 @@ def _find_project_context() -> dict | None:
     return None
 
 
-def _resolve_paths() -> tuple[Path, Path, str]:
+def _resolve_paths() -> tuple[Path, Path, Path]:
     """
-    Returns (memory_dir, obsidian_vault, obsidian_folder) for the current context.
-    Checks .claude-project → lab .claude-project → defaults.
+    Returns (memory_dir, dispatches_dir, db_path) for the current context.
+    Checks .claude-project (v5: memory_path; v4 compat: diary_path) → defaults.
     """
     ctx = _find_project_context()
 
     if ctx:
-        # Project-level context found
-        diary_path = ctx.get("diary_path")
-        vault_path = ctx.get("obsidian_vault")
-        vault_folder = ctx.get("obsidian_folder", _DEFAULT_OBSIDIAN_FOLDER)
+        # memory_path is canonical; diary_path kept for backward compat
+        raw = ctx.get("memory_path") or ctx.get("diary_path")
+        memory_dir = Path(raw).expanduser() if raw else _DEFAULT_MEMORY_DIR
+    else:
+        memory_dir = _DEFAULT_MEMORY_DIR
 
-        memory_dir = Path(diary_path).expanduser() if diary_path else _DEFAULT_MEMORY_DIR
-        obsidian_vault = Path(vault_path).expanduser() if vault_path else _DEFAULT_OBSIDIAN_VAULT
-        memory_dir.mkdir(parents=True, exist_ok=True)
-        return memory_dir, obsidian_vault, vault_folder
-
-    # No project context — use defaults
-    _DEFAULT_MEMORY_DIR.mkdir(parents=True, exist_ok=True)
-    return _DEFAULT_MEMORY_DIR, _DEFAULT_OBSIDIAN_VAULT, _DEFAULT_OBSIDIAN_FOLDER
+    memory_dir.mkdir(parents=True, exist_ok=True)
+    project_root = memory_dir.parent
+    dispatches_dir = project_root / "dispatches"
+    db_path = project_root / "research.db"
+    dispatches_dir.mkdir(parents=True, exist_ok=True)
+    return memory_dir, dispatches_dir, db_path
 
 
 def _current_project_id() -> str:
@@ -166,10 +160,11 @@ def _current_project_id() -> str:
 
 def _sync_obsidian(vault: Path, folder: str, filename: str, content: str, source: str) -> None:
     """
-    Silently mirror an entry to the Obsidian vault.
+    Silently mirror an entry to the Obsidian vault (opt-in via CLAUDE_OBSIDIAN_VAULT).
     Never raises — Obsidian sync failure must never crash the MCP.
-    Adds source attribution and timestamp as a blockquote.
     """
+    if not _OBSIDIAN_ENABLED:
+        return
     try:
         target_dir = vault / folder
         target_dir.mkdir(parents=True, exist_ok=True)
@@ -301,14 +296,13 @@ def _append_to_file(path: Path, header: str, entry: str) -> None:
 # ══════════════════════════════════════════════════════════════════════════════
 
 mcp = FastMCP(
-    name="claude-diary",
+    name="claude-project",
     instructions=(
-        "Persistent memory, project context, and Obsidian sync for Claude across all sessions. "
-        "Part of @claudelab/project v4 — .claude-project schema v4. "
+        "Persistent memory, project context, and dispatch queue for Claude across all sessions. "
+        "Part of claude-project v5 — .claude-project schema v5. "
         "START every session with get_context. "
-        "END every session with journal_append + wakeup_update_section. "
-        "Every entry is automatically attributed to its source device and synced to Obsidian. "
         "In a new project directory, call init_project first to create .claude-project. "
+        "Use store_memory / recall_memory to persist and retrieve knowledge. "
         "Use log_event to record any significant action. "
         "Use create_dispatch / list_dispatches to manage the task queue. "
         "Use list_projects to see all known projects on this machine."
@@ -327,7 +321,7 @@ def init_project(name: str, description: str = "") -> str:
     """
     Initialises a .claude-project file in the current directory.
     Like `git init` but for Claude project context.
-    Creates the file, assigns a UUID, links to the Obsidian vault.
+    Creates the file, assigns a UUID, and sets up the memory directory.
     Safe to call even if .claude-project already exists — will not overwrite.
 
     Args:
@@ -348,132 +342,30 @@ def init_project(name: str, description: str = "") -> str:
         )
 
     project_id = str(uuid.uuid4())
-    obsidian_folder = f"Projects/{name}"
-    diary_path = str(Path.home() / ".claude" / "projects" / f"project-{project_id[:8]}" / "memory")
+    memory_path = str(Path.home() / ".claude" / "projects" / f"project-{project_id[:8]}" / "memory")
 
     data = {
-        "$schema": "https://cdn.jsdelivr.net/npm/@claudelab/project/schema/claude-project.schema.json",
-        "version": "4",
+        "$schema": "https://cdn.jsdelivr.net/npm/claude-project/schema/claude-project.schema.json",
+        "version": "5.0",
         "project_id": project_id,
         "name": name,
         "description": description,
         "created": _today_prefix(),
         "created_by": _get_source(),
-        "obsidian_vault": str(_DEFAULT_OBSIDIAN_VAULT),
-        "obsidian_folder": obsidian_folder,
-        "diary_path": diary_path,
+        "memory_path": memory_path,
     }
 
     target.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-    Path(diary_path).mkdir(parents=True, exist_ok=True)
-
-    # Create Obsidian folder structure
-    obs_dir = _DEFAULT_OBSIDIAN_VAULT / obsidian_folder
-    obs_dir.mkdir(parents=True, exist_ok=True)
-    index_file = obs_dir / "README.md"
-    index_file.write_text(
-        f"# {name}\n\n{description}\n\n"
-        f"- **Project ID:** `{project_id}`\n"
-        f"- **Created:** {_today_prefix()} by {_get_source()}\n"
-        f"- **Diary:** `{diary_path}`\n",
-        encoding="utf-8",
-    )
+    Path(memory_path).mkdir(parents=True, exist_ok=True)
 
     return (
         f"Initialised project '{name}'\n"
         f"  UUID:     {project_id}\n"
-        f"  Diary:    {diary_path}\n"
-        f"  Obsidian: {obs_dir}\n"
+        f"  Memory:   {memory_path}\n"
         f"  Source:   {_get_source()}\n"
         f"\n.claude-project written to {target}"
     )
 
-
-@mcp.tool()
-def get_source_info() -> str:
-    """
-    Returns the current source attribution label and project context.
-    Call this to confirm what device/user/connection the MCP detects.
-    Useful for verifying the setup on a new machine or user account.
-    """
-    source = _get_source()
-    ctx = _find_project_context()
-    memory_dir, obsidian_vault, obsidian_folder = _resolve_paths()
-
-    lines = [
-        f"**Source:** {source}",
-        f"**Hostname:** {socket.gethostname()}",
-        f"**User:** {os.getenv('USER', 'unknown')}",
-        f"**SSH session:** {'yes' if os.getenv('SSH_CLIENT') or os.getenv('SSH_TTY') else 'no'}",
-        "",
-        f"**Memory dir:** {memory_dir}",
-        f"**Obsidian vault:** {obsidian_vault}",
-        f"**Obsidian folder:** {obsidian_folder}",
-    ]
-    if ctx:
-        lines += [
-            "",
-            f"**Project:** {ctx.get('name', '?')}",
-            f"**Project ID:** {ctx.get('project_id', '?')[:8]}",
-            f"**.claude-project found at:** {Path.cwd()}",
-        ]
-    else:
-        lines += ["", "**Project context:** none (.claude-project not found — using defaults)"]
-
-    return "\n".join(lines)
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# ORIENTATION TOOLS
-# ══════════════════════════════════════════════════════════════════════════════
-
-@mcp.tool()
-def get_context_legacy() -> str:
-    """
-    [DEPRECATED — use get_context() instead for compact typed output]
-    Single-call morning briefing — returns WAKEUP.md + last 2 journal entries as prose.
-    """
-    memory_dir, _, _ = _resolve_paths()
-    wakeup_file  = memory_dir / "WAKEUP.md"
-    journal_file = memory_dir / "SESSION_JOURNAL.md"
-
-    parts: list[str] = []
-    parts.append(f"## Current UTC Time\n{_now()}")
-    parts.append(f"## Source\n{_get_source()}")
-
-    ctx = _find_project_context()
-    if ctx:
-        parts.append(
-            f"## Project Context\n"
-            f"**{ctx.get('name')}** (ID: `{ctx.get('project_id','?')[:8]}`)\n"
-            f"{ctx.get('description','')}"
-        )
-
-    if wakeup_file.exists():
-        parts.append("## WAKEUP.md\n" + wakeup_file.read_text(encoding="utf-8"))
-    else:
-        parts.append("## WAKEUP.md\n(not found — memory may not be initialised yet)")
-
-    if journal_file.exists():
-        text = journal_file.read_text(encoding="utf-8")
-        entries = re.split(r"(?=^## \d{4}-\d{2}-\d{2})", text, flags=re.MULTILINE)
-        recent = [e.strip() for e in entries if re.match(r"^## \d{4}-\d{2}-\d{2}", e.strip())][:2]
-        if recent:
-            parts.append("## Last 2 Journal Entries\n\n" + "\n\n---\n\n".join(recent))
-    else:
-        parts.append("## Last 2 Journal Entries\n(no journal yet)")
-
-    return "\n\n" + "\n\n---\n\n".join(parts)
-
-
-@mcp.tool()
-def wakeup_read() -> str:
-    """Reads and returns the full contents of WAKEUP.md."""
-    memory_dir, _, _ = _resolve_paths()
-    wakeup_file = memory_dir / "WAKEUP.md"
-    if not wakeup_file.exists():
-        return "WAKEUP.md not found."
-    return wakeup_file.read_text(encoding="utf-8")
 
 
 @mcp.tool()
@@ -499,158 +391,6 @@ def get_time() -> str:
     return _now()
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# JOURNAL
-# ══════════════════════════════════════════════════════════════════════════════
-
-@mcp.tool()
-def journal_append(title: str, content: str) -> str:
-    """
-    Prepends a timestamped, UUID-tagged entry to SESSION_JOURNAL.md.
-    Also syncs to Obsidian with source attribution.
-    Call at session START with goal, and at session END with what happened.
-
-    Args:
-        title:   One-line session title, e.g. 'Milestone 1 — SDK connection'
-        content: Full markdown content for this entry
-    """
-    for val, name, lim in [(title, "title", _SHORT), (content, "content", _LONG)]:
-        err = _check(val, name, lim)
-        if err:
-            return err
-
-    memory_dir, obsidian_vault, obsidian_folder = _resolve_paths()
-    journal_file = memory_dir / "SESSION_JOURNAL.md"
-    source = _get_source()
-    ts = _now()
-    eid = _short_uuid()
-
-    entry = f"\n## {ts} — {title}\n*`{eid}` · {source}*\n\n{content.strip()}\n\n---\n"
-    _prepend_to_file(journal_file, "# Session Journal", entry)
-    _sync_obsidian(obsidian_vault, obsidian_folder, "Diary.md", f"### {title}\n\n{content.strip()}", source)
-
-    return f"Journal entry `{eid}` prepended at {ts} ({source})."
-
-
-@mcp.tool()
-def list_sessions(count: int = 3) -> str:
-    """Returns the most recent N session journal entries."""
-    count = min(max(int(count), 1), 10)
-    memory_dir, _, _ = _resolve_paths()
-    journal_file = memory_dir / "SESSION_JOURNAL.md"
-    if not journal_file.exists():
-        return "SESSION_JOURNAL.md not found yet."
-    text = journal_file.read_text(encoding="utf-8")
-    entries = re.split(r"(?=^## \d{4}-\d{2}-\d{2})", text, flags=re.MULTILINE)
-    recent = [e.strip() for e in entries if re.match(r"^## \d{4}-\d{2}-\d{2}", e.strip())][:count]
-    if not recent:
-        return "No timestamped session entries found yet."
-    return f"Last {len(recent)} session(s):\n\n" + "\n\n---\n\n".join(recent)
-
-
-@mcp.tool()
-def get_today() -> str:
-    """Returns all journal entries from today (UTC)."""
-    prefix = _today_prefix()
-    memory_dir, _, _ = _resolve_paths()
-    journal_file = memory_dir / "SESSION_JOURNAL.md"
-    if not journal_file.exists():
-        return "No journal yet."
-    text = journal_file.read_text(encoding="utf-8")
-    entries = re.split(r"(?=^## \d{4}-\d{2}-\d{2})", text, flags=re.MULTILINE)
-    today = [e.strip() for e in entries if e.strip().startswith(f"## {prefix}")]
-    if not today:
-        return f"No journal entries for {prefix} yet."
-    return f"Entries for {prefix}:\n\n" + "\n\n---\n\n".join(today)
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# WAKEUP MANAGEMENT
-# ══════════════════════════════════════════════════════════════════════════════
-
-@mcp.tool()
-def wakeup_update_section(section_heading: str, new_content: str) -> str:
-    """
-    Replaces the content of a named section in WAKEUP.md.
-    Also syncs the update to Obsidian with source attribution.
-
-    Args:
-        section_heading: Exact ## heading text, e.g. 'Last Session Summary'
-        new_content:     New markdown content
-    """
-    for val, name, lim in [
-        (section_heading, "section_heading", _SHORT),
-        (new_content, "new_content", _LONG),
-    ]:
-        err = _check(val, name, lim)
-        if err:
-            return err
-
-    memory_dir, obsidian_vault, obsidian_folder = _resolve_paths()
-    wakeup_file = memory_dir / "WAKEUP.md"
-    source = _get_source()
-
-    if not wakeup_file.exists():
-        return "WAKEUP.md not found."
-    text = wakeup_file.read_text(encoding="utf-8")
-    pattern = rf"(## {re.escape(section_heading)}\n)(.*?)(?=\n## |\Z)"
-    replacement = f"## {section_heading}\n{new_content.strip()}\n"
-    updated, count = re.subn(pattern, replacement, text, flags=re.DOTALL)
-    if count == 0:
-        headings = re.findall(r"^## (.+)$", text, re.MULTILINE)
-        return f"Section '## {section_heading}' not found. Available: {', '.join(headings)}"
-    wakeup_file.write_text(updated, encoding="utf-8")
-    _sync_obsidian(
-        obsidian_vault, obsidian_folder, "WAKEUP.md",
-        f"**{section_heading}** updated:\n\n{new_content.strip()}", source
-    )
-    return f"Section '## {section_heading}' updated ({source})."
-
-
-@mcp.tool()
-def add_open_question(question: str) -> str:
-    """Adds an unchecked item to 'Open Questions / Pending Decisions' in WAKEUP.md."""
-    err = _check(question, "question", _SHORT)
-    if err:
-        return err
-    memory_dir, _, _ = _resolve_paths()
-    wakeup_file = memory_dir / "WAKEUP.md"
-    if not wakeup_file.exists():
-        return "WAKEUP.md not found."
-    text = wakeup_file.read_text(encoding="utf-8")
-    pattern = r"(## Open Questions / Pending Decisions\n)(.*?)(?=\n## |\Z)"
-    def inserter(m):
-        return m.group(1) + m.group(2).rstrip() + f"\n- [ ] {question}\n"
-    updated, count = re.subn(pattern, inserter, text, flags=re.DOTALL)
-    if count == 0:
-        updated = text.rstrip() + f"\n\n## Open Questions / Pending Decisions\n\n- [ ] {question}\n"
-    wakeup_file.write_text(updated, encoding="utf-8")
-    return f"Question added: '{question}'"
-
-
-@mcp.tool()
-def resolve_question(question_fragment: str, resolution: str) -> str:
-    """Marks an open question as resolved in WAKEUP.md."""
-    for val, name, lim in [
-        (question_fragment, "question_fragment", _SHORT),
-        (resolution, "resolution", _MEDIUM),
-    ]:
-        err = _check(val, name, lim)
-        if err:
-            return err
-    memory_dir, _, _ = _resolve_paths()
-    wakeup_file = memory_dir / "WAKEUP.md"
-    if not wakeup_file.exists():
-        return "WAKEUP.md not found."
-    text = wakeup_file.read_text(encoding="utf-8")
-    pattern = rf"(- \[ \] )(.{{0,200}}{re.escape(question_fragment)}.{{0,200}})"
-    def resolver(m):
-        return f"- [x] {m.group(2).strip()} → *{resolution}*"
-    updated, count = re.subn(pattern, resolver, text, flags=re.IGNORECASE)
-    if count == 0:
-        return f"No unchecked question matching '{question_fragment}' found."
-    wakeup_file.write_text(updated, encoding="utf-8")
-    return f"Question resolved: '{question_fragment}' → {resolution}"
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -677,7 +417,7 @@ def note_discovery(topic: str, detail: str, tags: str = "") -> str:
         if err:
             return err
 
-    memory_dir, obsidian_vault, obsidian_folder = _resolve_paths()
+    memory_dir, dispatches_dir, db_path = _resolve_paths()
     discoveries_file = memory_dir / "discoveries.md"
     source = _get_source()
     ts = _now()
@@ -694,7 +434,7 @@ def note_discovery(topic: str, detail: str, tags: str = "") -> str:
         entry,
     )
     _sync_obsidian(
-        obsidian_vault, obsidian_folder, "Discoveries.md",
+        _DEFAULT_OBSIDIAN_VAULT, _DEFAULT_OBSIDIAN_FOLDER, "Discoveries.md",
         f"### {topic}\n\n{detail.strip()}{tag_line}", source
     )
     return f"Discovery `{eid}` logged: '{topic}' ({source})."
@@ -720,7 +460,7 @@ def log_decision(decision: str, rationale: str, alternatives: str = "") -> str:
         if err:
             return err
 
-    memory_dir, obsidian_vault, obsidian_folder = _resolve_paths()
+    memory_dir, dispatches_dir, db_path = _resolve_paths()
     decisions_file = memory_dir / "decisions.md"
     source = _get_source()
     ts = _now()
@@ -739,7 +479,7 @@ def log_decision(decision: str, rationale: str, alternatives: str = "") -> str:
         entry,
     )
     _sync_obsidian(
-        obsidian_vault, obsidian_folder, "Architecture.md",
+        _DEFAULT_OBSIDIAN_VAULT, _DEFAULT_OBSIDIAN_FOLDER, "Architecture.md",
         f"**Decision:** {decision.strip()}\n\n**Rationale:** {rationale.strip()}{alt_section}",
         source,
     )
@@ -764,7 +504,7 @@ def milestone(name: str, description: str) -> str:
         if err:
             return err
 
-    memory_dir, obsidian_vault, obsidian_folder = _resolve_paths()
+    memory_dir, dispatches_dir, db_path = _resolve_paths()
     milestones_file = memory_dir / "milestones.md"
     source = _get_source()
     ts = _now()
@@ -780,7 +520,7 @@ def milestone(name: str, description: str) -> str:
         entry,
     )
     _sync_obsidian(
-        obsidian_vault, obsidian_folder, "Milestones.md",
+        _DEFAULT_OBSIDIAN_VAULT, _DEFAULT_OBSIDIAN_FOLDER, "Milestones.md",
         f"### {name}\n\n{description.strip()}", source
     )
     return f"Milestone `{eid}` logged: '{name}' ({source})."
@@ -818,87 +558,6 @@ def memory_search(query: str) -> str:
     return f"{len(results)} match(es) for '{query}':\n\n" + "\n".join(results)
 
 
-@mcp.tool()
-def memory_append_thought(thought: str) -> str:
-    """
-    Appends a timestamped thought to THOUGHTS.md with source attribution.
-    Also syncs to Obsidian.
-
-    Args:
-        thought: The thought, question, or observation to preserve
-    """
-    err = _check(thought, "thought", _LONG)
-    if err:
-        return err
-    memory_dir, obsidian_vault, obsidian_folder = _resolve_paths()
-    thoughts_file = memory_dir / "THOUGHTS.md"
-    source = _get_source()
-    ts = _now()
-    eid = _short_uuid()
-    entry = f"\n---\n\n## {ts}\n*`{eid}` · {source}*\n\n{thought.strip()}\n"
-    _append_to_file(thoughts_file, "# Thoughts", entry)
-    _sync_obsidian(obsidian_vault, obsidian_folder, "Thoughts.md", thought.strip(), source)
-    return f"Thought `{eid}` appended ({source})."
-
-
-@mcp.tool()
-def read_memory_file(filename: str) -> str:
-    """
-    Reads any named .md file from the memory directory.
-    Pass just the filename (not the full path).
-
-    Args:
-        filename: e.g. 'DEXTER.md' or 'discoveries.md'
-    """
-    err = _check(filename, "filename", 100)
-    if err:
-        return err
-    memory_dir, _, _ = _resolve_paths()
-    target = (memory_dir / filename).resolve()
-    if memory_dir.resolve() not in target.parents and target != memory_dir.resolve():
-        return f"Access denied: '{filename}' is outside the memory directory."
-    if target.suffix.lower() != ".md":
-        return "Only .md files can be read via this tool."
-    if not target.exists():
-        available = [f.name for f in memory_dir.glob("*.md")]
-        return f"'{filename}' not found. Available: {', '.join(sorted(available))}"
-    return target.read_text(encoding="utf-8")
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PROFILE TOOL
-# ══════════════════════════════════════════════════════════════════════════════
-
-@mcp.tool()
-def update_dexter_profile(section: str, note: str) -> str:
-    """
-    Appends a note to a specific section of DEXTER.md.
-
-    Args:
-        section: Which section to update, e.g. 'Who He Is'
-        note:    The note to append
-    """
-    for val, name, lim in [(section, "section", _SHORT), (note, "note", _MEDIUM)]:
-        err = _check(val, name, lim)
-        if err:
-            return err
-    memory_dir, _, _ = _resolve_paths()
-    dexter_file = memory_dir / "DEXTER.md"
-    if not dexter_file.exists():
-        return "DEXTER.md not found."
-    text = dexter_file.read_text(encoding="utf-8")
-    ts = _today_prefix()
-    source = _get_source()
-    pattern = rf"(## {re.escape(section)}\n)(.*?)(?=\n## |\Z)"
-    def appender(m):
-        existing = m.group(2).rstrip()
-        return f"{m.group(1)}{existing}\n- *[{ts} · {source}]* {note.strip()}\n"
-    updated, count = re.subn(pattern, appender, text, flags=re.DOTALL)
-    if count == 0:
-        updated = text.rstrip() + f"\n\n## {section}\n\n- *[{ts} · {source}]* {note.strip()}\n"
-    dexter_file.write_text(updated, encoding="utf-8")
-    return f"DEXTER.md updated: '{section}' ({source})."
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # v4: REGISTRY HELPERS  (reads ~/.claude/registry.json)
@@ -933,11 +592,12 @@ def _get_events_path(ctx: dict | None) -> Path | None:
     """Returns path to events.jsonl for the current project context."""
     if not ctx:
         return None
-    diary_path = ctx.get("diary_path")
-    if not diary_path:
+    # v5: memory_path; v4 backward compat: diary_path
+    raw = ctx.get("memory_path") or ctx.get("diary_path")  # diary_path compat
+    if not raw:
         return None
-    memory_dir = Path(diary_path).expanduser()
-    # diary_path ends with /memory — events.jsonl is one level up
+    memory_dir = Path(raw).expanduser()
+    # memory_path ends with /memory — events.jsonl is one level up
     return memory_dir.parent / "events.jsonl"
 
 
@@ -969,10 +629,11 @@ def _get_dispatches_dir(ctx: dict | None) -> Path | None:
     """Returns path to dispatches/ for the current project context."""
     if not ctx:
         return None
-    diary_path = ctx.get("diary_path")
-    if not diary_path:
+    # v5: memory_path; v4 backward compat: diary_path
+    raw = ctx.get("memory_path") or ctx.get("diary_path")  # diary_path compat
+    if not raw:
         return None
-    memory_dir = Path(diary_path).expanduser()
+    memory_dir = Path(raw).expanduser()
     return memory_dir.parent / "dispatches"
 
 
@@ -991,7 +652,7 @@ def get_project_info() -> str:
     if not ctx:
         return "No .claude-project found in this directory or any parent."
 
-    memory_dir, obsidian_vault, obsidian_folder = _resolve_paths()
+    memory_dir, dispatches_dir, db_path = _resolve_paths()
     events_path = _get_events_path(ctx)
     dispatches_dir = _get_dispatches_dir(ctx)
 
@@ -1022,7 +683,7 @@ def get_project_info() -> str:
         f"- Memory: `{memory_dir}`",
         f"- Events: `{events_path}` ({event_count} events)",
         f"- Dispatches: `{dispatches_dir}` ({pending_dispatches} pending)",
-        f"- Obsidian: `{obsidian_vault}/{obsidian_folder}`",
+        f"- Obsidian sync: {'enabled' if _OBSIDIAN_ENABLED else 'disabled'}",
         "",
     ]
 
@@ -1442,6 +1103,8 @@ def _get_source_structured() -> dict:
 
 def _async_obsidian_export(category: str, text: str, entry_id: str):
     """Fire-and-forget Obsidian export — never blocks the caller."""
+    if not _OBSIDIAN_ENABLED:
+        return
     ctx = _find_project_context()
     if not ctx:
         return
@@ -1549,7 +1212,7 @@ def query_memory(query: str, category: Optional[str] = None, limit: int = 5) -> 
 @mcp.tool()
 def get_context() -> dict:
     """
-    Compact typed session state. Call at every session start — 95% fewer tokens than get_context_legacy().
+    Compact typed session state. Call at every session start.
     Returns: {stage, blockers, open_questions, critical_facts, last_session_summary}
     """
     memory_dir, _, _ = _resolve_paths()

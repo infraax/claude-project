@@ -1,80 +1,81 @@
+// src/lib/paths.ts
+// Resolves all file-system paths for a claude-project project.
+// Single source of truth — no obsidian paths, no legacy WAKEUP/journal paths.
+
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { ClaudeProject, DEFAULTS, expandHome } from './project.js';
+import { ClaudeProject } from './project.js';
 
 // ── Resolved paths for a project ──────────────────────────────────────────────
 
-export interface ResolvedPaths {
+export interface ProjectPaths {
   memoryDir: string;
-  obsidianVault: string;
-  obsidianFolder: string;
-  obsidianProjectDir: string;
-  wakeupFile: string;
-  journalFile: string;
-  // v4: runtime dirs
-  runtimeDir: string;       // <diary_parent>/  e.g. ~/.claude/projects/project-XXXX/
-  eventsFile: string;       // runtimeDir/events.jsonl
-  sessionsDir: string;      // runtimeDir/sessions/
-  dispatchesDir: string;    // runtimeDir/dispatches/
-  // v4: project config dirs (alongside .claude-project)
-  dotClaudeDir: string;     // projectDir/.claude/
-  agentsDir: string;        // projectDir/.claude/agents/
-  servicesDir: string;      // projectDir/.claude/services/
-  automationsDir: string;   // projectDir/.claude/automations/
-  toolsDir: string;         // projectDir/.claude/tools/
+  dispatchesDir: string;
+  eventsFile: string;
+  dbPath: string;
+  researchDbPath: string;
+  // project-local config dirs (alongside .claude-project)
+  runtimeDir: string;
+  sessionsDir: string;
+  dotClaudeDir: string;
+  agentsDir: string;
+  servicesDir: string;
+  automationsDir: string;
+  toolsDir: string;
 }
 
-export function resolvePaths(project: ClaudeProject, projectDir?: string): ResolvedPaths {
-  const memoryDir = expandHome(project.diary_path);
-  const obsidianVault = expandHome(project.obsidian_vault ?? DEFAULTS.obsidianVault);
-  const obsidianFolder = project.obsidian_folder ?? 'Projects/Unsorted';
-  const obsidianProjectDir = path.join(obsidianVault, obsidianFolder);
+// Backward-compat alias — callers will be updated file by file in Phase 10.
+export type ResolvedPaths = ProjectPaths;
 
-  // Runtime dir lives one level above memory/ (the project-XXXX folder)
-  const runtimeDir = path.dirname(memoryDir);
+function expandHome(p: string): string {
+  return p.startsWith('~') ? path.join(os.homedir(), p.slice(1)) : p;
+}
 
-  // .claude/ config dir lives alongside .claude-project in the project root
+export function resolvePaths(project: ClaudeProject, projectDir?: string): ProjectPaths {
+  // memory_path is the new field; diary_path kept for backward-compat read-only.
+  const rawMemory =
+    project.memory_path ??
+    (project as any).diary_path ??
+    process.env['CLAUDE_PROJECT_DIR'] ??
+    path.join(os.homedir(), '.claude', 'projects', `project-${((project as any).project_id ?? (project as any).id ?? 'default').slice(0, 8)}`, 'memory');
+
+  const memoryDir = expandHome(rawMemory);
+  const runtimeDir = path.dirname(memoryDir); // project-XXXX folder
+
   const dotClaudeDir = projectDir
     ? path.join(projectDir, '.claude')
     : path.join(process.cwd(), '.claude');
 
   return {
     memoryDir,
-    obsidianVault,
-    obsidianFolder,
-    obsidianProjectDir,
-    wakeupFile: path.join(memoryDir, 'WAKEUP.md'),
-    journalFile: path.join(memoryDir, 'SESSION_JOURNAL.md'),
-    // v4 runtime dirs
     runtimeDir,
-    eventsFile: path.join(runtimeDir, 'events.jsonl'),
-    sessionsDir: path.join(runtimeDir, 'sessions'),
-    dispatchesDir: path.join(runtimeDir, 'dispatches'),
-    // v4 project config dirs
+    dispatchesDir:  path.join(runtimeDir, 'dispatches'),
+    eventsFile:     path.join(runtimeDir, 'events.jsonl'),
+    sessionsDir:    path.join(runtimeDir, 'sessions'),
+    dbPath:         path.join(runtimeDir, 'memory.db'),
+    researchDbPath: path.join(runtimeDir, 'research.db'),
     dotClaudeDir,
-    agentsDir: path.join(dotClaudeDir, 'agents'),
-    servicesDir: path.join(dotClaudeDir, 'services'),
+    agentsDir:      path.join(dotClaudeDir, 'agents'),
+    servicesDir:    path.join(dotClaudeDir, 'services'),
     automationsDir: path.join(dotClaudeDir, 'automations'),
-    toolsDir: path.join(dotClaudeDir, 'tools'),
+    toolsDir:       path.join(dotClaudeDir, 'tools'),
   };
 }
 
 // ── MCP server path (bundled server.py) ───────────────────────────────────────
 
 export function getMcpServerPath(): string {
-  // Resolve relative to this file's location so it works whether running
-  // from source (dist/) or installed globally (node_modules/.bin → dist/).
   const candidates = [
-    path.join(__dirname, '..', '..', 'mcp', 'server.py'),   // dist/ → repo root
-    path.join(__dirname, '..', 'mcp', 'server.py'),          // fallback
+    path.join(__dirname, '..', '..', 'mcp', 'server.py'),
+    path.join(__dirname, '..', 'mcp', 'server.py'),
   ];
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) return candidate;
   }
   throw new Error(
     `MCP server.py not found. Expected at: ${candidates[0]}\n` +
-    'Run: npm install -g @claudelab/project',
+    'Run: npm install -g claude-project',
   );
 }
 
@@ -88,17 +89,19 @@ export function getPython(): string {
     'python',
   ];
   for (const p of candidates) {
-    if (!p.includes('/')) return p; // bare name — let PATH handle it
+    if (!p.includes('/')) return p;
     if (fs.existsSync(p)) return p;
   }
   return 'python3';
 }
 
-// ── Default diary dir (used when no project context) ─────────────────────────
+// ── Default memory dir (used when no project context) ────────────────────────
 
 export function getDefaultMemoryDir(): string {
-  return process.env['CLAUDE_DIARY_PATH']
-    ?? path.join(os.homedir(), '.claude', 'memory');
+  return (
+    process.env['CLAUDE_PROJECT_DIR'] ??
+    path.join(os.homedir(), '.claude', 'projects', 'default', 'memory')
+  );
 }
 
 // ── Known project search roots ────────────────────────────────────────────────
@@ -110,10 +113,7 @@ export function getSearchRoots(): string[] {
     path.join(os.homedir(), 'Projects'),
     os.homedir(),
   ];
-
-  // Optional extra root from env (e.g. a shared SSD or network drive)
   const extra = process.env['CLAUDE_PROJECTS_ROOT'];
   if (extra) roots.unshift(extra);
-
   return roots.filter(fs.existsSync);
 }

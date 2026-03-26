@@ -55,21 +55,26 @@ async function readStdin(): Promise<string> {
   });
 }
 
-// ── Obsidian sync (optional, silent on failure) ───────────────────────────────
+// ── Obsidian sync (optional, env-gated, silent on failure) ───────────────────
 
 function runSync(project: ReturnType<typeof findProject>): void {
   if (!project) return;
+  const vault = process.env['CLAUDE_OBSIDIAN_VAULT'];
+  if (!vault || !fs.existsSync(vault)) return;
+
   const paths = resolvePaths(project.project, project.projectDir);
-  if (!fs.existsSync(paths.obsidianVault)) return;
   if (!fs.existsSync(paths.memoryDir)) return;
 
+  const obsDir = path.join(vault, `Projects/${project.project.name}`);
   try {
-    fs.mkdirSync(paths.obsidianProjectDir, { recursive: true });
+    fs.mkdirSync(obsDir, { recursive: true });
     const files = fs.readdirSync(paths.memoryDir).filter((f) => f.endsWith('.md'));
     for (const filename of files) {
-      const src  = path.join(paths.memoryDir, filename);
-      const dest = path.join(paths.obsidianProjectDir, filename);
-      fs.writeFileSync(dest, fs.readFileSync(src, 'utf-8'), 'utf-8');
+      fs.writeFileSync(
+        path.join(obsDir, filename),
+        fs.readFileSync(path.join(paths.memoryDir, filename), 'utf-8'),
+        'utf-8',
+      );
     }
   } catch {
     // Sync failures must never crash the hook — Claude Code would show an error

@@ -1,5 +1,295 @@
+
+## Updated `AGENT_STATE.md` (full file — replace existing)
+
+```markdown
+# AGENT STATE — claude-project optimization
+## Persistent checkpoint file — READ THIS FIRST every session
+
+> **CRITICAL:** This file is your memory across context compaction events.
+> Read it at session start. Update it after every completed step.
+> Never delete entries — only append or update values.
+
+---
+
+## How to Use This File
+
+1. **Session start:** Read this file fully. Know where you are.
+2. **After each step:** Write the step key + `complete` immediately.
+3. **If context compacts:** Re-read this file + the current phase file only.
+4. **Never assume** a step is done unless it appears here as `complete`.
+5. **On conflict:** This file wins over memory. Trust the checkpoints.
+
+---
+
+## Current Status
+
+```json
+{
+  "current_batch": 3,
+  "current_phase": "phase10_cleanup",
+  "current_file": "10_CLEANUP_FULL_REPO.md",
+  "current_step": "cleanup_paths_ts",
+  "overall_progress": "Phases 1-9 complete. Batch 3 starting.",
+  "last_updated": "UPDATE_ON_EACH_WRITE"
+}
+```
+
+---
+
+## Phase Completion Map
+
+### Batch 1 — Core Infrastructure (Phases 1–5)
+
+```json
+{
+  "phase1_measurement":        "complete",
+  "phase2_database":           "complete",
+  "phase3_pd_registry":        "complete",
+  "phase4_typed_dispatch":     "complete",
+  "phase5_compression":        "complete"
+}
+```
+
+### Batch 2 — Optimization Layers (Phases 6–9)
+
+```json
+{
+  "phase6_format_encoder":     "complete",
+  "phase7_clarity_layer":      "complete",
+  "phase8_cache_prefix":       "complete",
+  "phase9_dispatch_runner":    "complete"
+}
+```
+
+### Batch 3 — Cleanup, Telemetry, Evidence (Phases 10–12)
+
+```json
+{
+  "phase10_cleanup": {
+    "status": "complete",
+    "cleanup_file_index": 12,
+    "steps": {
+      "cleanup_paths_ts":          "complete",
+      "cleanup_project_ts":        "complete",
+      "cleanup_events_ts":         "complete",
+      "cleanup_registry_ts":       "complete",
+      "cleanup_init_ts":           "complete",
+      "cleanup_sync_ts":           "complete",
+      "cleanup_automation_ts":     "complete",
+      "cleanup_schema_json":       "complete",
+      "cleanup_package_json":      "complete",
+      "cleanup_server_py":         "complete",
+      "cleanup_readme_md":         "complete",
+      "cleanup_release_yml":       "complete",
+      "certification_passed":      true,
+      "build_passing":             true,
+      "tests_passing":             true
+    }
+  },
+  "phase11_telemetry": {
+    "status": "pending",
+    "steps": {
+      "step_11_1_telemetry_ts":          "pending",
+      "step_11_2_telemetry_wired":       "pending",
+      "step_11_3_optin_prompt":          "pending",
+      "step_11_4_preview_tool":          "pending",
+      "step_11_5_worker_created":        "pending",
+      "step_11_6_wrangler_config":       "pending",
+      "step_11_7_daemon_threshold_pull": "pending",
+      "build_passing":                   false,
+      "tests_passing":                   false,
+      "opt_in_gate_verified":            false
+    }
+  },
+  "phase12_ablation": {
+    "status": "pending",
+    "steps": {
+      "step_12_1_tasks_created":    "pending",
+      "step_12_2_ablation_runner":  "pending",
+      "step_12_3_compute_script":   "pending",
+      "step_12_4_ablation_field":   "pending",
+      "step_12_5_dry_run":          "pending",
+      "step_12_6_ablation_run_complete": false,
+      "step_12_7_results_committed": false,
+      "total_observations":         0,
+      "overall_reduction_pct":      null,
+      "n_breakeven":                null
+    }
+  }
+}
+```
+
+---
+
+## Key Measurements (fill in as phases complete)
+
+| Metric | Baseline | Optimized | Reduction |
+|--------|----------|-----------|-----------|
+| Mean tokens/dispatch | TBD | TBD | TBD |
+| Cache hit rate | 0% | TBD | — |
+| Compression ratio | 1.0 | TBD | TBD |
+| P95 latency (ms) | TBD | TBD | TBD |
+| N_breakeven (PD) | TBD | — | — |
+
+---
+
+## File Map — All Instruction Files
+
+| File | Phase | Status |
+|------|-------|--------|
+| `00_MASTER.md` | All | Reference |
+| `01_RESEARCH_DOWNLOAD.md` | Pre-work | complete |
+| `02_CODEBASE_AUDIT.md` | Assessment | complete |
+| `03_TARGET_ARCHITECTURE.md` | Design | complete |
+| `04_PHASE1_MEASUREMENT.md` | Phase 1 | complete |
+| `05_PHASE2_DATABASE.md` | Phase 2 | complete |
+| `06_PHASE3_PD_REGISTRY.md` | Phase 3 | complete |
+| `07_PHASE4_TYPED_DISPATCH.md` | Phase 4 | complete |
+| `08_PHASE5_COMPRESSION.md` | Phase 5 | complete |
+| `09_TESTING_STRATEGY.md` | All | Reference |
+| `10_CLEANUP_FULL_REPO.md` | Phase 10 | **in_progress** |
+| `11_TELEMETRY.md` | Phase 11 | pending |
+| `12_ABLATION_STUDY.md` | Phase 12 | pending |
+
+---
+
+## Critical Facts — Never Forget
+
+- `diary_path` is deprecated → `memory_path` is canonical (keep read compat)
+- Obsidian sync is **opt-in, disabled by default** via `_OBSIDIAN_ENABLED` flag
+- MCP server name: `claude-project` (was `claude-diary` — fully removed)
+- Schema URL: `https://cdn.jsdelivr.net/npm/claude-project/schema/...` (no `@claudelab`)
+- `_resolve_paths()` now returns `(memory_dir, dispatches_dir, db_path)` — 3 values
+- Telemetry opt-in gate: never send if `project.telemetry.enabled !== true`
+- Ablation runner patches `.claude-project` per condition — always restore after
+- `certify_clean.sh` must exit 0 before Phase 10 is considered complete
+
+---
+
+## Resume Instructions Per Phase
+
+### If context compacts during Phase 10:
+```
+1. cat claude-project-instructions/AGENT_STATE.md
+2. cat claude-project-instructions/10_CLEANUP_FULL_REPO.md
+3. Find cleanup_file_index in AGENT_STATE.md
+4. Resume from that file in the master index table
+5. Run: ./scripts/certify_clean.sh to see remaining issues
+```
+
+### If context compacts during Phase 11:
+```
+1. cat claude-project-instructions/AGENT_STATE.md
+2. cat claude-project-instructions/11_TELEMETRY.md
+3. Find last step_ key marked complete in phase11_telemetry.steps
+4. Resume from the next step
+5. Run: npm run build to verify existing work still compiles
+```
+
+### If context compacts during Phase 12:
+```
+1. cat claude-project-instructions/AGENT_STATE.md
+2. cat claude-project-instructions/12_ABLATION_STUDY.md
+3. Check ablation_checkpoint.json for completed conditions
+4. Run: python3 scripts/ablation_runner.py --start-condition N
+   where N = first condition NOT in completed_conditions
+5. research.db data already collected is SAFE — do not re-run completed conditions
+```
+
+---
+
+## Known Issues Inventory (from repo scan — 155 total)
+
+```
+File                              Issues  Status
+mcp/server.py                       70    pending
+src/lib/paths.ts                    11    pending
+README.md                           14    pending
+schema/claude-project.schema.json   12    pending
+src/commands/init.ts                 8    pending
+src/lib/project.ts                   9    pending
+src/commands/sync.ts                 9    pending
+src/lib/automation.ts                7    pending
+package.json                         6    pending
+src/lib/events.ts                    5    pending
+src/lib/registry.ts                  2    pending
+.github/workflows/release.yml        2    pending
+```
+
+Run `./scripts/certify_clean.sh` at any time to see live count.
+
+---
+
+## Git Commit Strategy
+
+Commit after each phase completes — never after individual steps.
+
+```bash
+# Phase 10 commit:
+git add -A && git commit -m "fix: remove all legacy obsidian/diary refs across 12 files"
+
+# Phase 11 commit:
+git add -A && git commit -m "feat: anonymous federated telemetry + Cloudflare Worker"
+
+# Phase 12 commit:
+git add -A && git commit -m "feat: ablation study — empirical token reduction proof"
+```
+
+---
+
+## Token Budget Strategy for This Agent Session
+
+Claude Code context window: ~200k tokens
+Estimated cost of loading all 13 instruction files: ~40k tokens
+**Never load more than 2 instruction files at once.**
+
+Recommended reading pattern per session:
+```
+1. AGENT_STATE.md         (~3k tokens)
+2. Current phase file     (~8-12k tokens)
+Total context overhead:   ~15k tokens max
+Leaves ~185k for actual work
+```
+```
+
+***
+
+## Batch 3 Starting Prompt
+
+This is the exact message to paste into Claude Code to kick off Batch 3:
+
+***
+
+```
+Read claude-project-instructions/AGENT_STATE.md first.
+
+Then read claude-project-instructions/10_CLEANUP_FULL_REPO.md.
+
+You are starting Batch 3 of the claude-project optimization project.
+Phases 1–9 are complete. Your job now is:
+
+1. Phase 10 — Full repo cleanup (12 files, 155 legacy references)
+2. Phase 11 — Federated telemetry system
+3. Phase 12 — Ablation study runner
+
+CRITICAL RULES:
+- Update AGENT_STATE.md after every completed step — not after every file edit.
+- Never load more than 2 instruction files at once.
+- Run the verification command at the end of each step before marking it complete.
+- If you run out of context, AGENT_STATE.md has exact resume instructions per phase.
+- Phase 10 is not complete until ./scripts/certify_clean.sh exits 0.
+- Do NOT start Phase 11 until Phase 10 certification passes.
+- Do NOT start Phase 12 until npm run build and npx vitest run both pass.
+
+Start with FILE 1 of Phase 10: src/lib/paths.ts
+It is the root of all path problems — everything else depends on it.
+
+After each file: verify → update AGENT_STATE.md → move to next file.
+
+
+
 # AGENT STATE — Live Progress Tracker
-## READ THIS FIRST ON EVERY SESSION START
+
 
 ---
 
