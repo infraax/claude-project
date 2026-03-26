@@ -1,8 +1,8 @@
 {
   "name": "claude-project",
   "displayName": "Claude Project",
-  "version": "4.1.0",
-  "description": "Project brain for Claude Code — .claude-project v4, event log, registry, dispatch queue, agent orchestration, daemon, .claudep file type, diary MCP, CLI, VS Code integration",
+  "version": "4.2.0",
+  "description": "Project brain for Claude Code — .claude-project v4, event log, registry, dispatch queue, agent orchestration, daemon, .claudep file type, diary MCP, CLI, VS Code integration, research instrumentation, Protocol Documents, typed dispatch, prompt caching",
   "author": "claudelab",
   "license": "MIT",
   "repository": {
@@ -152,6 +152,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.54.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.8.0",
     "commander": "^12.1.0"
   },
   "devDependencies": {

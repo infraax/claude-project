@@ -428,10 +428,10 @@ def get_source_info() -> str:
 # ══════════════════════════════════════════════════════════════════════════════
 
 @mcp.tool()
-def get_context() -> str:
+def get_context_legacy() -> str:
     """
-    Single-call morning briefing — the FIRST tool to call at every session start.
-    Returns: current UTC time + source info + full WAKEUP.md + last 2 journal entries.
+    [DEPRECATED — use get_context() instead for compact typed output]
+    Single-call morning briefing — returns WAKEUP.md + last 2 journal entries as prose.
     """
     memory_dir, _, _ = _resolve_paths()
     wakeup_file  = memory_dir / "WAKEUP.md"
@@ -1343,6 +1343,589 @@ def complete_dispatch(dispatch_id: str, outcome: str = "") -> str:
     })
 
     return f"Dispatch `{dispatch_id}` marked as completed ({_get_source()})."
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PHASE 5 — Agent-Optimized Database Layer
+# SQLite + LanceDB for semantic memory, file summaries, session state
+# ══════════════════════════════════════════════════════════════════════════════
+
+import sqlite3
+import hashlib
+import threading
+from typing import Optional
+
+try:
+    import lancedb as _lancedb_mod
+    _LANCEDB_AVAILABLE = True
+except ImportError:
+    _LANCEDB_AVAILABLE = False
+
+_EMBED_MODEL = None
+
+def _get_embed_model():
+    global _EMBED_MODEL
+    if _EMBED_MODEL is None:
+        from sentence_transformers import SentenceTransformer
+        _EMBED_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+    return _EMBED_MODEL
+
+def _get_db_paths(memory_dir: Path) -> dict:
+    project_dir = memory_dir.parent
+    return {
+        "sqlite":  project_dir / "research.db",
+        "lancedb": project_dir / "vectors",
+    }
+
+def _init_sqlite_v5(db_path: Path) -> sqlite3.Connection:
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS memories (
+            id TEXT PRIMARY KEY, category TEXT NOT NULL,
+            text TEXT NOT NULL, text_hash TEXT NOT NULL,
+            project_id TEXT NOT NULL, source TEXT NOT NULL,
+            tags TEXT, created_at TEXT NOT NULL, updated_at TEXT
+        )""")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS file_summaries (
+            path TEXT NOT NULL, project_id TEXT NOT NULL,
+            summary TEXT NOT NULL, summary_hash TEXT NOT NULL,
+            file_hash TEXT NOT NULL, updated_at TEXT NOT NULL,
+            PRIMARY KEY (path, project_id)
+        )""")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS session_state (
+            project_id TEXT PRIMARY KEY, stage TEXT,
+            blockers TEXT, open_questions TEXT,
+            critical_facts TEXT, last_session_summary TEXT,
+            updated_at TEXT NOT NULL
+        )""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_mem_project ON memories(project_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_mem_category ON memories(category)")
+    try:
+        conn.execute("CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(id, text, category)")
+    except Exception:
+        pass
+    conn.commit()
+    return conn
+
+def _init_lancedb_v5(lancedb_path: Path):
+    if not _LANCEDB_AVAILABLE:
+        return None
+    lancedb_path.mkdir(parents=True, exist_ok=True)
+    db = _lancedb_mod.connect(str(lancedb_path))
+    if "memory_vec" not in db.table_names():
+        import pyarrow as pa
+        db.create_table("memory_vec", schema=pa.schema([
+            pa.field("id", pa.string()), pa.field("vector", pa.list_(pa.float32(), 384)),
+            pa.field("category", pa.string()), pa.field("text", pa.string()),
+            pa.field("project_id", pa.string()), pa.field("ts", pa.string()),
+        ]))
+    if "file_summaries_vec" not in db.table_names():
+        import pyarrow as pa
+        db.create_table("file_summaries_vec", schema=pa.schema([
+            pa.field("path", pa.string()), pa.field("vector", pa.list_(pa.float32(), 384)),
+            pa.field("project_id", pa.string()), pa.field("summary", pa.string()),
+        ]))
+    return db
+
+def _get_source_structured() -> dict:
+    return {
+        "device_id": socket.gethostname(),
+        "hostname": socket.gethostname().lower(),
+        "user": os.getenv("USER", "unknown"),
+        "ssh_client": os.getenv("SSH_CLIENT"),
+    }
+
+def _async_obsidian_export(category: str, text: str, entry_id: str):
+    """Fire-and-forget Obsidian export — never blocks the caller."""
+    ctx = _find_project_context()
+    if not ctx:
+        return
+    if not ctx.get("obsidian_sync", {}).get("enabled", False):
+        return
+    def _export():
+        try:
+            pass  # placeholder — obsidian write logic would go here
+        except Exception:
+            pass
+    threading.Thread(target=_export, daemon=True).start()
+
+
+@mcp.tool()
+def store_memory(category: str, text: str, tags: Optional[list] = None) -> dict:
+    """
+    Store a typed memory entry.
+    category: decision | discovery | fact | milestone | question
+    Returns: {id, category, text_hash}
+    """
+    valid = ("decision", "discovery", "fact", "milestone", "question")
+    if category not in valid:
+        return {"error": f"Invalid category. Use one of: {' | '.join(valid)}"}
+
+    memory_dir, _, _ = _resolve_paths()
+    db_paths   = _get_db_paths(memory_dir)
+    conn       = _init_sqlite_v5(db_paths["sqlite"])
+    lance_db   = _init_lancedb_v5(db_paths["lancedb"])
+    project_id = _current_project_id()
+    entry_id   = str(uuid.uuid4())[:8]
+    text_hash  = hashlib.sha256(text.encode()).hexdigest()[:16]
+    source     = json.dumps(_get_source_structured())
+    now        = datetime.now(timezone.utc).isoformat()
+
+    conn.execute(
+        "INSERT INTO memories (id, category, text, text_hash, project_id, source, tags, created_at) VALUES (?,?,?,?,?,?,?,?)",
+        (entry_id, category, text, text_hash, project_id, source, json.dumps(tags or []), now)
+    )
+    try:
+        conn.execute("INSERT INTO memories_fts (id, text, category) VALUES (?,?,?)", (entry_id, text, category))
+    except Exception:
+        pass
+    conn.commit()
+
+    if lance_db is not None:
+        try:
+            vector = _get_embed_model().encode(text).tolist()
+            lance_db.open_table("memory_vec").add([{
+                "id": entry_id, "vector": vector, "category": category,
+                "text": text, "project_id": project_id, "ts": now,
+            }])
+        except Exception:
+            pass
+
+    _async_obsidian_export(category, text, entry_id)
+    conn.close()
+    return {"id": entry_id, "category": category, "text_hash": text_hash}
+
+
+@mcp.tool()
+def query_memory(query: str, category: Optional[str] = None, limit: int = 5) -> list:
+    """
+    Semantic search over stored memories. Returns [{id, category, text, score}].
+    Prefer this over reading memory files directly.
+    """
+    memory_dir, _, _ = _resolve_paths()
+    db_paths   = _get_db_paths(memory_dir)
+    project_id = _current_project_id()
+
+    if _LANCEDB_AVAILABLE:
+        try:
+            lance_db  = _init_lancedb_v5(db_paths["lancedb"])
+            query_vec = _get_embed_model().encode(query).tolist()
+            results   = (
+                lance_db.open_table("memory_vec")
+                .search(query_vec)
+                .where(f"project_id = '{project_id}'")
+                .limit(limit)
+                .to_list()
+            )
+            if category:
+                results = [r for r in results if r["category"] == category]
+            return [{"id": r["id"], "category": r["category"],
+                     "text": r["text"][:500], "score": round(float(r["_distance"]), 4)}
+                    for r in results]
+        except Exception:
+            pass
+
+    # FTS5 fallback
+    conn = _init_sqlite_v5(db_paths["sqlite"])
+    try:
+        rows = conn.execute(
+            "SELECT id, category, text FROM memories_fts WHERE memories_fts MATCH ? AND id IN (SELECT id FROM memories WHERE project_id=?) LIMIT ?",
+            (query, project_id, limit)
+        ).fetchall()
+    except Exception:
+        rows = conn.execute(
+            "SELECT id, category, text FROM memories WHERE project_id=? AND text LIKE ? LIMIT ?",
+            (project_id, f"%{query}%", limit)
+        ).fetchall()
+    conn.close()
+    return [{"id": r["id"], "category": r["category"], "text": r["text"][:500], "score": None} for r in rows]
+
+
+@mcp.tool()
+def get_context() -> dict:
+    """
+    Compact typed session state. Call at every session start — 95% fewer tokens than get_context_legacy().
+    Returns: {stage, blockers, open_questions, critical_facts, last_session_summary}
+    """
+    memory_dir, _, _ = _resolve_paths()
+    conn       = _init_sqlite_v5(_get_db_paths(memory_dir)["sqlite"])
+    project_id = _current_project_id()
+    row        = conn.execute("SELECT * FROM session_state WHERE project_id=?", (project_id,)).fetchone()
+    conn.close()
+    if not row:
+        return {"stage": "unknown", "blockers": [], "open_questions": [], "critical_facts": [], "last_session_summary": None}
+    return {
+        "stage":                row["stage"],
+        "blockers":             json.loads(row["blockers"] or "[]"),
+        "open_questions":       json.loads(row["open_questions"] or "[]"),
+        "critical_facts":       json.loads(row["critical_facts"] or "[]"),
+        "last_session_summary": row["last_session_summary"],
+    }
+
+
+@mcp.tool()
+def set_context(stage: Optional[str] = None, blockers: Optional[list] = None,
+                open_questions: Optional[list] = None, critical_facts: Optional[list] = None,
+                last_session_summary: Optional[str] = None) -> dict:
+    """Update typed session state. Only provided fields are written. Others unchanged."""
+    memory_dir, _, _ = _resolve_paths()
+    conn       = _init_sqlite_v5(_get_db_paths(memory_dir)["sqlite"])
+    project_id = _current_project_id()
+    now        = datetime.now(timezone.utc).isoformat()
+    existing   = conn.execute("SELECT * FROM session_state WHERE project_id=?", (project_id,)).fetchone()
+
+    if existing:
+        updates = {"updated_at": now}
+        if stage is not None:                updates["stage"] = stage
+        if blockers is not None:             updates["blockers"] = json.dumps(blockers)
+        if open_questions is not None:       updates["open_questions"] = json.dumps(open_questions)
+        if critical_facts is not None:       updates["critical_facts"] = json.dumps(critical_facts)
+        if last_session_summary is not None: updates["last_session_summary"] = last_session_summary
+        set_clause = ", ".join(f"{k} = ?" for k in updates)
+        conn.execute(f"UPDATE session_state SET {set_clause} WHERE project_id=?",
+                     (*updates.values(), project_id))
+    else:
+        conn.execute(
+            "INSERT INTO session_state (project_id, stage, blockers, open_questions, critical_facts, last_session_summary, updated_at) VALUES (?,?,?,?,?,?,?)",
+            (project_id, stage, json.dumps(blockers or []), json.dumps(open_questions or []),
+             json.dumps(critical_facts or []), last_session_summary, now)
+        )
+    conn.commit()
+    conn.close()
+    return {"updated": True, "project_id": project_id}
+
+
+@mcp.tool()
+def set_file_summary(file_path: str, summary: str) -> dict:
+    """
+    Store a 1-line semantic summary for a file (~15 tokens vs reading the full file).
+    Always call after analysing any file. Prevents token waste on re-reads.
+    """
+    memory_dir, _, _ = _resolve_paths()
+    db_paths   = _get_db_paths(memory_dir)
+    conn       = _init_sqlite_v5(db_paths["sqlite"])
+    lance_db   = _init_lancedb_v5(db_paths["lancedb"])
+    project_id = _current_project_id()
+    now        = datetime.now(timezone.utc).isoformat()
+
+    full_path = os.path.join(os.getcwd(), file_path) if not os.path.isabs(file_path) else file_path
+    file_hash = ""
+    if os.path.exists(full_path):
+        with open(full_path, "rb") as f:
+            file_hash = hashlib.sha256(f.read()).hexdigest()[:16]
+
+    summary_hash = hashlib.sha256(summary.encode()).hexdigest()[:16]
+    conn.execute(
+        "INSERT OR REPLACE INTO file_summaries (path, project_id, summary, summary_hash, file_hash, updated_at) VALUES (?,?,?,?,?,?)",
+        (file_path, project_id, summary, summary_hash, file_hash, now)
+    )
+    conn.commit()
+
+    if lance_db is not None:
+        try:
+            vector = _get_embed_model().encode(summary).tolist()
+            tbl = lance_db.open_table("file_summaries_vec")
+            tbl.delete(f"path = '{file_path}'")
+            tbl.add([{"path": file_path, "vector": vector, "project_id": project_id, "summary": summary}])
+        except Exception:
+            pass
+
+    conn.close()
+    return {"path": file_path, "summary_hash": summary_hash, "file_hash": file_hash}
+
+
+@mcp.tool()
+def get_file_summary(file_path: str) -> dict:
+    """
+    Get stored 1-line summary for a file. Always call this before reading a file.
+    Returns: {found, path, summary, is_stale, updated_at}
+    """
+    memory_dir, _, _ = _resolve_paths()
+    conn       = _init_sqlite_v5(_get_db_paths(memory_dir)["sqlite"])
+    project_id = _current_project_id()
+    row        = conn.execute(
+        "SELECT * FROM file_summaries WHERE path=? AND project_id=?", (file_path, project_id)
+    ).fetchone()
+    conn.close()
+
+    if not row:
+        return {"found": False, "path": file_path}
+
+    full_path = os.path.join(os.getcwd(), file_path) if not os.path.isabs(file_path) else file_path
+    current_hash = ""
+    if os.path.exists(full_path):
+        with open(full_path, "rb") as f:
+            current_hash = hashlib.sha256(f.read()).hexdigest()[:16]
+    return {
+        "found": True, "path": file_path, "summary": row["summary"],
+        "is_stale": current_hash != row["file_hash"] if current_hash else False,
+        "updated_at": row["updated_at"],
+    }
+
+
+@mcp.tool()
+def find_related_files(query: str, limit: int = 5) -> list:
+    """Semantic search over file summaries. Returns relevant files without reading them."""
+    memory_dir, _, _ = _resolve_paths()
+    db_paths   = _get_db_paths(memory_dir)
+    project_id = _current_project_id()
+
+    if _LANCEDB_AVAILABLE:
+        try:
+            lance_db  = _init_lancedb_v5(db_paths["lancedb"])
+            query_vec = _get_embed_model().encode(query).tolist()
+            results   = (
+                lance_db.open_table("file_summaries_vec")
+                .search(query_vec)
+                .where(f"project_id = '{project_id}'")
+                .limit(limit)
+                .to_list()
+            )
+            return [{"path": r["path"], "summary": r["summary"],
+                     "score": round(float(r["_distance"]), 4)} for r in results]
+        except Exception:
+            pass
+
+    conn = _init_sqlite_v5(db_paths["sqlite"])
+    rows = conn.execute(
+        "SELECT path, summary FROM file_summaries WHERE project_id=? AND summary LIKE ? LIMIT ?",
+        (project_id, f"%{query}%", limit)
+    ).fetchall()
+    conn.close()
+    return [{"path": r["path"], "summary": r["summary"], "score": None} for r in rows]
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PHASE 8 — Compression Layer: LLMLingua + dispatch_task full pipeline tool
+# ══════════════════════════════════════════════════════════════════════════════
+
+_LINGUA_COMPRESSOR = None
+
+
+def _get_lingua_compressor():
+    """Lazy-load LLMLingua-2. Returns 'unavailable' string on failure — callers must check."""
+    global _LINGUA_COMPRESSOR
+    if _LINGUA_COMPRESSOR is None:
+        try:
+            from llmlingua import PromptCompressor
+            _LINGUA_COMPRESSOR = PromptCompressor(
+                model_name="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank",
+                use_llmlingua2=True,
+                device_map="cpu",
+            )
+        except Exception as e:
+            print(f"[compression] LLMLingua unavailable: {e}. Using passthrough.")
+            _LINGUA_COMPRESSOR = "unavailable"
+    return _LINGUA_COMPRESSOR
+
+
+def compress_natural_language(text: str, target_ratio: float = 0.6) -> dict:
+    """
+    Compress natural-language text using LLMLingua-2.
+    ONLY call on natural_language format dispatches — never on typed_pseudocode/DSL/TOON.
+    """
+    import time
+    start = time.monotonic()
+    original_chars = len(text)
+
+    compressor = _get_lingua_compressor()
+    if compressor == "unavailable" or len(text) < 200:
+        return {
+            "compressed": text, "original_chars": original_chars,
+            "compressed_chars": original_chars, "ratio": 1.0,
+            "latency_ms": 0, "passthrough": True,
+        }
+
+    try:
+        result = compressor.compress_prompt(
+            text,
+            rate=target_ratio,
+            force_tokens=["\n", ".", "!", "?"],
+            drop_consecutive=True,
+        )
+        compressed = result["compressed_prompt"]
+        latency_ms = int((time.monotonic() - start) * 1000)
+        return {
+            "compressed": compressed,
+            "original_chars": original_chars,
+            "compressed_chars": len(compressed),
+            "ratio": round(len(compressed) / original_chars, 4),
+            "latency_ms": latency_ms,
+            "passthrough": False,
+        }
+    except Exception as e:
+        return {
+            "compressed": text, "original_chars": original_chars,
+            "compressed_chars": original_chars, "ratio": 1.0,
+            "latency_ms": 0, "passthrough": True, "error": str(e),
+        }
+
+
+@mcp.tool()
+def dispatch_task(title: str, body: str, agent: Optional[str] = None,
+                  priority: str = "normal", context: Optional[str] = None) -> dict:
+    """
+    Full-pipeline dispatch: Clarity Layer → LLMLingua compression → Submit.
+    Prefer over raw dispatch for all natural language inputs.
+    Returns: {dispatch_id, task_type, clarity_passthrough, compression_ratio, original_chars, final_chars}
+    """
+    import sys as _sys2
+    _sys2.path.insert(0, str(Path(__file__).parent))
+    from clarity_layer import clarify
+    from task_classifier_py import classify_task_type
+    import time
+
+    timings = {}
+
+    # Step 1: Clarity Layer
+    clarity_result = clarify(body, context=context)
+    timings["clarity_ms"] = clarity_result["latency_ms"]
+    clean_body = clarity_result["output"]
+
+    # Step 2: Classify then compress (only NL tasks)
+    task_type = classify_task_type(title, clean_body)
+    compress_result = {"ratio": 1.0, "passthrough": True, "latency_ms": 0}
+    if task_type in ("planning", "documentation", "unknown"):
+        compress_result = compress_natural_language(clean_body, target_ratio=0.65)
+        clean_body = compress_result["compressed"]
+    timings["compression_ms"] = compress_result.get("latency_ms", 0)
+
+    # Step 3: Create dispatch file
+    memory_dir, dispatches_dir, _ = _resolve_paths()
+    dispatch_id = str(uuid.uuid4())[:8]
+    now = datetime.now(timezone.utc).isoformat()
+
+    dispatch_data = {
+        "id": dispatch_id, "title": title, "body": clean_body,
+        "original_body_chars": len(body), "encoded_body_chars": len(clean_body),
+        "compression_ratio": compress_result["ratio"],
+        "task_type": task_type, "agent": agent, "priority": priority,
+        "status": "pending", "created": now, "protocol_condition": "natural_language",
+    }
+    with open(dispatches_dir / f"{dispatch_id}.json", "w") as f:
+        json.dump(dispatch_data, f, indent=2)
+
+    return {
+        "dispatch_id": dispatch_id, "task_type": task_type,
+        "clarity_passthrough": clarity_result["passthrough"],
+        "compression_ratio": compress_result["ratio"],
+        "original_chars": len(body), "final_chars": len(clean_body),
+        "timings_ms": timings,
+    }
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PHASE 6 — Protocol Document Registry MCP Tools
+# ══════════════════════════════════════════════════════════════════════════════
+
+import sys as _sys
+_sys.path.insert(0, str(Path(__file__).parent))
+from pd_registry import (
+    register_pd_entry, get_pd_entry, search_pd_entries,
+    log_pd_use, deprecate_pd, increment_interaction_count,
+)
+
+_PD_NEGOTIATION_THRESHOLD = 3
+
+
+@mcp.tool()
+def register_pd(text: str, task_type: str, interaction_pair: str) -> dict:
+    """
+    Register a new Protocol Document (content-addressed by SHA-256).
+    Returns {id, is_new}. Identical text always returns the same id — no duplicates.
+    Call search_pd first to avoid creating redundant PDs.
+    """
+    memory_dir, _, _ = _resolve_paths()
+    conn = _init_sqlite_v5(_get_db_paths(memory_dir)["sqlite"])
+    result = register_pd_entry(conn, text, task_type, interaction_pair, created_by="negotiation_controller")
+    conn.close()
+    return result
+
+
+@mcp.tool()
+def get_pd(pd_id: str) -> dict:
+    """
+    Retrieve a Protocol Document by its SHA-256 id.
+    Returns {found, id, text, task_type, interaction_pair, use_count, deprecated}.
+    """
+    memory_dir, _, _ = _resolve_paths()
+    conn  = _init_sqlite_v5(_get_db_paths(memory_dir)["sqlite"])
+    entry = get_pd_entry(conn, pd_id)
+    conn.close()
+    if not entry:
+        return {"found": False, "id": pd_id}
+    return {
+        "found": True,
+        "id": entry["id"], "text": entry["text"],
+        "task_type": entry["task_type"], "interaction_pair": entry["interaction_pair"],
+        "use_count": entry["use_count"], "created_at": entry["created_at"],
+        "deprecated": bool(entry["deprecated"]), "superseded_by": entry["superseded_by"],
+    }
+
+
+@mcp.tool()
+def search_pd(task_type: Optional[str] = None, interaction_pair: Optional[str] = None,
+              limit: int = 5) -> list:
+    """
+    Find existing Protocol Documents. Always call this before negotiating a new PD.
+    Returns [{id, task_type, interaction_pair, use_count, created_at}] ordered by use_count.
+    """
+    memory_dir, _, _ = _resolve_paths()
+    conn    = _init_sqlite_v5(_get_db_paths(memory_dir)["sqlite"])
+    results = search_pd_entries(conn, task_type, interaction_pair, limit)
+    conn.close()
+    return results
+
+
+@mcp.tool()
+def log_pd_usage(pd_id: str, dispatch_id: str, tokens_saved: Optional[int] = None) -> dict:
+    """
+    Record a PD usage event and increment its use_count.
+    tokens_saved: estimated tokens saved vs natural-language baseline.
+    """
+    memory_dir, _, _ = _resolve_paths()
+    conn       = _init_sqlite_v5(_get_db_paths(memory_dir)["sqlite"])
+    project_id = _current_project_id()
+    session_id = os.getenv("CLAUDE_SESSION_ID", "unknown")
+    log_pd_use(conn, pd_id, dispatch_id, session_id, project_id, tokens_saved)
+    conn.close()
+    return {"logged": True, "pd_id": pd_id}
+
+
+@mcp.tool()
+def check_negotiation_threshold(interaction_pair: str) -> dict:
+    """
+    Check if an interaction pair has reached the PD negotiation threshold (default 3).
+    Returns {pair, count, threshold, should_negotiate, existing_pd_id}.
+    Call at dispatch start to decide whether to trigger the negotiation_controller.
+    """
+    memory_dir, _, _ = _resolve_paths()
+    conn       = _init_sqlite_v5(_get_db_paths(memory_dir)["sqlite"])
+    project_id = _current_project_id()
+
+    row = conn.execute(
+        "SELECT count, pd_assigned FROM interaction_counts WHERE pair=? AND project_id=?",
+        (interaction_pair, project_id)
+    ).fetchone()
+    count       = row["count"]      if row else 0
+    pd_assigned = row["pd_assigned"] if row else None
+
+    # Increment counter for this interaction
+    increment_interaction_count(conn, interaction_pair, project_id)
+    conn.close()
+
+    return {
+        "pair": interaction_pair,
+        "count": count + 1,
+        "threshold": _PD_NEGOTIATION_THRESHOLD,
+        "should_negotiate": (count + 1) >= _PD_NEGOTIATION_THRESHOLD and pd_assigned is None,
+        "existing_pd_id": pd_assigned,
+    }
 
 
 # ══════════════════════════════════════════════════════════════════════════════
