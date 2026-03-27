@@ -20,7 +20,7 @@ jobs:
       actions: write
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -47,7 +47,7 @@ jobs:
         run: test -f mcp/server.py && echo "server.py OK"
 
       - name: Upload dist artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
@@ -67,7 +67,7 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js (npm registry)
         uses: actions/setup-node@v4

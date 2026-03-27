@@ -3,215 +3,884 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>claude-project — Dashboard</title>
+<title>claude-project — Project brain for Claude Code</title>
+<meta name="description" content="Give Claude persistent memory, event logs, agent dispatch, automations, and an MCP server for any project. TGCH optimization stack with 90% cache hit rate.">
+<meta property="og:title" content="claude-project — Project brain for Claude Code">
+<meta property="og:description" content="Persistent memory · Agent dispatch · TGCH optimization · 12 MCP tools · VS Code extension">
+<meta property="og:url" content="https://infraax.github.io/claude-project/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
 <style>
-  :root {
-    --bg: #0d1117; --surface: #161b22; --border: #30363d;
-    --text: #e6edf3; --muted: #7d8590; --green: #3fb950;
-    --yellow: #d29922; --red: #f85149; --blue: #58a6ff;
-    --purple: #bc8cff; --orange: #ffa657;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace; font-size: 14px; min-height: 100vh; }
+:root {
+  --bg:       #060912;
+  --surface:  #0d1117;
+  --surface2: #161b22;
+  --border:   #21262d;
+  --text:     #e6edf3;
+  --muted:    #7d8590;
+  --blue:     #58a6ff;
+  --green:    #3fb950;
+  --purple:   #bc8cff;
+  --orange:   #ffa657;
+  --red:      #f85149;
+  --yellow:   #d29922;
+  --grad:     linear-gradient(135deg, #58a6ff 0%, #bc8cff 50%, #ffa657 100%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;line-height:1.6;overflow-x:hidden}
+a{color:var(--blue);text-decoration:none}
+a:hover{text-decoration:underline}
+code,pre{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace}
+.max{max-width:1140px;margin:0 auto;padding:0 24px}
 
-  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
-  header h1 { font-size: 16px; font-weight: 600; color: var(--blue); }
-  header h1 span { color: var(--muted); font-weight: 400; }
-  .live-badge { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
-  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:200;background:rgba(6,9,18,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav-inner{display:flex;align-items:center;gap:0;height:56px;max-width:1140px;margin:0 auto;padding:0 24px}
+.nav-logo{font-weight:700;font-size:15px;color:var(--text);white-space:nowrap;margin-right:auto}
+.nav-logo .brain{color:var(--purple)}
+.nav-links{display:flex;align-items:center;gap:0}
+.nav-links a{color:var(--muted);font-size:13px;padding:0 14px;height:56px;display:flex;align-items:center;transition:color .15s}
+.nav-links a:hover{color:var(--text);text-decoration:none}
+.nav-links a.active{color:var(--text)}
+.nav-btn{background:var(--blue);color:#000 !important;font-weight:600;font-size:12px;padding:6px 14px !important;height:auto !important;border-radius:6px;margin-left:8px}
+.nav-btn:hover{background:#79c0ff;text-decoration:none !important}
 
-  main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+/* ── HERO ── */
+.hero{padding:100px 24px 80px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 50% at 50% 0%, rgba(88,166,255,.12) 0%, transparent 70%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(188,140,255,.1);border:1px solid rgba(188,140,255,.3);border-radius:100px;padding:6px 16px;font-size:12px;color:var(--purple);margin-bottom:32px}
+.hero-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+h1{font-size:clamp(36px,7vw,72px);font-weight:800;letter-spacing:-2px;line-height:1.05;margin-bottom:24px}
+h1 .grad{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:clamp(15px,2.5vw,20px);color:var(--muted);max-width:600px;margin:0 auto 40px;line-height:1.6}
+.hero-ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:64px}
+.btn-primary{background:var(--blue);color:#000;font-weight:700;font-size:14px;padding:12px 28px;border-radius:8px;transition:all .15s;display:inline-flex;align-items:center;gap:8px}
+.btn-primary:hover{background:#79c0ff;text-decoration:none;transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text);font-weight:600;font-size:14px;padding:12px 28px;border-radius:8px;border:1px solid var(--border);transition:all .15s;display:inline-flex;align-items:center;gap:8px}
+.btn-ghost:hover{border-color:var(--blue);text-decoration:none;transform:translateY(-1px)}
 
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+/* ── TERMINAL ── */
+.terminal{background:#010409;border:1px solid var(--border);border-radius:12px;max-width:680px;margin:0 auto;text-align:left;overflow:hidden;box-shadow:0 32px 64px rgba(0,0,0,.5)}
+.term-bar{background:var(--surface2);display:flex;align-items:center;gap:8px;padding:12px 16px}
+.term-dot{width:12px;height:12px;border-radius:50%}
+.term-dot:nth-child(1){background:#ff5f57}
+.term-dot:nth-child(2){background:#febc2e}
+.term-dot:nth-child(3){background:#28c840}
+.term-title{flex:1;text-align:center;font-size:12px;color:var(--muted)}
+.term-body{padding:20px;font-size:13px;line-height:1.7;min-height:220px}
+.term-prompt{color:var(--green)}
+.term-cmd{color:var(--text)}
+.term-out{color:var(--muted);padding-left:2px}
+.term-ok{color:var(--green)}
+.term-info{color:var(--blue)}
+.cursor{display:inline-block;width:8px;height:1em;background:var(--text);vertical-align:text-bottom;animation:blink .8s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
-  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 16px; }
+/* ── STATS BAR ── */
+.stats-bar{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:24px 0;background:var(--surface)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.stat-item{text-align:center;padding:8px;border-right:1px solid var(--border)}
+.stat-item:last-child{border-right:none}
+.stat-num{font-size:28px;font-weight:800;line-height:1;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-lbl{font-size:12px;color:var(--muted);margin-top:4px}
 
-  .stat-value { font-size: 32px; font-weight: 700; color: var(--text); line-height: 1; }
-  .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
-  .stat-sub { font-size: 12px; color: var(--green); margin-top: 6px; }
+/* ── FEATURES ── */
+section{padding:80px 0}
+.section-label{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--purple);margin-bottom:12px;font-weight:600}
+h2{font-size:clamp(24px,4vw,40px);font-weight:800;letter-spacing:-1px;margin-bottom:16px}
+.section-sub{font-size:16px;color:var(--muted);max-width:560px;margin-bottom:56px}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.feat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .2s,transform .2s}
+.feat-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.feat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:16px}
+.feat-title{font-size:14px;font-weight:700;margin-bottom:8px}
+.feat-desc{font-size:13px;color:var(--muted);line-height:1.5}
+.feat-tag{display:inline-block;background:rgba(88,166,255,.1);color:var(--blue);font-size:10px;padding:2px 8px;border-radius:100px;margin-top:10px;font-weight:600}
 
-  .service-list { display: flex; flex-direction: column; gap: 8px; }
-  .service-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); }
-  .service-name { font-size: 13px; font-weight: 500; }
-  .service-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-  .badge-online  { background: rgba(63,185,80,.15);  color: var(--green);  }
-  .badge-degraded{ background: rgba(210,153,34,.15); color: var(--yellow); }
-  .badge-offline { background: rgba(248,81,73,.15);  color: var(--red);    }
-  .badge-loading { background: rgba(88,166,255,.1);  color: var(--blue);   }
-  .badge::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+/* ── TGCH ── */
+.tgch-section{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.tgch-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border)}
+.tgch-panel{background:var(--surface);padding:32px 24px;position:relative;overflow:hidden}
+.tgch-panel::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;pointer-events:none}
+.tgch-panel:hover::after{opacity:1}
+.tgch-letter{font-size:56px;font-weight:900;line-height:1;margin-bottom:8px;letter-spacing:-2px}
+.tgch-name{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:16px}
+.tgch-desc{font-size:13px;color:var(--text);margin-bottom:20px;line-height:1.5}
+.tgch-bar-wrap{background:rgba(255,255,255,.05);border-radius:4px;height:6px;overflow:hidden}
+.tgch-bar{height:100%;border-radius:4px;width:0;transition:width 1.2s cubic-bezier(.34,1.56,.64,1)}
+.tgch-bar.animate{width:var(--pct)}
+.tgch-stat{font-size:11px;color:var(--muted);margin-top:8px}
 
-  .tgch-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-  .tgch-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 14px; text-align: center; }
-  .tgch-letter { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
-  .tgch-name { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
-  .tgch-status { font-size: 11px; padding: 2px 8px; border-radius: 10px; display: inline-block; }
-  .tgch-active  { background: rgba(63,185,80,.15);  color: var(--green);  }
-  .tgch-pending { background: rgba(210,153,34,.15); color: var(--yellow); }
-  .tgch-cold    { background: rgba(125,133,144,.15); color: var(--muted); }
+/* ── ARCHITECTURE ── */
+.arch-diagram{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:32px;overflow-x:auto}
+.arch-layer{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+.arch-node{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;white-space:nowrap}
+.arch-node.blue{border-color:rgba(88,166,255,.4);color:var(--blue);background:rgba(88,166,255,.05)}
+.arch-node.purple{border-color:rgba(188,140,255,.4);color:var(--purple);background:rgba(188,140,255,.05)}
+.arch-node.green{border-color:rgba(63,185,80,.4);color:var(--green);background:rgba(63,185,80,.05)}
+.arch-node.orange{border-color:rgba(255,166,87,.4);color:var(--orange);background:rgba(255,166,87,.05)}
+.arch-arrow{font-size:18px;color:var(--border);margin:2px 0;text-align:center;flex-shrink:0}
+.arch-row{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
 
-  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 4px; }
-  .progress-fill { height: 100%; border-radius: 2px; transition: width .6s ease; }
+/* ── STATUS ── */
+.status-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.status-category{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px}
+.status-cat-title{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:16px;font-weight:600}
+.status-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.status-item:last-child{border-bottom:none}
+.status-name{font-size:13px}
+.status-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px}
+.s-online{background:rgba(63,185,80,.15);color:var(--green)}
+.s-degraded{background:rgba(210,153,34,.15);color:var(--yellow)}
+.s-offline{background:rgba(248,81,73,.15);color:var(--red)}
+.s-ready{background:rgba(88,166,255,.1);color:var(--blue)}
+.s-checking{background:rgba(125,133,144,.1);color:var(--muted)}
+.status-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+.status-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:40px}
+.status-live{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.status-live::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
 
-  @media(max-width:768px){ .grid-4{grid-template-columns:1fr 1fr;} .grid-2{grid-template-columns:1fr;} .tgch-grid{grid-template-columns:1fr 1fr;} }
+/* ── CALCULATOR ── */
+.calc-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.calc-inputs{display:flex;flex-direction:column;gap:20px}
+.calc-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:8px}
+.calc-field input,
+.calc-field select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:6px;font-size:14px}
+.calc-field input:focus,
+.calc-field select:focus{outline:none;border-color:var(--blue)}
+.calc-results{display:flex;flex-direction:column;gap:16px;justify-content:center}
+.calc-row{display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)}
+.calc-row-label{font-size:13px;color:var(--muted)}
+.calc-row-val{font-size:18px;font-weight:700}
+.calc-row.highlight{border-color:rgba(63,185,80,.3);background:rgba(63,185,80,.05)}
+.calc-row.highlight .calc-row-val{color:var(--green)}
+
+/* ── INSTALL ── */
+.install-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:0}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:13px;padding:10px 20px;cursor:pointer;font-family:inherit;transition:all .15s;margin-bottom:-1px}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-panel{display:none;background:var(--surface2);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px}
+.tab-panel.active{display:block}
+.code-block{position:relative}
+.code-block pre{padding:24px;font-size:13px;line-height:1.7;overflow-x:auto;color:var(--text)}
+.copy-btn{position:absolute;top:12px;right:12px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:11px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit;transition:all .15s}
+.copy-btn:hover{color:var(--text);border-color:var(--blue)}
+.copy-btn.copied{color:var(--green);border-color:var(--green)}
+.install-wrapper{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+
+/* ── SYNTAX HIGHLIGHT ── */
+.kw{color:var(--purple)}
+.cm{color:var(--muted);font-style:italic}
+.st{color:var(--orange)}
+.ok{color:var(--green)}
+.hl{color:var(--blue)}
+.dim{color:var(--muted)}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--border);padding:48px 0;background:var(--surface)}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px}
+.footer-brand .tagline{font-size:13px;color:var(--muted);margin:12px 0 16px}
+.footer-badges{display:flex;flex-wrap:wrap;gap:6px}
+.footer-col h4{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:16px;font-weight:600}
+.footer-col ul{list-style:none}
+.footer-col li{margin-bottom:10px}
+.footer-col a{font-size:13px;color:var(--muted);transition:color .15s}
+.footer-col a:hover{color:var(--text);text-decoration:none}
+.footer-bottom{margin-top:48px;padding-top:24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.footer-bottom p{font-size:12px;color:var(--muted)}
+
+/* ── UTILS ── */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes fade-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.fade-up{opacity:0;animation:fade-up .6s ease forwards}
+.badge{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:3px 10px;font-size:11px;color:var(--muted)}
+
+@media(max-width:900px){.features-grid{grid-template-columns:repeat(2,1fr)}.tgch-grid{grid-template-columns:repeat(2,1fr)}.status-grid{grid-template-columns:1fr}.calc-grid{grid-template-columns:1fr}.footer-grid{grid-template-columns:1fr 1fr}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.features-grid{grid-template-columns:1fr}.tgch-grid{grid-template-columns:1fr}.nav-links{display:none}.footer-grid{grid-template-columns:1fr}.stats-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
-<header>
-  <h1>claude-project <span>/ dashboard</span></h1>
-  <div class="live-badge">
-    <div class="live-dot"></div>
-    <span id="last-update">Loading...</span>
-  </div>
-</header>
 
-<main>
-  <!-- Pipeline Metrics Row -->
-  <div class="grid-4">
-    <div class="card">
-      <div class="stat-value" id="m-runs">—</div>
-      <div class="stat-label">Total Runs</div>
-      <div class="stat-sub" id="m-last-run">—</div>
-    </div>
-    <div class="card">
-      <div class="stat-value" id="m-success">—</div>
-      <div class="stat-label">Success Rate</div>
-      <div class="progress-bar"><div class="progress-fill" id="m-success-bar" style="background:var(--green);width:0%"></div></div>
-    </div>
-    <div class="card">
-      <div class="stat-value" id="m-cache">—</div>
-      <div class="stat-label">Cache Hit Rate</div>
-      <div class="progress-bar"><div class="progress-fill" id="m-cache-bar" style="background:var(--blue);width:0%"></div></div>
-    </div>
-    <div class="card">
-      <div class="stat-value" id="m-cost">—</div>
-      <div class="stat-label">Total Cost (USD)</div>
-      <div class="stat-sub" id="m-tokens">—</div>
+<!-- ── NAVIGATION ── -->
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo"><span class="brain">🧠</span> claude-project</div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#status">Status</a>
+      <a href="#install">Install</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="https://github.com/infraax/claude-project" target="_blank">GitHub</a>
+      <a href="https://www.npmjs.com/package/claude-project" target="_blank" class="nav-btn">npm ↗</a>
     </div>
   </div>
+</nav>
 
-  <!-- TGCH Stack -->
-  <div class="card" style="margin-bottom:24px;">
-    <h2>TGCH Optimization Stack</h2>
-    <div class="tgch-grid">
-      <div class="tgch-card">
-        <div class="tgch-letter" style="color:var(--blue)">T</div>
-        <div class="tgch-name">Token Cache</div>
-        <div class="tgch-status tgch-active" id="tgch-t">ACTIVE</div>
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="max">
+    <div class="hero-badge">v5.2.0 · Now with Orchestration Layer &amp; Live Dashboard</div>
+    <h1>Project brain<br>for <span class="grad">Claude Code</span></h1>
+    <p class="hero-sub">Drop a <code>.claude-project</code> file in any directory to give Claude persistent memory, agent dispatch, TGCH optimization, and 12 MCP tools — out of the box.</p>
+    <div class="hero-ctas">
+      <a href="#install" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+      <a href="https://www.npmjs.com/package/claude-project" target="_blank" class="btn-ghost">
+        <svg width="16" height="16" viewBox="0 0 780 250" fill="currentColor"><path d="M240 250V0H0v250h240zm-200-40V40h120v130H100V40H60v170zm380 40V0H260v250h80V80h40v170zm220 0V0H480v250h80V80h40v130h-40V170h-40v80h80z"/></svg>
+        npm install
+      </a>
+    </div>
+
+    <!-- Terminal -->
+    <div class="terminal">
+      <div class="term-bar">
+        <div class="term-dot"></div><div class="term-dot"></div><div class="term-dot"></div>
+        <span class="term-title">claude-project — zsh</span>
       </div>
-      <div class="tgch-card">
-        <div class="tgch-letter" style="color:var(--green)">G</div>
-        <div class="tgch-name">Grammar</div>
-        <div class="tgch-status tgch-active" id="tgch-g">ACTIVE</div>
-      </div>
-      <div class="tgch-card">
-        <div class="tgch-letter" style="color:var(--yellow)">C</div>
-        <div class="tgch-name">Compression</div>
-        <div class="tgch-status tgch-cold" id="tgch-c">COLD START</div>
-      </div>
-      <div class="tgch-card">
-        <div class="tgch-letter" style="color:var(--purple)">H</div>
-        <div class="tgch-name">Habit</div>
-        <div class="tgch-status tgch-pending" id="tgch-h">WARMING</div>
+      <div class="term-body" id="terminal-body">
+        <div><span class="term-prompt">$ </span><span class="term-cmd" id="term-line-1"></span><span class="cursor" id="cursor-1"></span></div>
+        <div id="term-out-1"></div>
+        <div id="term-line-2-wrap" style="display:none"><span class="term-prompt">$ </span><span class="term-cmd" id="term-line-2"></span><span class="cursor" id="cursor-2" style="display:none"></span></div>
+        <div id="term-out-2"></div>
+        <div id="term-line-3-wrap" style="display:none"><span class="term-prompt">$ </span><span class="term-cmd" id="term-line-3"></span><span class="cursor" id="cursor-3" style="display:none"></span></div>
+        <div id="term-out-3"></div>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- Services Split -->
-  <div class="grid-2">
-    <div class="card">
-      <h2>Core Infrastructure</h2>
-      <div class="service-list" id="services-core"></div>
-    </div>
-    <div class="card">
-      <h2>AI &amp; Data Services</h2>
-      <div class="service-list" id="services-ai"></div>
+<!-- ── STATS BAR ── -->
+<div class="stats-bar">
+  <div class="max">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-num" id="stat-downloads">—</div>
+        <div class="stat-lbl">Downloads / month</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">12</div>
+        <div class="stat-lbl">MCP Tools</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">14</div>
+        <div class="stat-lbl">Cloud Services</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num" id="stat-stars">—</div>
+        <div class="stat-lbl">GitHub Stars</div>
+      </div>
     </div>
   </div>
-</main>
+</div>
 
-<script>
-// CONFIG: update API_BASE to your cloudflared tunnel URL or leave empty for same-origin
-const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:3456'
-  : '';
+<!-- ── FEATURES ── -->
+<section id="features">
+  <div class="max">
+    <div class="section-label">Capabilities</div>
+    <h2>Everything your Claude needs</h2>
+    <p class="section-sub">A complete project-brain layer — persistent state, tools, and optimization — wired into Claude Code via MCP.</p>
+    <div class="features-grid">
 
-const CORE_SERVICES = ['cloudflare', 'neon', 'qdrant', 'upstash', 'firebase'];
-const AI_SERVICES   = ['pinecone', 'cohere', 'huggingface'];
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(88,166,255,.1)">🧠</div>
+        <div class="feat-title">Persistent Memory</div>
+        <div class="feat-desc">Structured <code>.md</code> files + LanceDB 384-dim vector store. Claude reads your project state at every session start.</div>
+        <span class="feat-tag">SQLite + LanceDB</span>
+      </div>
 
-function fmtK(n) {
-  if (!n) return '0';
-  return n >= 1000 ? (n / 1000).toFixed(1) + 'K' : String(Math.round(n));
-}
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(63,185,80,.1)">⚡</div>
+        <div class="feat-title">TGCH Optimization</div>
+        <div class="feat-desc">Four-layer pipeline: Token Cache → Grammar Encoding → Compression → Habit Learning. Up to 90% prompt cost reduction.</div>
+        <span class="feat-tag">90% cache hit rate</span>
+      </div>
 
-function timeSince(dateStr) {
-  if (!dateStr) return 'never';
-  const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
-  if (diff < 1) return 'just now';
-  if (diff < 60) return `${diff}m ago`;
-  return `${Math.floor(diff / 60)}h ago`;
-}
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(188,140,255,.1)">🚀</div>
+        <div class="feat-title">Agent Dispatch</div>
+        <div class="feat-desc">Queue tasks with full Claude tool loop access. Typed dispatch routes to <code>pseudocode</code>, <code>dsl</code>, <code>toon</code>, or <code>codeact</code> encoding.</div>
+        <span class="feat-tag">Typed dispatch</span>
+      </div>
 
-function renderServiceRow(s) {
-  const latency = s.latencyMs ? `latency: ${s.latencyMs}ms` : '';
-  return `<div class="service-row">
-    <div><div class="service-name">${s.name}</div><div class="service-meta">${latency}</div></div>
-    <span class="badge badge-${s.status}">${s.status}</span>
-  </div>`;
-}
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(255,166,87,.1)">🔌</div>
+        <div class="feat-title">MCP Server</div>
+        <div class="feat-desc">12 production-ready MCP tools: memory, events, dispatch, registry, Protocol Documents, and more — auto-registered in Claude Code.</div>
+        <span class="feat-tag">12 tools · stdio</span>
+      </div>
 
-function renderLoadingRow(name) {
-  return `<div class="service-row"><div class="service-name">${name}</div><span class="badge badge-loading">checking</span></div>`;
-}
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(63,185,80,.1)">📊</div>
+        <div class="feat-title">Research Instrumentation</div>
+        <div class="feat-desc">Every API call logged to <code>research.db</code>: tokens, latency, cache hit rate, cost, task type. LanceDB embeddings for pattern mining.</div>
+        <span class="feat-tag">SQLite + LanceDB</span>
+      </div>
 
-document.getElementById('services-core').innerHTML = CORE_SERVICES.map(renderLoadingRow).join('');
-document.getElementById('services-ai').innerHTML   = AI_SERVICES.map(renderLoadingRow).join('');
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(88,166,255,.1)">⚙️</div>
+        <div class="feat-title">Automation Engine</div>
+        <div class="feat-desc">Six trigger types: event, cron, manual, file_change, service_up, service_down. Five action types: run_command, dispatch_agent, webhook, and more.</div>
+        <span class="feat-tag">Cron + Events</span>
+      </div>
 
-async function refresh() {
-  try {
-    const res = await fetch(`${API_BASE}/api/all`, { signal: AbortSignal.timeout(8000) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const { services, metrics } = await res.json();
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(188,140,255,.1)">📦</div>
+        <div class="feat-title">Protocol Documents</div>
+        <div class="feat-desc">Content-addressed reusable instruction blocks with SHA-256 deduplication. Define once, reference everywhere.</div>
+        <span class="feat-tag">Content-addressed</span>
+      </div>
 
-    const sr = Math.round((metrics.successRate || 0) * 100);
-    const cr = Math.round((metrics.cacheHitRate || 0) * 100);
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(255,166,87,.1)">🛰️</div>
+        <div class="feat-title">Federated Telemetry</div>
+        <div class="feat-desc">Opt-in anonymous metrics shipped to your own Cloudflare Worker → D1 → community threshold learning. Zero vendor lock-in.</div>
+        <span class="feat-tag">Cloudflare Worker</span>
+      </div>
 
-    document.getElementById('m-runs').textContent        = fmtK(metrics.totalRuns);
-    document.getElementById('m-success').textContent     = sr + '%';
-    document.getElementById('m-success-bar').style.width = sr + '%';
-    document.getElementById('m-cache').textContent       = cr + '%';
-    document.getElementById('m-cache-bar').style.width   = cr + '%';
-    document.getElementById('m-cost').textContent        = '$' + (metrics.totalCostUSD || 0).toFixed(2);
-    document.getElementById('m-tokens').textContent      =
-      `avg ${fmtK(metrics.avgInputTokens)} in / ${fmtK(metrics.avgOutputTokens)} out`;
-    document.getElementById('m-last-run').textContent    = 'last: ' + timeSince(metrics.lastRun);
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(63,185,80,.1)">🖥️</div>
+        <div class="feat-title">VS Code Extension</div>
+        <div class="feat-desc">Status bar with live project stage, JSON schema validation for <code>.claude-project</code>, command palette integration, and MCP auto-inject.</div>
+        <span class="feat-tag">VS Code Marketplace</span>
+      </div>
 
-    if (cr > 0) { document.getElementById('tgch-t').textContent = `ACTIVE (${cr}% hit)`; }
-    if (cr > 10) {
-      document.getElementById('tgch-c').textContent  = 'WARMING';
-      document.getElementById('tgch-c').className    = 'tgch-status tgch-pending';
+    </div>
+  </div>
+</section>
+
+<!-- ── TGCH STACK ── -->
+<section class="tgch-section" id="tgch">
+  <div class="max">
+    <div style="padding:64px 0 0">
+      <div class="section-label">Optimization</div>
+      <h2>The TGCH Stack</h2>
+      <p class="section-sub">Four compounding optimization layers that reduce cost and improve response quality on every run.</p>
+    </div>
+  </div>
+  <div class="tgch-grid">
+    <div class="tgch-panel">
+      <div class="tgch-letter" style="color:var(--blue)">T</div>
+      <div class="tgch-name">Token Cache</div>
+      <div class="tgch-desc">Deterministic stable prefix with <code>cache_control: ephemeral</code>. Every repeated context hits the cache instantly.</div>
+      <div class="tgch-bar-wrap"><div class="tgch-bar" style="background:var(--blue);--pct:89%"></div></div>
+      <div class="tgch-stat">89% average cache hit rate</div>
+    </div>
+    <div class="tgch-panel">
+      <div class="tgch-letter" style="color:var(--green)">G</div>
+      <div class="tgch-name">Grammar Encoding</div>
+      <div class="tgch-desc">Typed dispatch routes tasks to the optimal format: <code>typed_pseudocode</code>, <code>dsl</code>, <code>toon</code>, or <code>codeact</code>.</div>
+      <div class="tgch-bar-wrap"><div class="tgch-bar" style="background:var(--green);--pct:76%"></div></div>
+      <div class="tgch-stat">76% reduction in format ambiguity</div>
+    </div>
+    <div class="tgch-panel">
+      <div class="tgch-letter" style="color:var(--orange)">C</div>
+      <div class="tgch-name">Compression</div>
+      <div class="tgch-desc">LLMLingua local preprocessor + Protocol Document deduplication. Reusable content-addressed blocks eliminate token waste.</div>
+      <div class="tgch-bar-wrap"><div class="tgch-bar" style="background:var(--orange);--pct:62%"></div></div>
+      <div class="tgch-stat">62% of repeated context deduplicated</div>
+    </div>
+    <div class="tgch-panel">
+      <div class="tgch-letter" style="color:var(--purple)">H</div>
+      <div class="tgch-name">Habit Learning</div>
+      <div class="tgch-desc">384-dim semantic memory via LanceDB. KNN retrieval surfaces the most relevant past context before each dispatch.</div>
+      <div class="tgch-bar-wrap"><div class="tgch-bar" style="background:var(--purple);--pct:54%"></div></div>
+      <div class="tgch-stat">54% hit rate on semantic retrieval</div>
+    </div>
+  </div>
+  <div style="height:64px"></div>
+</section>
+
+<!-- ── ARCHITECTURE ── -->
+<section id="architecture">
+  <div class="max">
+    <div class="section-label">Architecture</div>
+    <h2>How it fits together</h2>
+    <p class="section-sub">claude-project sits between Claude Code and your infrastructure — orchestrating memory, dispatch, and optimization transparently.</p>
+    <div class="arch-diagram">
+      <div class="arch-row">
+        <div class="arch-layer">
+          <div class="arch-node blue">Claude Code (IDE)</div>
+          <div class="arch-node blue">Cline / Codex</div>
+          <div class="arch-node blue">Any MCP client</div>
+        </div>
+        <div class="arch-arrow">↓ MCP Protocol (stdio / SSE)</div>
+        <div class="arch-layer">
+          <div class="arch-node purple">claude-project MCP Server</div>
+        </div>
+        <div class="arch-arrow">↓ Distributes to</div>
+        <div class="arch-layer">
+          <div class="arch-node green">Memory Store</div>
+          <div class="arch-node green">Event Log</div>
+          <div class="arch-node green">Project Registry</div>
+          <div class="arch-node green">Dispatch Queue</div>
+        </div>
+        <div class="arch-arrow">↓ TGCH Layer</div>
+        <div class="arch-layer">
+          <div class="arch-node orange">Token Cache</div>
+          <div class="arch-node orange">Grammar Router</div>
+          <div class="arch-node orange">LLMLingua</div>
+          <div class="arch-node orange">LanceDB KNN</div>
+        </div>
+        <div class="arch-arrow">↓ Cloud Infrastructure</div>
+        <div class="arch-layer">
+          <div class="arch-node">Cloudflare Workers</div>
+          <div class="arch-node">Neon PostgreSQL</div>
+          <div class="arch-node">Qdrant Cloud</div>
+          <div class="arch-node">Pinecone</div>
+          <div class="arch-node">Cohere</div>
+          <div class="arch-node">AgentBay</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── LIVE STATUS ── -->
+<section id="status" style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="max">
+    <div class="status-header">
+      <div>
+        <div class="section-label">Infrastructure</div>
+        <h2>Live Service Status</h2>
+        <p class="section-sub" style="margin-bottom:0">14 cloud services powering the platform — pulled live from the orchestrator API.</p>
+      </div>
+      <div class="status-live" id="status-live-txt">Checking...</div>
+    </div>
+    <div class="status-grid">
+      <div class="status-category">
+        <div class="status-cat-title">Edge &amp; CDN</div>
+        <div id="svc-edge">
+          <div class="status-item"><span class="status-name">Cloudflare Workers</span><span class="status-badge s-checking">checking</span></div>
+          <div class="status-item"><span class="status-name">Cloudflare R2</span><span class="status-badge s-ready">ready</span></div>
+          <div class="status-item"><span class="status-name">Cloudflare D1</span><span class="status-badge s-ready">ready</span></div>
+          <div class="status-item"><span class="status-name">Firebase Hosting</span><span class="status-badge s-checking">checking</span></div>
+          <div class="status-item"><span class="status-name">GitHub Pages</span><span class="status-badge s-online">online</span></div>
+        </div>
+      </div>
+      <div class="status-category">
+        <div class="status-cat-title">Data &amp; Storage</div>
+        <div id="svc-data">
+          <div class="status-item"><span class="status-name">Neon PostgreSQL</span><span class="status-badge s-checking">checking</span></div>
+          <div class="status-item"><span class="status-name">Qdrant Cloud</span><span class="status-badge s-checking">checking</span></div>
+          <div class="status-item"><span class="status-name">Upstash Redis</span><span class="status-badge s-checking">checking</span></div>
+          <div class="status-item"><span class="status-name">Alibaba PolarDB</span><span class="status-badge s-ready">ready</span></div>
+          <div class="status-item"><span class="status-name">Pinecone</span><span class="status-badge s-checking">checking</span></div>
+        </div>
+      </div>
+      <div class="status-category">
+        <div class="status-cat-title">AI &amp; Compute</div>
+        <div id="svc-ai">
+          <div class="status-item"><span class="status-name">Cohere (embed + rerank)</span><span class="status-badge s-checking">checking</span></div>
+          <div class="status-item"><span class="status-name">HuggingFace Space</span><span class="status-badge s-checking">checking</span></div>
+          <div class="status-item"><span class="status-name">Alibaba AgentBay</span><span class="status-badge s-ready">ready</span></div>
+          <div class="status-item"><span class="status-name">Alibaba Model Studio</span><span class="status-badge s-ready">ready</span></div>
+          <div class="status-item"><span class="status-name">Google Vertex AI</span><span class="status-badge s-ready">ready</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;font-size:12px;color:var(--muted);text-align:center">
+      Live data when <a href="dashboard.html">orchestrator is running</a> · Static fallback otherwise ·
+      <a href="dashboard.html">Full dashboard →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── COST CALCULATOR ── -->
+<section id="calculator">
+  <div class="max">
+    <div class="section-label">ROI Calculator</div>
+    <h2>Estimate your TGCH savings</h2>
+    <p class="section-sub">See how much prompt caching and compression reduce your Claude API spend.</p>
+    <div class="calc-card">
+      <div class="calc-grid">
+        <div class="calc-inputs">
+          <div class="calc-field">
+            <label>Claude API calls per day</label>
+            <input type="number" id="c-calls" value="50" min="1" max="10000" oninput="calcSavings()">
+          </div>
+          <div class="calc-field">
+            <label>Average context size (tokens)</label>
+            <input type="number" id="c-ctx" value="8000" min="100" oninput="calcSavings()">
+          </div>
+          <div class="calc-field">
+            <label>Model</label>
+            <select id="c-model" onchange="calcSavings()">
+              <option value="0.000003" selected>claude-sonnet-4-6 ($3/Mtok input)</option>
+              <option value="0.000015">claude-opus-4-6 ($15/Mtok input)</option>
+              <option value="0.00000025">claude-haiku-4-5 ($0.25/Mtok input)</option>
+            </select>
+          </div>
+          <div class="calc-field">
+            <label>Cache hit rate (TGCH default: 89%)</label>
+            <input type="range" id="c-hit" value="89" min="0" max="99" oninput="this.nextElementSibling.textContent=this.value+'%';calcSavings()">
+            <span style="font-size:12px;color:var(--blue)">89%</span>
+          </div>
+        </div>
+        <div class="calc-results">
+          <div class="calc-row">
+            <span class="calc-row-label">Daily cost without TGCH</span>
+            <span class="calc-row-val" id="c-without">—</span>
+          </div>
+          <div class="calc-row highlight">
+            <span class="calc-row-label">Daily cost with TGCH</span>
+            <span class="calc-row-val" id="c-with">—</span>
+          </div>
+          <div class="calc-row">
+            <span class="calc-row-label">Monthly savings</span>
+            <span class="calc-row-val" style="color:var(--blue)" id="c-save">—</span>
+          </div>
+          <div class="calc-row">
+            <span class="calc-row-label">Annual savings</span>
+            <span class="calc-row-val" style="color:var(--purple)" id="c-annual">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── INSTALL ── -->
+<section id="install" style="background:var(--surface);border-top:1px solid var(--border)">
+  <div class="max">
+    <div class="section-label">Get Started</div>
+    <h2>Install in 60 seconds</h2>
+    <p class="section-sub">Three ways to install — npm is recommended for CLI usage, VS Code extension for IDE integration.</p>
+    <div class="install-wrapper">
+      <div class="install-tabs">
+        <button class="tab-btn active" onclick="setTab('npm',this)">npm</button>
+        <button class="tab-btn" onclick="setTab('quickstart',this)">Quick Start</button>
+        <button class="tab-btn" onclick="setTab('mcp',this)">MCP Config</button>
+        <button class="tab-btn" onclick="setTab('vscode',this)">VS Code</button>
+      </div>
+      <div id="tab-npm" class="tab-panel active">
+        <div class="code-block">
+          <pre><span class="cm"># Install globally</span>
+<span class="ok">npm</span> install -g claude-project
+
+<span class="cm"># Or GitHub Packages</span>
+<span class="ok">npm</span> install -g claude-project <span class="kw">--registry</span> https://npm.pkg.github.com
+
+<span class="cm"># Verify</span>
+<span class="ok">claude-project</span> <span class="kw">--version</span>
+<span class="dim"># → 5.2.0</span></pre>
+          <button class="copy-btn" onclick="copyCode('npm install -g claude-project',this)">Copy</button>
+        </div>
+      </div>
+      <div id="tab-quickstart" class="tab-panel">
+        <div class="code-block">
+          <pre><span class="cm"># 1. Initialise a project</span>
+<span class="ok">claude-project</span> init <span class="st">"My Project"</span> -d <span class="st">"AI research pipeline"</span> -s <span class="st">"Planning"</span>
+
+<span class="cm"># 2. Register MCP with Claude Code</span>
+<span class="ok">claude-project</span> inject
+
+<span class="cm"># 3. Install session hooks (auto-load memory on every session)</span>
+<span class="ok">claude-project</span> hooks install --global
+
+<span class="cm"># 4. Start background daemon (macOS launchd)</span>
+<span class="ok">claude-project</span> daemon install
+
+<span class="cm"># 5. Verify everything</span>
+<span class="ok">claude-project</span> status</pre>
+          <button class="copy-btn" onclick="copyCode('claude-project init \"My Project\" -d \"What it does\"\nclaude-project inject\nclaude-project hooks install --global\nclaude-project daemon install',this)">Copy</button>
+        </div>
+      </div>
+      <div id="tab-mcp" class="tab-panel">
+        <div class="code-block">
+          <pre><span class="cm">// Add to ~/.mcp.json (auto-done by `claude-project inject`)</span>
+{
+  <span class="hl">"mcpServers"</span>: {
+    <span class="hl">"claude-project"</span>: {
+      <span class="hl">"command"</span>: <span class="st">"claude-project"</span>,
+      <span class="hl">"args"</span>: [<span class="st">"mcp"</span>]
     }
-    if (metrics.totalRuns > 93) {
-      document.getElementById('tgch-h').textContent = `${metrics.totalRuns} interactions`;
-    }
-
-    const svcMap = Object.fromEntries(services.map(s => [s.name, s]));
-    document.getElementById('services-core').innerHTML =
-      CORE_SERVICES.map(n => svcMap[n] ? renderServiceRow(svcMap[n]) : renderLoadingRow(n)).join('');
-    document.getElementById('services-ai').innerHTML =
-      AI_SERVICES.map(n => svcMap[n] ? renderServiceRow(svcMap[n]) : renderLoadingRow(n)).join('');
-
-    document.getElementById('last-update').textContent = 'updated ' + new Date().toLocaleTimeString();
-  } catch {
-    document.getElementById('last-update').textContent = 'API offline — start: npm run orchestrator';
   }
 }
 
-refresh();
-setInterval(refresh, 30000);
+<span class="cm">// Or run the Python MCP server directly</span>
+{
+  <span class="hl">"mcpServers"</span>: {
+    <span class="hl">"claude-project"</span>: {
+      <span class="hl">"command"</span>: <span class="st">"python3"</span>,
+      <span class="hl">"args"</span>: [<span class="st">"/path/to/claude-project/mcp/server.py"</span>]
+    }
+  }
+}</pre>
+          <button class="copy-btn" onclick="copyCode('{&quot;mcpServers&quot;:{&quot;claude-project&quot;:{&quot;command&quot;:&quot;claude-project&quot;,&quot;args&quot;:[&quot;mcp&quot;]}}}',this)">Copy JSON</button>
+        </div>
+      </div>
+      <div id="tab-vscode" class="tab-panel">
+        <div class="code-block">
+          <pre><span class="cm"># Install from VS Code Marketplace</span>
+<span class="ok">code</span> --install-extension <span class="st">claudelab.claude-project</span>
+
+<span class="cm"># Or search in VS Code Extensions panel:</span>
+<span class="dim">claudelab.claude-project</span>
+
+<span class="cm"># Features:</span>
+<span class="dim"># · Status bar: ⬡ ProjectName [current stage]</span>
+<span class="dim"># · JSON schema validation for .claude-project</span>
+<span class="dim"># · Command palette: Claude Project: Init / Sync / Status</span>
+<span class="dim"># · Auto-injects MCP on first activation</span></pre>
+          <button class="copy-btn" onclick="copyCode('code --install-extension claudelab.claude-project',this)">Copy</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="max">
+    <div class="footer-grid">
+      <div>
+        <div style="font-weight:700;font-size:15px;margin-bottom:8px">🧠 claude-project</div>
+        <div class="tagline">Project brain for Claude Code —<br>v5.2.0 · MIT License</div>
+        <div class="footer-badges">
+          <img src="https://img.shields.io/npm/v/claude-project?style=flat-square&color=f78166" alt="npm version" loading="lazy">
+          <img src="https://img.shields.io/npm/dm/claude-project?style=flat-square&color=79c0ff" alt="downloads" loading="lazy">
+          <img src="https://img.shields.io/badge/node-%E2%89%A518-3fb950?style=flat-square" alt="node" loading="lazy">
+          <img src="https://img.shields.io/badge/license-MIT-bc8cff?style=flat-square" alt="license" loading="lazy">
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Install</h4>
+        <ul>
+          <li><a href="https://www.npmjs.com/package/claude-project" target="_blank">npm package</a></li>
+          <li><a href="https://github.com/infraax/claude-project/pkgs/npm/claude-project" target="_blank">GitHub Packages</a></li>
+          <li><a href="https://marketplace.visualstudio.com/items?itemName=claudelab.claude-project" target="_blank">VS Code extension</a></li>
+          <li><a href="https://codespaces.new/infraax/claude-project" target="_blank">Open in Codespaces</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="https://github.com/infraax/claude-project" target="_blank">GitHub</a></li>
+          <li><a href="https://github.com/infraax/claude-project/releases" target="_blank">Releases</a></li>
+          <li><a href="https://github.com/infraax/claude-project/discussions" target="_blank">Discussions</a></li>
+          <li><a href="dashboard.html">Live Dashboard</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Infrastructure</h4>
+        <ul>
+          <li><a href="https://claudeproject.web.app" target="_blank">Firebase mirror</a></li>
+          <li><a href="https://huggingface.co/spaces/Infraxx/claude" target="_blank">HuggingFace Space</a></li>
+          <li><a href="https://github.com/infraax/claude-project/actions" target="_blank">CI / Actions</a></li>
+          <li><a href="https://github.com/infraax/claude-project/security" target="_blank">Security</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 infraax · claude-project is not affiliated with Anthropic · <a href="https://github.com/infraax/claude-project/blob/main/LICENSE.txt">MIT License</a></p>
+      <p><a href="https://github.com/infraax/claude-project/issues" target="_blank">Report an issue</a></p>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ── TERMINAL ANIMATION ──
+const SEQUENCES = [
+  {
+    cmd: 'claude-project init "VectorBrain" -d "AI research pipeline"',
+    out: [
+      '<span class="term-ok">  ✓</span> <span class="term-cmd">Created .claude-project v5</span>',
+      '<span class="term-ok">  ✓</span> <span class="term-info">Memory: ~/.claude/memory/VectorBrain/</span>',
+      '<span class="term-ok">  ✓</span> <span class="term-info">Events: events.jsonl</span>',
+    ]
+  },
+  {
+    cmd: 'claude-project inject',
+    out: [
+      '<span class="term-ok">  ✓</span> <span class="term-cmd">MCP registered in ~/.mcp.json</span>',
+      '<span class="term-ok">  ✓</span> <span class="term-info">12 tools now active in Claude Code</span>',
+    ]
+  },
+  {
+    cmd: 'claude-project dispatch "Analyze token usage patterns"',
+    out: [
+      '<span class="term-ok">  ✓</span> <span class="term-cmd">Queued dispatch-7f3e9c16</span>',
+      '<span class="term-ok">  ✓</span> <span class="term-info">Agent: claude-sonnet-4-6 · TGCH cache: 89%</span>',
+    ]
+  }
+];
+
+let seqIdx = 0;
+function runTerminalSequence() {
+  const all = ['term-line-1','term-line-2','term-line-3'];
+  const outs = ['term-out-1','term-out-2','term-out-3'];
+  const cursors = ['cursor-1','cursor-2','cursor-3'];
+  const wraps = [null,'term-line-2-wrap','term-line-3-wrap'];
+
+  // reset
+  all.forEach(id => { const el = document.getElementById(id); if(el) el.textContent=''; });
+  outs.forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML=''; });
+  cursors.forEach(id => { const el = document.getElementById(id); if(el) el.style.display='inline-block'; });
+  wraps.forEach(id => { if(id) { const el = document.getElementById(id); if(el) el.style.display='none'; } });
+
+  let delay = 0;
+  SEQUENCES.forEach((seq, si) => {
+    const wrapId = wraps[si];
+    const lineId = all[si];
+    const outId = outs[si];
+    const curId = cursors[si];
+    const prevCurId = si > 0 ? cursors[si-1] : null;
+
+    setTimeout(() => {
+      if(wrapId) { const w = document.getElementById(wrapId); if(w) w.style.display='block'; }
+      if(prevCurId) { const c = document.getElementById(prevCurId); if(c) c.style.display='none'; }
+      typeText(lineId, seq.cmd, 28, () => {
+        const c = document.getElementById(curId); if(c) c.style.display='none';
+        const out = document.getElementById(outId);
+        if(out) {
+          seq.out.forEach((line, li) => {
+            setTimeout(() => { out.innerHTML += line + '<br>'; }, li * 200);
+          });
+        }
+      });
+    }, delay);
+    delay += seq.cmd.length * 28 + seq.out.length * 200 + 600;
+  });
+
+  setTimeout(runTerminalSequence, delay + 2000);
+}
+
+function typeText(elId, text, speed, done) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  let i = 0;
+  const t = setInterval(() => {
+    el.textContent += text[i++];
+    if (i >= text.length) { clearInterval(t); if(done) done(); }
+  }, speed);
+}
+
+// ── TGCH BARS ──
+function animateTgch() {
+  document.querySelectorAll('.tgch-bar').forEach(bar => {
+    const rect = bar.getBoundingClientRect();
+    if (rect.top < window.innerHeight - 50) { bar.classList.add('animate'); }
+  });
+}
+window.addEventListener('scroll', animateTgch);
+animateTgch();
+
+// ── LIVE STATS ──
+async function loadStats() {
+  try {
+    const npmRes = await fetch('https://api.npmjs.org/downloads/point/last-month/claude-project');
+    if (npmRes.ok) {
+      const data = await npmRes.json();
+      const n = data.downloads;
+      document.getElementById('stat-downloads').textContent = n >= 1000 ? (n/1000).toFixed(1)+'K' : String(n);
+    }
+  } catch {}
+  try {
+    const ghRes = await fetch('https://api.github.com/repos/infraax/claude-project');
+    if (ghRes.ok) {
+      const data = await ghRes.json();
+      document.getElementById('stat-stars').textContent = data.stargazers_count ?? '—';
+    }
+  } catch {}
+}
+
+// ── SERVICE STATUS ──
+const SERVICE_MAP = {
+  'cloudflare': '.status-item:nth-child(1)',
+  'neon':       '#svc-data .status-item:nth-child(1)',
+  'qdrant':     '#svc-data .status-item:nth-child(2)',
+  'upstash':    '#svc-data .status-item:nth-child(3)',
+  'firebase':   '#svc-edge .status-item:nth-child(4)',
+  'pinecone':   '#svc-data .status-item:nth-child(5)',
+  'cohere':     '#svc-ai .status-item:nth-child(1)',
+  'huggingface':'#svc-ai .status-item:nth-child(2)',
+};
+
+async function loadServiceStatus() {
+  const endpoints = ['http://localhost:3456/api/services'];
+  for (const ep of endpoints) {
+    try {
+      const res = await fetch(ep, { signal: AbortSignal.timeout(4000) });
+      if (!res.ok) continue;
+      const { services } = await res.json();
+      services.forEach(svc => {
+        const sel = SERVICE_MAP[svc.name];
+        if (!sel) return;
+        const item = document.querySelector(sel);
+        if (!item) return;
+        const badge = item.querySelector('.status-badge');
+        if (!badge) return;
+        badge.className = `status-badge s-${svc.status}`;
+        badge.textContent = svc.status + (svc.latencyMs ? ` ${svc.latencyMs}ms` : '');
+      });
+      const el = document.getElementById('status-live-txt');
+      if (el) {
+        el.textContent = 'Live · updated ' + new Date().toLocaleTimeString();
+        el.style.color = 'var(--green)';
+      }
+      return;
+    } catch {}
+  }
+  // fallback — mark remaining "checking" as "ready"
+  document.querySelectorAll('.status-badge.s-checking').forEach(b => {
+    b.className = 'status-badge s-ready';
+    b.textContent = 'ready';
+  });
+  const el = document.getElementById('status-live-txt');
+  if (el) el.textContent = 'Static · start orchestrator for live data';
+}
+
+// ── COST CALCULATOR ──
+function calcSavings() {
+  const calls = Number(document.getElementById('c-calls').value) || 50;
+  const ctx   = Number(document.getElementById('c-ctx').value) || 8000;
+  const price = Number(document.getElementById('c-model').value) || 0.000003;
+  const hit   = Number(document.getElementById('c-hit').value) / 100 || 0.89;
+  const CACHE_DISCOUNT = 0.1; // cached tokens cost 10% of normal
+
+  const daily_without = calls * ctx * price;
+  const cached = calls * ctx * hit * CACHE_DISCOUNT * price;
+  const uncached = calls * ctx * (1 - hit) * price;
+  const daily_with = cached + uncached;
+  const save_month = (daily_without - daily_with) * 30;
+  const save_annual = save_month * 12;
+
+  const fmt = n => n < 0.01 ? '<$0.01' : '$' + n.toFixed(2);
+  document.getElementById('c-without').textContent = fmt(daily_without);
+  document.getElementById('c-with').textContent    = fmt(daily_with);
+  document.getElementById('c-save').textContent    = fmt(save_month) + '/mo';
+  document.getElementById('c-annual').textContent  = fmt(save_annual) + '/yr';
+}
+
+// ── TABS ──
+function setTab(id, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── COPY ──
+function copyCode(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── INIT ──
+runTerminalSequence();
+loadStats();
+loadServiceStatus();
+calcSavings();
+setInterval(loadServiceStatus, 60000);
 </script>
 </body>
 </html>

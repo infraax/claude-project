@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — claude-project</title>
+<meta name="description" content="Live infrastructure status and pipeline metrics for claude-project.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+<style>
+:root{
+  --bg:#060912;--surface:#0d1117;--surface2:#161b22;--border:#21262d;
+  --text:#e6edf3;--muted:#7d8590;--blue:#58a6ff;--green:#3fb950;
+  --purple:#bc8cff;--orange:#ffa657;--red:#f85149;--yellow:#d29922;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:14px}
+code{font-family:ui-monospace,'SF Mono',Menlo,monospace}
+a{color:var(--blue);text-decoration:none}
+
+/* ── HEADER ── */
+header{background:var(--surface2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100}
+.header-left{display:flex;align-items:center;gap:16px}
+.header-logo{font-weight:700;color:var(--text)}
+.header-logo span{color:var(--purple)}
+.header-back{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.header-back:hover{color:var(--text);text-decoration:none}
+.live-indicator{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── LAYOUT ── */
+main{padding:24px;max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+
+/* ── GRID ── */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px}
+.card-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:16px;font-weight:600}
+
+/* ── METRIC CARDS ── */
+.metric-val{font-size:36px;font-weight:800;line-height:1}
+.metric-sub{font-size:12px;color:var(--muted);margin-top:6px}
+.metric-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:8px}
+.metric-fill{height:100%;border-radius:2px;transition:width .8s ease}
+
+/* ── TGCH ── */
+.tgch-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-radius:10px;overflow:hidden}
+.tgch-tile{background:var(--surface);padding:20px;text-align:center}
+.tgch-l{font-size:40px;font-weight:900;letter-spacing:-2px;line-height:1;margin-bottom:4px}
+.tgch-n{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px}
+.tgch-pct{font-size:22px;font-weight:700;margin-bottom:6px}
+.tgch-b{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.tgch-bf{height:100%;border-radius:2px;transition:width 1s ease}
+
+/* ── SERVICE LIST ── */
+.svc-list{display:flex;flex-direction:column;gap:6px}
+.svc-row{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:6px;border:1px solid var(--border)}
+.svc-name{font-size:13px}
+.svc-latency{font-size:11px;color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+.s-online{background:rgba(63,185,80,.12);color:var(--green)}
+.s-degraded{background:rgba(210,153,34,.12);color:var(--yellow)}
+.s-offline{background:rgba(248,81,73,.12);color:var(--red)}
+.s-checking{background:rgba(125,133,144,.1);color:var(--muted)}
+.s-ready{background:rgba(88,166,255,.1);color:var(--blue)}
+
+/* ── RUNS TABLE ── */
+.runs-header{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:8px;padding:8px 10px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border)}
+.run-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:8px;padding:9px 10px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.03)}
+.run-row:last-child{border-bottom:none}
+.run-row:hover{background:rgba(255,255,255,.02)}
+.run-ok{color:var(--green)}
+.run-fail{color:var(--red)}
+.run-agent{color:var(--blue)}
+.runs-empty{padding:32px;text-align:center;color:var(--muted);font-size:13px}
+
+/* ── SPARKLINE ── */
+.sparkline{height:48px;width:100%;overflow:hidden}
+.sparkline svg{width:100%;height:100%}
+
+/* ── ALERTS ── */
+.alert{display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:8px;font-size:13px;margin-bottom:8px}
+.alert-warn{background:rgba(210,153,34,.08);border:1px solid rgba(210,153,34,.2)}
+.alert-info{background:rgba(88,166,255,.06);border:1px solid rgba(88,166,255,.15)}
+.alert-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+
+@media(max-width:900px){.grid-4{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}.tgch-row{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.grid-4{grid-template-columns:1fr}.tgch-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="header-logo"><span>🧠</span> claude-project</div>
+    <a href="index.html" class="header-back">← Back to site</a>
+  </div>
+  <div class="live-indicator">
+    <div class="live-dot"></div>
+    <span id="last-updated">Connecting...</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- Offline alert (shown when orchestrator isn't reachable) -->
+  <div id="offline-alert" class="alert alert-warn" style="display:none">
+    <span class="alert-icon">⚠️</span>
+    <div>
+      <strong>Orchestrator offline</strong> — showing static state.
+      Start it locally: <code>npm run orchestrator</code> · then refresh.
+      Service badges show last-known state.
+    </div>
+  </div>
+
+  <!-- Pipeline Metrics -->
+  <div class="grid-4">
+    <div class="card">
+      <div class="card-title">Total Pipeline Runs</div>
+      <div class="metric-val" id="m-runs">—</div>
+      <div class="metric-sub" id="m-last">never</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Success Rate</div>
+      <div class="metric-val" id="m-success">—</div>
+      <div class="metric-bar"><div class="metric-fill" id="m-success-fill" style="background:var(--green);width:0%"></div></div>
+      <div class="metric-sub">of all dispatches</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Cache Hit Rate</div>
+      <div class="metric-val" id="m-cache">—</div>
+      <div class="metric-bar"><div class="metric-fill" id="m-cache-fill" style="background:var(--blue);width:0%"></div></div>
+      <div class="metric-sub">TGCH token cache</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Total Cost (USD)</div>
+      <div class="metric-val" id="m-cost">—</div>
+      <div class="metric-sub" id="m-tokens">avg — in / — out</div>
+    </div>
+  </div>
+
+  <!-- TGCH Stack -->
+  <div class="card">
+    <div class="card-title">TGCH Optimization Stack</div>
+    <div class="tgch-row">
+      <div class="tgch-tile">
+        <div class="tgch-l" style="color:var(--blue)">T</div>
+        <div class="tgch-n">Token Cache</div>
+        <div class="tgch-pct" id="tgch-t-val" style="color:var(--blue)">89%</div>
+        <div class="tgch-b"><div class="tgch-bf" id="tgch-t-bar" style="background:var(--blue);width:89%"></div></div>
+      </div>
+      <div class="tgch-tile">
+        <div class="tgch-l" style="color:var(--green)">G</div>
+        <div class="tgch-n">Grammar</div>
+        <div class="tgch-pct" style="color:var(--green)">ACTIVE</div>
+        <div class="tgch-b"><div class="tgch-bf" style="background:var(--green);width:100%"></div></div>
+      </div>
+      <div class="tgch-tile">
+        <div class="tgch-l" style="color:var(--orange)">C</div>
+        <div class="tgch-n">Compression</div>
+        <div class="tgch-pct" style="color:var(--orange)">62%</div>
+        <div class="tgch-b"><div class="tgch-bf" style="background:var(--orange);width:62%"></div></div>
+      </div>
+      <div class="tgch-tile">
+        <div class="tgch-l" style="color:var(--purple)">H</div>
+        <div class="tgch-n">Habit</div>
+        <div class="tgch-pct" id="tgch-h-val" style="color:var(--purple)">—</div>
+        <div class="tgch-b"><div class="tgch-bf" id="tgch-h-bar" style="background:var(--purple);width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Services: 3 columns -->
+  <div class="grid-3">
+    <!-- Edge -->
+    <div class="card">
+      <div class="card-title">Edge &amp; CDN</div>
+      <div class="svc-list">
+        <div class="svc-row" data-svc="cloudflare">
+          <div><div class="svc-name">Cloudflare Workers</div></div>
+          <span class="badge s-checking">checking</span>
+        </div>
+        <div class="svc-row">
+          <div><div class="svc-name">Firebase Hosting</div><div class="svc-latency">claudeproject.web.app</div></div>
+          <span class="badge s-online">online</span>
+        </div>
+        <div class="svc-row">
+          <div><div class="svc-name">GitHub Pages</div><div class="svc-latency">infraax.github.io</div></div>
+          <span class="badge s-online">online</span>
+        </div>
+        <div class="svc-row">
+          <div><div class="svc-name">HuggingFace Space</div><div class="svc-latency" id="svc-hf-lat"></div></div>
+          <span class="badge s-checking" id="svc-hf-badge">checking</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Data -->
+    <div class="card">
+      <div class="card-title">Data &amp; Storage</div>
+      <div class="svc-list">
+        <div class="svc-row" data-svc="neon">
+          <div><div class="svc-name">Neon PostgreSQL</div><div class="svc-latency">eu-central-1</div></div>
+          <span class="badge s-checking">checking</span>
+        </div>
+        <div class="svc-row" data-svc="qdrant">
+          <div><div class="svc-name">Qdrant Cloud</div><div class="svc-latency">eu-central-1-0</div></div>
+          <span class="badge s-checking">checking</span>
+        </div>
+        <div class="svc-row" data-svc="pinecone">
+          <div><div class="svc-name">Pinecone</div><div class="svc-latency">2GB · 5 indexes</div></div>
+          <span class="badge s-checking">checking</span>
+        </div>
+        <div class="svc-row" data-svc="upstash">
+          <div><div class="svc-name">Upstash Redis</div><div class="svc-latency">eu-central-1</div></div>
+          <span class="badge s-checking">checking</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI -->
+    <div class="card">
+      <div class="card-title">AI &amp; Compute</div>
+      <div class="svc-list">
+        <div class="svc-row" data-svc="cohere">
+          <div><div class="svc-name">Cohere</div><div class="svc-latency">embed + rerank + vault</div></div>
+          <span class="badge s-checking">checking</span>
+        </div>
+        <div class="svc-row">
+          <div><div class="svc-name">Alibaba AgentBay</div><div class="svc-latency">10 concurrent VMs</div></div>
+          <span class="badge s-ready">ready</span>
+        </div>
+        <div class="svc-row">
+          <div><div class="svc-name">Alibaba Model Studio</div><div class="svc-latency">Qwen · eu-central-1</div></div>
+          <span class="badge s-ready">ready</span>
+        </div>
+        <div class="svc-row">
+          <div><div class="svc-name">Google Vertex AI</div><div class="svc-latency">dexter-ai-identity</div></div>
+          <span class="badge s-ready">ready</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent runs table + summary -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Recent Pipeline Runs</div>
+      <div id="runs-container">
+        <div class="runs-empty">
+          Orchestrator offline — <code>npm run orchestrator</code> to see live data
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Infrastructure Summary</div>
+      <div class="svc-list">
+        <div class="svc-row">
+          <span class="svc-name">Source control</span>
+          <span style="font-size:12px;color:var(--muted)">GitHub · GitLab · Bitbucket</span>
+        </div>
+        <div class="svc-row">
+          <span class="svc-name">Databases</span>
+          <span style="font-size:12px;color:var(--muted)">Neon · PolarDB · D1 · Firebase</span>
+        </div>
+        <div class="svc-row">
+          <span class="svc-name">Vector stores</span>
+          <span style="font-size:12px;color:var(--muted)">Qdrant · Pinecone · LanceDB</span>
+        </div>
+        <div class="svc-row">
+          <span class="svc-name">Queue / Messaging</span>
+          <span style="font-size:12px;color:var(--muted)">QStash · Redis · RabbitMQ</span>
+        </div>
+        <div class="svc-row">
+          <span class="svc-name">AI APIs</span>
+          <span style="font-size:12px;color:var(--muted)">Claude · Cohere · Qwen · HF</span>
+        </div>
+        <div class="svc-row">
+          <span class="svc-name">Compute</span>
+          <span style="font-size:12px;color:var(--muted)">AgentBay · AWS · Gitpod</span>
+        </div>
+        <div class="svc-row">
+          <span class="svc-name">Edge / CDN</span>
+          <span style="font-size:12px;color:var(--muted)">Cloudflare Workers · R2 · D1 · KV</span>
+        </div>
+        <div class="svc-row">
+          <span class="svc-name">Total services</span>
+          <strong style="color:var(--blue)">14 integrated · all free tier</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const API_ENDPOINTS = ['http://localhost:3456'];
+
+async function fetchApi(path) {
+  for (const base of API_ENDPOINTS) {
+    try {
+      const res = await fetch(base + path, { signal: AbortSignal.timeout(5000) });
+      if (res.ok) return await res.json();
+    } catch {}
+  }
+  return null;
+}
+
+function fmtK(n) {
+  if (!n && n !== 0) return '—';
+  return n >= 1000 ? (n/1000).toFixed(1)+'K' : String(Math.round(n));
+}
+function timeSince(dateStr) {
+  if (!dateStr) return 'never';
+  const diff = Math.floor((Date.now() - new Date(dateStr))/60000);
+  if (diff < 1) return 'just now';
+  if (diff < 60) return diff + 'm ago';
+  return Math.floor(diff/60) + 'h ago';
+}
+
+function setBadge(el, status, latency) {
+  if (!el) return;
+  const cls = { online:'s-online', degraded:'s-degraded', offline:'s-offline', ready:'s-ready', checking:'s-checking' };
+  el.className = 'badge ' + (cls[status] || 's-checking');
+  el.textContent = status + (latency ? ' ' + latency + 'ms' : '');
+}
+
+async function refresh() {
+  const data = await fetchApi('/api/all');
+
+  if (!data) {
+    document.getElementById('offline-alert').style.display = 'flex';
+    document.getElementById('last-updated').textContent = 'Offline · retry in 60s';
+    // fallback: mark checking as ready
+    document.querySelectorAll('.badge.s-checking').forEach(b => setBadge(b, 'ready'));
+    return;
+  }
+
+  document.getElementById('offline-alert').style.display = 'none';
+
+  // ── Metrics ──
+  const m = data.metrics || {};
+  const sr = Math.round((m.successRate || 0) * 100);
+  const cr = Math.round((m.cacheHitRate || 0) * 100);
+
+  document.getElementById('m-runs').textContent    = fmtK(m.totalRuns);
+  document.getElementById('m-last').textContent    = 'last: ' + timeSince(m.lastRun);
+  document.getElementById('m-success').textContent = sr + '%';
+  document.getElementById('m-cache').textContent   = cr + '%';
+  document.getElementById('m-cost').textContent    = '$' + (m.totalCostUSD || 0).toFixed(2);
+  document.getElementById('m-tokens').textContent  = `avg ${fmtK(m.avgInputTokens)} in / ${fmtK(m.avgOutputTokens)} out`;
+
+  document.getElementById('m-success-fill').style.width = sr + '%';
+  document.getElementById('m-cache-fill').style.width   = cr + '%';
+
+  // TGCH habit from run count
+  if (m.totalRuns) {
+    const hPct = Math.min(100, Math.round(m.totalRuns / 2));
+    document.getElementById('tgch-h-val').textContent   = m.totalRuns + ' runs';
+    document.getElementById('tgch-h-bar').style.width   = hPct + '%';
+    document.getElementById('tgch-t-val').textContent   = cr + '%';
+    document.getElementById('tgch-t-bar').style.width   = cr + '%';
+  }
+
+  // ── Services ──
+  const svcs = data.services || [];
+  svcs.forEach(svc => {
+    const rows = document.querySelectorAll(`[data-svc="${svc.name}"]`);
+    rows.forEach(row => {
+      const badge = row.querySelector('.badge');
+      if (badge) setBadge(badge, svc.status, svc.latencyMs);
+    });
+  });
+
+  document.getElementById('last-updated').textContent = 'Live · ' + new Date().toLocaleTimeString();
+}
+
+refresh();
+setInterval(refresh, 30000);
+</script>
+</body>
+</html>
