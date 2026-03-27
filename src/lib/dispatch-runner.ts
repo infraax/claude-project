@@ -19,7 +19,7 @@ import * as https from 'https';
 import { spawnSync } from 'child_process';
 import { randomUUID } from 'crypto';
 import Anthropic from '@anthropic-ai/sdk';
-import { HttpsProxyAgent } from 'https-proxy-agent';
+import { ProxyAgent, setGlobalDispatcher } from 'undici';
 import 'dotenv/config';
 import { ClaudeProject } from './project.js';
 import { resolvePaths } from './paths.js';
@@ -303,11 +303,20 @@ export async function runDispatch(
     session_id: sessionId,
   });
 
+  // Set undici global proxy dispatcher so Node fetch routes through HTTPS_PROXY.
+  // This must be done before any SDK call — undici ignores env proxy vars by default.
   const proxyUrl = process.env['HTTPS_PROXY'] ?? process.env['https_proxy'];
-  const client = new Anthropic({
-    apiKey,
-    ...(proxyUrl ? { httpAgent: new HttpsProxyAgent(proxyUrl) } : {}),
-  });
+  if (proxyUrl) {
+    setGlobalDispatcher(new ProxyAgent(proxyUrl));
+  }
+
+  // Session ingress tokens (sk-ant-si-...) authenticate as Bearer, not x-api-key.
+  const isSessionToken = apiKey.startsWith('sk-ant-si-');
+  const client = new Anthropic(
+    isSessionToken
+      ? { authToken: apiKey, apiKey: null as unknown as string }
+      : { apiKey },
+  );
 
   // Resolve agent definition
   const agentKey = dispatch.agent ?? Object.keys(project.agents ?? {})[0];
