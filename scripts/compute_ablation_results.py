@@ -23,6 +23,17 @@ CONDITIONS_ORDER = [
 
 
 def get_research_dbs() -> list:
+    # Derive from .claude-project memory_path so it works in container envs
+    # where Path.home() != the actual macOS home being mounted.
+    try:
+        import json as _json
+        memory_path = Path(_json.load(open(".claude-project"))["memory_path"]).expanduser()
+        db = memory_path.parent / "research.db"
+        if db.exists():
+            return [str(db)]
+    except Exception:
+        pass
+    # Fallback to glob
     paths = sorted(glob.glob(
         str(Path.home() / ".claude" / "projects" / "*" / "research.db")
     ))
