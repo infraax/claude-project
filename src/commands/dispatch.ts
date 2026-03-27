@@ -31,15 +31,25 @@ function requireProject() {
 }
 
 function requireApiKey(): string {
+  // Standard API key
   const key = process.env['ANTHROPIC_API_KEY'];
-  if (!key) {
-    console.error(
-      '\n  Error: ANTHROPIC_API_KEY environment variable is required.\n' +
-      '  Set it with: export ANTHROPIC_API_KEY=sk-ant-...\n',
-    );
-    process.exit(1);
+  if (key) return key;
+
+  // Claude Code container: use session ingress token as Bearer auth
+  const tokenFile = process.env['CLAUDE_SESSION_INGRESS_TOKEN_FILE'];
+  if (tokenFile) {
+    try {
+      const { readFileSync } = require('fs');
+      const token = readFileSync(tokenFile, 'utf8').trim();
+      if (token) return token;
+    } catch { /* fall through */ }
   }
-  return key;
+
+  console.error(
+    '\n  Error: ANTHROPIC_API_KEY environment variable is required.\n' +
+    '  Set it with: export ANTHROPIC_API_KEY=sk-ant-...\n',
+  );
+  process.exit(1);
 }
 
 function statusBadge(status: string): string {
