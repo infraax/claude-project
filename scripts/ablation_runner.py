@@ -131,8 +131,11 @@ def run_dispatch(task: dict, condition_name: str, dry_run: bool) -> dict:
         return {"status": "no_id", "stdout": create_result.stdout[:200],
                 "elapsed_s": time.monotonic() - start}
 
-    # Tag the dispatch JSON with ablation_condition
-    dispatches_dir = Path.home() / ".claude" / "projects"
+    # Tag the dispatch JSON with ablation_condition.
+    # Derive dispatches_dir from .claude-project memory_path rather than
+    # Path.home(), which may differ in container environments.
+    memory_path = Path(json.load(open(PROJECT_FILE))["memory_path"]).expanduser()
+    dispatches_dir = memory_path.parent / "dispatches"
     dispatch_files = list(dispatches_dir.rglob(f"{dispatch_id}.json"))
     if dispatch_files:
         with open(dispatch_files[0]) as f:
@@ -159,7 +162,9 @@ def run_dispatch(task: dict, condition_name: str, dry_run: bool) -> dict:
 
 
 def get_research_dbs() -> list:
-    return sorted(glob.glob(str(Path.home() / ".claude" / "projects" / "*" / "research.db")))
+    memory_path = Path(json.load(open(PROJECT_FILE))["memory_path"]).expanduser()
+    db_path = memory_path.parent / "research.db"
+    return [str(db_path)] if db_path.exists() else []
 
 
 def count_observations_for_condition(condition_name: str) -> int:
@@ -247,7 +252,7 @@ def main():
 
             condition_results.append({
                 "condition": cname,
-                "task_id":   task["id"],
+                "task_id":   task.get("id", f"t{i+1:02d}"),
                 "task_type": task["task_type"],
                 **result,
             })

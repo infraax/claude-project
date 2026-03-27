@@ -1,5 +1,6 @@
 {
   "completed_conditions": [
+    "baseline",
     "cache_only",
     "format_only",
     "clarity_only",
@@ -7,17 +8,19 @@
     "pd_only",
     "full_system"
   ],
-  "started_at": "2026-03-26T20:23:16.001932+00:00",
-  "condition_cache_only_completed_at": "2026-03-26T20:27:41.029236+00:00",
-  "condition_cache_only_obs_count": 30,
-  "condition_format_only_completed_at": "2026-03-26T20:32:07.622435+00:00",
-  "condition_format_only_obs_count": 30,
-  "condition_clarity_only_completed_at": "2026-03-26T20:40:34.686038+00:00",
-  "condition_clarity_only_obs_count": 30,
-  "condition_llmlingua_only_completed_at": "2026-03-26T20:44:55.983565+00:00",
-  "condition_llmlingua_only_obs_count": 30,
-  "condition_pd_only_completed_at": "2026-03-26T20:49:22.717105+00:00",
-  "condition_pd_only_obs_count": 30,
-  "condition_full_system_completed_at": "2026-03-26T21:00:25.539355+00:00",
-  "condition_full_system_obs_count": 30
+  "started_at": "2026-03-27T11:32:22.411172+00:00",
+  "condition_baseline_completed_at": "2026-03-27T11:35:09.123252+00:00",
+  "condition_baseline_obs_count": 30,
+  "condition_cache_only_completed_at": "2026-03-27T11:37:55.937750+00:00",
+  "condition_cache_only_obs_count": 20,
+  "condition_format_only_completed_at": "2026-03-27T11:40:42.532532+00:00",
+  "condition_format_only_obs_count": 20,
+  "condition_clarity_only_completed_at": "2026-03-27T11:43:32.581578+00:00",
+  "condition_clarity_only_obs_count": 20,
+  "condition_llmlingua_only_completed_at": "2026-03-27T11:46:29.920774+00:00",
+  "condition_llmlingua_only_obs_count": 20,
+  "condition_pd_only_completed_at": "2026-03-27T12:45:12.003732+00:00",
+  "condition_pd_only_obs_count": 26,
+  "condition_full_system_completed_at": "2026-03-27T12:47:50.500937+00:00",
+  "condition_full_system_obs_count": 20
 }

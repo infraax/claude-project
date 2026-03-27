@@ -19,6 +19,8 @@ import * as https from 'https';
 import { spawnSync } from 'child_process';
 import { randomUUID } from 'crypto';
 import Anthropic from '@anthropic-ai/sdk';
+import { ProxyAgent, setGlobalDispatcher } from 'undici';
+import 'dotenv/config';
 import { ClaudeProject } from './project.js';
 import { resolvePaths } from './paths.js';
 import { appendEvent } from './events.js';
@@ -26,6 +28,8 @@ import { initResearchDb, writeObservation, getResearchDbPath, DispatchObservatio
 import { classifyTaskType, inferInteractionPair } from './task-classifier.js';
 import { selectFormat, encodeDispatchBody, DispatchFormat } from './format-encoder.js';
 import { sendTelemetryAsync } from './telemetry.js';
+import { buildSystemPrompt } from './system-prompt-builder.js';
+import { getModel, estimateCost, CACHE_MIN_TOKENS } from '../config/models.js';
 
 // Approximate token cost of sending BUILTIN_TOOLS to the API (measured: 5 tools ≈ 350 tokens).
 const BUILTIN_TOOLS_TOKEN_COUNT = 350;
@@ -60,6 +64,8 @@ export interface DispatchFile {
   encoded_chars?: number;
   original_chars?: number;
   compression_ratio?: number;
+  cost_usd?: number;
+  model_used?: string;
 }
 
 // ── Built-in tool definitions sent to the Claude API ─────────────────────────
@@ -297,14 +303,31 @@ export async function runDispatch(
     session_id: sessionId,
   });
 
-  const client = new Anthropic({ apiKey });
+  // Set undici global proxy dispatcher so Node fetch routes through HTTPS_PROXY.
+  // This must be done before any SDK call — undici ignores env proxy vars by default.
+  const proxyUrl = process.env['HTTPS_PROXY'] ?? process.env['https_proxy'];
+  if (proxyUrl) {
+    setGlobalDispatcher(new ProxyAgent(proxyUrl));
+  }
+
+  // Session ingress tokens (sk-ant-si-...) authenticate as Bearer, not x-api-key.
+  const isSessionToken = apiKey.startsWith('sk-ant-si-');
+  const client = new Anthropic(
+    isSessionToken
+      ? { authToken: apiKey, apiKey: null as unknown as string }
+      : { apiKey },
+  );
 
   // Resolve agent definition
   const agentKey = dispatch.agent ?? Object.keys(project.agents ?? {})[0];
   const agentDef = agentKey ? (project.agents ?? {})[agentKey] : undefined;
+  // Always use the rich cacheable prompt as the base (≥1024 tokens required for cache activation).
+  // Append any agent-specific instructions from the config on top.
+  const basePrompt = buildSystemPrompt(agentKey ?? 'main');
   const systemPrompt = agentDef?.instructions
-    ?? `You are a helpful agent for the project "${project.name}". Complete the given task clearly and concisely.`;
-  const model = agentDef?.model ?? 'claude-sonnet-4-6';
+    ? `${basePrompt}\n\n## Agent-Specific Instructions\n\n${agentDef.instructions}`
+    : basePrompt;
+  const model = agentDef?.model ?? getModel('dispatch');
   const maxTokens = agentDef?.max_tokens ?? 4096;
   const agentTools = agentDef?.tools ?? [];
 
@@ -375,16 +398,28 @@ export async function runDispatch(
     timings.pd_lookup = Date.now() - pdLookupStart;
   }
 
-  // (k) Build system: cached block array or plain string
-  const system: string | Anthropic.Messages.TextBlockParam[] = useCache
+  // (k) Build system: cached block array or plain string.
+  // Cache is only activated when system prompt is above the model's minimum token threshold.
+  // Below threshold, cache_control is wasteful — strip it.
+  const estSystemTokens = Math.round(effectiveSystemPrompt.split(/\s+/).length * 1.3);
+  const cacheMinForModel = CACHE_MIN_TOKENS[model] ?? 1024;
+  const activateCache = useCache && estSystemTokens >= cacheMinForModel;
+  const system: string | Anthropic.Messages.TextBlockParam[] = activateCache
     ? [{ type: 'text' as const, text: effectiveSystemPrompt, cache_control: { type: 'ephemeral' as const } }]
     : effectiveSystemPrompt;
 
   const toolCallLog: DispatchFile['tool_calls'] = [];
   let totalUsage = { input_tokens: 0, output_tokens: 0 };
+  let modelCallCount = 0;
 
   try {
     let resultText = '';
+
+    // Beta header opts-in to prompt caching and overrides cross-region routing blocks.
+    // Only sent when cache is actually active (system prompt above model minimum).
+    const cacheApiOpts = activateCache
+      ? { headers: { 'anthropic-beta': 'prompt-caching-2024-07-31' } }
+      : {};
 
     if (agentTools.length === 0) {
       // ── Simple mode: single API call ────────────────────────────────────────
@@ -392,11 +427,12 @@ export async function runDispatch(
       const response = await client.messages.create({
         model,
         max_tokens: maxTokens,
-        system: systemPrompt,
+        system,
         messages: [{ role: 'user', content: messageBody }],
-      });
+      }, cacheApiOpts);
       timings.inference = Date.now() - inferStart;
       lastResponse = response;
+      modelCallCount = 1;
       totalUsage.input_tokens += response.usage.input_tokens;
       totalUsage.output_tokens += response.usage.output_tokens;
       resultText = response.content
@@ -422,10 +458,10 @@ export async function runDispatch(
         const response = await client.messages.create({
           model,
           max_tokens: maxTokens,
-          system: systemPrompt,
+          system,
           messages,
           tools: allowedTools,
-        });
+        }, cacheApiOpts);
         timings.inference += Date.now() - iterStart;
         lastResponse = response;
 
@@ -470,12 +506,15 @@ export async function runDispatch(
         messages.push({ role: 'user', content: toolResults });
       }
 
+      modelCallCount = iterations;
       if (iterations >= MAX_ITERATIONS) {
         resultText += '\n[Stopped: reached max iterations limit]';
       }
     }
 
     // Success
+    const cacheRead = ((lastResponse?.usage as unknown) as Record<string, unknown>)?.['cache_read_input_tokens'] as number ?? 0;
+    const dispatchCost = estimateCost(model, totalUsage.input_tokens, totalUsage.output_tokens, cacheRead);
     writeDispatch(dispatchFilePath, {
       status: 'completed',
       completed_at: new Date().toISOString(),
@@ -483,6 +522,8 @@ export async function runDispatch(
       tool_calls: toolCallLog,
       usage: totalUsage,
       task_type: classifyTaskType(dispatch.title, dispatch.body ?? ''),
+      cost_usd: dispatchCost,
+      model_used: model,
     });
 
     // Record research observation + increment interaction pair counter
@@ -541,9 +582,11 @@ export async function runDispatch(
             : 0,
         },
         outcome: 'success',
-        iterations: toolCallLog.length,
+        iterations: modelCallCount,
         task_completed: true,
         ablation_condition: (dispatch as any).ablation_condition ?? null,
+        cost_usd: dispatchCost,
+        model,
         ts: new Date().toISOString(),
       };
       writeObservation(db, obs);
@@ -599,7 +642,7 @@ export async function runDispatch(
         },
         latency_ms: timings,
         outcome: 'failure',
-        iterations: toolCallLog.length,
+        iterations: modelCallCount,
         task_completed: false,
         ablation_condition: (dispatch as any).ablation_condition ?? null,
         ts: new Date().toISOString(),

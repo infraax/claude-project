@@ -1,0 +1,13 @@
+[10:03:46] Queue runner started — 2 tasks pending
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[10:03:46] EXECUTING: 01-ablation-v2.md
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[10:22:33] ✅ DONE: 01-ablation-v2.md → moved to completed/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[10:22:33] EXECUTING: 02-verify-self-use.md
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[10:22:37] ✅ DONE: 02-verify-self-use.md → moved to completed/
+
+[10:22:37] Queue complete — all tasks done

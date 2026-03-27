@@ -1,0 +1,15 @@
+#!/bin/bash
+# Pre-push: scans all tracked files for secrets before push
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+echo "🔍 Running secret scan before push..."
+bash "$REPO_ROOT/scripts/hooks/scan-secrets.sh" "$REPO_ROOT"
+
+if [ $? -ne 0 ]; then
+  echo "🚫 PUSH ABORTED — secrets detected"
+  echo "To bypass (DANGEROUS): git push --no-verify"
+  exit 1
+fi
+
+exit 0
