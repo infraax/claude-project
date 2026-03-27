@@ -1,51 +1,37 @@
 {
   "name": "claude-project",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20",
-
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
   "features": {
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "22"
-    },
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.11"
-    },
+    "ghcr.io/devcontainers/features/node:1": {"version": "22"},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-
-  "mounts": [
-    "source=${localWorkspaceFolder}/research.db,target=/workspace/research.db,type=bind"
-  ],
-
-  "postCreateCommand": "npm install && npm run build && npm link",
-GitHub.copilot",
-        "GitHub.copilot-chat",
-        "
+  "postCreateCommand": "npm ci",
+  "forwardPorts": [3000, 3001],
+  "portsAttributes": {
+    "3000": {
+      "label": "Pipeline API",
+      "onAutoForward": "notify"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
         "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode",
         "ms-vscode.vscode-typescript-next",
-        "redhat.vscode-yaml",
-        "claudelab.claude-project"
+        "alexcvzz.vscode-sqlite"
       ],
       "settings": {
         "editor.formatOnSave": true,
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "typescript.preferences.importModuleSpecifier": "relative"
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
       }
     }
   },
-
-  "remoteEnv": {
-    "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
-  },
-
-  "forwardPorts": [8765],
-  "portsAttributes": {
-    "8765": {
-      "label": "MCP Server (HTTP)",
-      "onAutoForward": "silent"
+  "secrets": {
+    "ANTHROPIC_API_KEY": {
+      "description": "Anthropic API key for claude-project pipeline",
+      "documentationUrl": "https://console.anthropic.com"
     }
   }
 }

@@ -1,0 +1,24 @@
+pipeline:
+  - changed-files:
+    - any-glob-to-any-file: 'src/dispatch-runner.ts'
+    - any-glob-to-any-file: 'src/tgch/**'
+
+security:
+  - changed-files:
+    - any-glob-to-any-file: 'scripts/hooks/**'
+    - any-glob-to-any-file: '.github/workflows/**'
+
+data:
+  - changed-files:
+    - any-glob-to-any-file: 'data/**'
+    - any-glob-to-any-file: 'schema/**'
+
+ci:
+  - changed-files:
+    - any-glob-to-any-file: '.github/**'
+    - any-glob-to-any-file: '.devcontainer/**'
+
+docs:
+  - changed-files:
+    - any-glob-to-any-file: 'docs/**'
+    - any-glob-to-any-file: '*.md'

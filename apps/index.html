@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>claude-project dashboard</title>
+  <style>
+    body { font-family: monospace; background: #0d1117; color: #c9d1d9; 
+           padding: 2rem; margin: 0; }
+    h1 { color: #58a6ff; }
+    .card { background: #161b22; border: 1px solid #30363d; 
+            border-radius: 8px; padding: 1rem; margin: 1rem 0; }
+    .status { color: #3fb950; }
+    .pending { color: #d29922; }
+  </style>
+</head>
+<body>
+  <h1>⚡ claude-project</h1>
+  <div class="card">
+    <p class="status">● Pipeline live</p>
+    <p>Dashboard apps loading...</p>
+    <p><a href="apps/pipeline.html" style="color:#58a6ff">Pipeline Dashboard</a></p>
+    <p><a href="apps/ablation.html" style="color:#58a6ff">Ablation Comparator</a></p>
+    <p><a href="apps/queue.html" style="color:#58a6ff">Queue Inspector</a></p>
+    <p><a href="apps/tgch.html" style="color:#58a6ff">TGCH Status Board</a></p>
+  </div>
+  <div class="card">
+    <p class="pending">● Live data tunnel: checking...</p>
+    <script>
+      fetch('data/tunnel.json?v=' + Date.now())
+        .then(r => r.json())
+        .then(d => {
+          document.querySelector('.pending').textContent = 
+            '● Tunnel active: ' + d.url;
+          document.querySelector('.pending').className = 'status';
+        })
+        .catch(() => {
+          document.querySelector('.pending').textContent = 
+            '● Tunnel offline — static data mode';
+        });
+    </script>
+  </div>
+</body>
+</html>
