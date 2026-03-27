@@ -48,6 +48,9 @@ for pattern in "${PATTERNS[@]}"; do
   fi
 done
 
+
+echo "=== secret scan ==="
+bash scripts/hooks/scan-secrets.sh . || ERRORS=$((ERRORS+1))
 if [ $ERRORS -eq 0 ]; then
   echo "✓ CERTIFICATION PASSED — zero legacy references"
 else
