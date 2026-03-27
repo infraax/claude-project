@@ -1,5 +1,5 @@
 {
-  "computed_at": "2026-03-27T10:23:04.369918+00:00",
+  "computed_at": "2026-03-27T10:48:26.519631+00:00",
   "total_observations": 80,
   "conditions_run": [
     "baseline",
@@ -306,19 +306,12 @@
     }
   },
   "per_task_type_full_system": {
-    "documentation": {
+    "analysis": {
       "n_baseline": 2,
       "n_optimized": 1,
-      "baseline_mean": 2453,
-      "optimized_mean": 2453,
-      "reduction_pct": 0.0
-    },
-    "code_gen": {
-      "n_baseline": 8,
-      "n_optimized": 4,
-      "baseline_mean": 2397.8,
-      "optimized_mean": 2513.8,
-      "reduction_pct": -4.8
+      "baseline_mean": 2596,
+      "optimized_mean": 2599,
+      "reduction_pct": -0.1
     },
     "test_gen": {
       "n_baseline": 2,
@@ -334,19 +327,26 @@
       "optimized_mean": 2423,
       "reduction_pct": 0.0
     },
-    "analysis": {
-      "n_baseline": 2,
-      "n_optimized": 1,
-      "baseline_mean": 2596,
-      "optimized_mean": 2599,
-      "reduction_pct": -0.1
-    },
     "refactor": {
       "n_baseline": 4,
       "n_optimized": 2,
       "baseline_mean": 2437,
       "optimized_mean": 2552,
       "reduction_pct": -4.7
+    },
+    "documentation": {
+      "n_baseline": 2,
+      "n_optimized": 1,
+      "baseline_mean": 2453,
+      "optimized_mean": 2453,
+      "reduction_pct": 0.0
+    },
+    "code_gen": {
+      "n_baseline": 8,
+      "n_optimized": 4,
+      "baseline_mean": 2397.8,
+      "optimized_mean": 2513.8,
+      "reduction_pct": -4.8
     }
   },
   "n_breakeven_pd_negotiation": null,
