@@ -1,6 +1,6 @@
 {
   "$schema": "https://cdn.jsdelivr.net/npm/claude-project/schema/claude-project.schema.json",
-  "version": "5.0",
+  "version": "5.1",
   "project_id": "0bf67307-092a-4e2b-98da-c4bec5bc68e7",
   "name": "claude-project",
   "description": "MCP memory and dispatch server \u2014 self-hosted",
