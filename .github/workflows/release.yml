@@ -110,9 +110,11 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
 
       - name: Publish to GitHub Packages
+        continue-on-error: true
         run: |
           node -e "
             const pkg = require('./package.json');
+            pkg.name = '@infraax/claude-project';
             pkg.publishConfig = { registry: 'https://npm.pkg.github.com', access: 'public' };
             require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
           "
