@@ -193,7 +193,7 @@ export function writeObservation(db: Database.Database, obs: DispatchObservation
       @latency_inference_ms, @latency_tool_exec_ms, @latency_total_ms,
       @compression_ratio, @compression_input_raw, @compression_post_clarity,
       @compression_post_lingua, @outcome, @iterations, @task_completed, @ablation_condition,
-      @cost_usd, @model, @ts
+      @ts, @cost_usd, @model
     )
   `);
   stmt.run({
