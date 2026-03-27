@@ -68,7 +68,7 @@ function checkPinecone(): Promise<ServiceHealth> {
 
 function checkQdrant(): Promise<ServiceHealth> {
   const base = process.env['QDRANT_URL'] ?? '';
-  return probe(`${base}:6333/collections`, 'qdrant', {
+  return probe('qdrant', `${base}:6333/collections`, {
     'api-key': process.env['QDRANT_API_KEY'] ?? '',
   });
 }
