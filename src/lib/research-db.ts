@@ -48,6 +48,8 @@ export interface DispatchObservation {
   iterations: number;
   task_completed: boolean;
   ablation_condition?: string | null;
+  cost_usd?: number;
+  model?: string;
   ts: string;
 }
 
@@ -94,6 +96,8 @@ export function initResearchDb(dbPath: string): Database.Database {
       iterations INTEGER NOT NULL DEFAULT 0,
       task_completed INTEGER NOT NULL DEFAULT 0,
       ablation_condition TEXT,
+      cost_usd REAL DEFAULT 0,
+      model TEXT DEFAULT 'unknown',
       ts TEXT NOT NULL
     );
 
@@ -153,6 +157,19 @@ export function initResearchDb(dbPath: string): Database.Database {
       computed_at TEXT NOT NULL
     );
 
+    -- Migrations for columns added after initial schema
+    -- SQLite ignores duplicate column errors when using ALTER TABLE
+  `);
+
+  // Additive column migrations — safe to run repeatedly
+  for (const migration of [
+    "ALTER TABLE dispatch_observations ADD COLUMN cost_usd REAL DEFAULT 0",
+    "ALTER TABLE dispatch_observations ADD COLUMN model TEXT DEFAULT 'unknown'",
+  ]) {
+    try { db.exec(migration); } catch { /* column already exists */ }
+  }
+
+  db.exec(`
     CREATE INDEX IF NOT EXISTS idx_obs_dispatch   ON dispatch_observations(dispatch_id);
     CREATE INDEX IF NOT EXISTS idx_obs_task_type  ON dispatch_observations(task_type);
     CREATE INDEX IF NOT EXISTS idx_obs_protocol   ON dispatch_observations(protocol_condition);
@@ -175,7 +192,8 @@ export function writeObservation(db: Database.Database, obs: DispatchObservation
       @latency_clarity_ms, @latency_compression_ms, @latency_pd_lookup_ms,
       @latency_inference_ms, @latency_tool_exec_ms, @latency_total_ms,
       @compression_ratio, @compression_input_raw, @compression_post_clarity,
-      @compression_post_lingua, @outcome, @iterations, @task_completed, @ablation_condition, @ts
+      @compression_post_lingua, @outcome, @iterations, @task_completed, @ablation_condition,
+      @cost_usd, @model, @ts
     )
   `);
   stmt.run({
@@ -210,6 +228,8 @@ export function writeObservation(db: Database.Database, obs: DispatchObservation
     iterations: obs.iterations,
     task_completed: obs.task_completed ? 1 : 0,
     ablation_condition: obs.ablation_condition ?? null,
+    cost_usd: obs.cost_usd ?? 0,
+    model: obs.model ?? 'unknown',
     ts: obs.ts,
   });
 }
