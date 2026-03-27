@@ -42,3 +42,26 @@ Pipeline env var: CLAUDE_PROJECT_DIR=${CLAUDE_PROJECT_DIR}
 
 ## Current Version
 v5.1.0 — legacy tools removed, schema updated, MCP globally registered, CLI ready.
+
+## USE THE PIPELINE FOR ALL CODING TASKS
+
+When implementing any non-trivial code change (>20 lines or >1 file):
+
+1. PLAN first — write the plan as a dispatch:
+   Use dispatch_task(title="plan: [task]", body="[full spec]", agent="main")
+   
+2. IMPLEMENT via dispatch — do not write code directly for complex tasks:
+   Use dispatch_task(title="impl: [task]", body="[plan output + requirements]", agent="main")
+
+3. VERIFY via dispatch:
+   Use dispatch_task(title="verify: [task]", body="[what to check]", agent="main")
+
+For simple fixes (<20 lines, 1 file): write directly is fine.
+
+ALWAYS store significant decisions:
+  store_memory(category="decision", text="[what and why]")
+
+ALWAYS store new patterns you notice:
+  store_memory(category="pattern", text="[repeated pattern description]")
+
+This is how the system learns and improves itself.
