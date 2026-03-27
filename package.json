@@ -144,7 +144,9 @@
     "package": "vsce package",
     "publish:npm": "npm publish --access public",
     "publish:vsce": "vsce publish",
-    "publish:all": "npm run build && npm run publish:npm && npm run publish:vsce"
+    "publish:all": "npm run build && npm run publish:npm && npm run publish:vsce",
+    "orchestrator": "npx ts-node --esm src/orchestration/api-server.ts",
+    "orchestrator:bg": "nohup npx ts-node --esm src/orchestration/api-server.ts &"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

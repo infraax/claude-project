@@ -269,9 +269,10 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
     // macOS notification (silent on error)
     if (notifyEnabled && process.platform === 'darwin') {
       try {
+        const safeMsg = msg.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
         spawnSync('osascript', [
           '-e',
-          `display notification "${msg.replace(/"/g, '\\"')}" with title "claude-project"`,
+          `display notification "${safeMsg}" with title "claude-project"`,
         ], { timeout: 5000 });
       } catch { /* non-fatal */ }
     }

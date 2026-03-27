@@ -16,6 +16,13 @@ import * as os from 'os';
 import { ClaudeProject } from './lib/project.js';
 import { inject, isInjected, eject, getMcpJsonPath } from './lib/mcp-inject.js';
 
+// ── Utilities ─────────────────────────────────────────────────────────────────
+
+/** POSIX single-quote escaping — safe for all shell metacharacters. */
+function shellEscape(s: string): string {
+  return "'" + s.replace(/'/g, "'\\''") + "'";
+}
+
 // ── State ─────────────────────────────────────────────────────────────────────
 
 let statusBarItem: vscode.StatusBarItem;
@@ -209,8 +216,8 @@ function cmdInit(): void {
       // Run CLI in integrated terminal — keeps output visible and familiar
       const terminal = vscode.window.createTerminal('Claude Project');
       terminal.show();
-      const desc = description ? ` -d "${description.replace(/"/g, '\\"')}"` : '';
-      terminal.sendText(`claude-project init "${name.replace(/"/g, '\\"')}"${desc}`);
+      const desc = description ? ` -d ${shellEscape(description)}` : '';
+      terminal.sendText(`claude-project init ${shellEscape(name)}${desc}`);
     });
   });
 }

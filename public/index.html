@@ -1,13 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>claude-project</title>
-  <style>body{font-family:monospace;padding:2rem;background:#0d1117;color:#58a6ff;}</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>claude-project — Dashboard</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #7d8590; --green: #3fb950;
+    --yellow: #d29922; --red: #f85149; --blue: #58a6ff;
+    --purple: #bc8cff; --orange: #ffa657;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace; font-size: 14px; min-height: 100vh; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 16px; font-weight: 600; color: var(--blue); }
+  header h1 span { color: var(--muted); font-weight: 400; }
+  .live-badge { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 16px; }
+
+  .stat-value { font-size: 32px; font-weight: 700; color: var(--text); line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .stat-sub { font-size: 12px; color: var(--green); margin-top: 6px; }
+
+  .service-list { display: flex; flex-direction: column; gap: 8px; }
+  .service-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg); border-radius: 6px; border: 1px solid var(--border); }
+  .service-name { font-size: 13px; font-weight: 500; }
+  .service-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge-online  { background: rgba(63,185,80,.15);  color: var(--green);  }
+  .badge-degraded{ background: rgba(210,153,34,.15); color: var(--yellow); }
+  .badge-offline { background: rgba(248,81,73,.15);  color: var(--red);    }
+  .badge-loading { background: rgba(88,166,255,.1);  color: var(--blue);   }
+  .badge::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+  .tgch-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .tgch-card { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 14px; text-align: center; }
+  .tgch-letter { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+  .tgch-name { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .tgch-status { font-size: 11px; padding: 2px 8px; border-radius: 10px; display: inline-block; }
+  .tgch-active  { background: rgba(63,185,80,.15);  color: var(--green);  }
+  .tgch-pending { background: rgba(210,153,34,.15); color: var(--yellow); }
+  .tgch-cold    { background: rgba(125,133,144,.15); color: var(--muted); }
+
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width .6s ease; }
+
+  @media(max-width:768px){ .grid-4{grid-template-columns:1fr 1fr;} .grid-2{grid-template-columns:1fr;} .tgch-grid{grid-template-columns:1fr 1fr;} }
+</style>
 </head>
 <body>
-  <h1>claude-project</h1>
-  <p>MCP memory + dispatch pipeline — infrastructure online.</p>
-  <p style="color:#8b949e;font-size:0.8rem">v5.1.0</p>
+<header>
+  <h1>claude-project <span>/ dashboard</span></h1>
+  <div class="live-badge">
+    <div class="live-dot"></div>
+    <span id="last-update">Loading...</span>
+  </div>
+</header>
+
+<main>
+  <!-- Pipeline Metrics Row -->
+  <div class="grid-4">
+    <div class="card">
+      <div class="stat-value" id="m-runs">—</div>
+      <div class="stat-label">Total Runs</div>
+      <div class="stat-sub" id="m-last-run">—</div>
+    </div>
+    <div class="card">
+      <div class="stat-value" id="m-success">—</div>
+      <div class="stat-label">Success Rate</div>
+      <div class="progress-bar"><div class="progress-fill" id="m-success-bar" style="background:var(--green);width:0%"></div></div>
+    </div>
+    <div class="card">
+      <div class="stat-value" id="m-cache">—</div>
+      <div class="stat-label">Cache Hit Rate</div>
+      <div class="progress-bar"><div class="progress-fill" id="m-cache-bar" style="background:var(--blue);width:0%"></div></div>
+    </div>
+    <div class="card">
+      <div class="stat-value" id="m-cost">—</div>
+      <div class="stat-label">Total Cost (USD)</div>
+      <div class="stat-sub" id="m-tokens">—</div>
+    </div>
+  </div>
+
+  <!-- TGCH Stack -->
+  <div class="card" style="margin-bottom:24px;">
+    <h2>TGCH Optimization Stack</h2>
+    <div class="tgch-grid">
+      <div class="tgch-card">
+        <div class="tgch-letter" style="color:var(--blue)">T</div>
+        <div class="tgch-name">Token Cache</div>
+        <div class="tgch-status tgch-active" id="tgch-t">ACTIVE</div>
+      </div>
+      <div class="tgch-card">
+        <div class="tgch-letter" style="color:var(--green)">G</div>
+        <div class="tgch-name">Grammar</div>
+        <div class="tgch-status tgch-active" id="tgch-g">ACTIVE</div>
+      </div>
+      <div class="tgch-card">
+        <div class="tgch-letter" style="color:var(--yellow)">C</div>
+        <div class="tgch-name">Compression</div>
+        <div class="tgch-status tgch-cold" id="tgch-c">COLD START</div>
+      </div>
+      <div class="tgch-card">
+        <div class="tgch-letter" style="color:var(--purple)">H</div>
+        <div class="tgch-name">Habit</div>
+        <div class="tgch-status tgch-pending" id="tgch-h">WARMING</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Services Split -->
+  <div class="grid-2">
+    <div class="card">
+      <h2>Core Infrastructure</h2>
+      <div class="service-list" id="services-core"></div>
+    </div>
+    <div class="card">
+      <h2>AI &amp; Data Services</h2>
+      <div class="service-list" id="services-ai"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+// CONFIG: update API_BASE to your cloudflared tunnel URL or leave empty for same-origin
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3456'
+  : '';
+
+const CORE_SERVICES = ['cloudflare', 'neon', 'qdrant', 'upstash', 'firebase'];
+const AI_SERVICES   = ['pinecone', 'cohere', 'huggingface'];
+
+function fmtK(n) {
+  if (!n) return '0';
+  return n >= 1000 ? (n / 1000).toFixed(1) + 'K' : String(Math.round(n));
+}
+
+function timeSince(dateStr) {
+  if (!dateStr) return 'never';
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 60000);
+  if (diff < 1) return 'just now';
+  if (diff < 60) return `${diff}m ago`;
+  return `${Math.floor(diff / 60)}h ago`;
+}
+
+function renderServiceRow(s) {
+  const latency = s.latencyMs ? `latency: ${s.latencyMs}ms` : '';
+  return `<div class="service-row">
+    <div><div class="service-name">${s.name}</div><div class="service-meta">${latency}</div></div>
+    <span class="badge badge-${s.status}">${s.status}</span>
+  </div>`;
+}
+
+function renderLoadingRow(name) {
+  return `<div class="service-row"><div class="service-name">${name}</div><span class="badge badge-loading">checking</span></div>`;
+}
+
+document.getElementById('services-core').innerHTML = CORE_SERVICES.map(renderLoadingRow).join('');
+document.getElementById('services-ai').innerHTML   = AI_SERVICES.map(renderLoadingRow).join('');
+
+async function refresh() {
+  try {
+    const res = await fetch(`${API_BASE}/api/all`, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { services, metrics } = await res.json();
+
+    const sr = Math.round((metrics.successRate || 0) * 100);
+    const cr = Math.round((metrics.cacheHitRate || 0) * 100);
+
+    document.getElementById('m-runs').textContent        = fmtK(metrics.totalRuns);
+    document.getElementById('m-success').textContent     = sr + '%';
+    document.getElementById('m-success-bar').style.width = sr + '%';
+    document.getElementById('m-cache').textContent       = cr + '%';
+    document.getElementById('m-cache-bar').style.width   = cr + '%';
+    document.getElementById('m-cost').textContent        = '$' + (metrics.totalCostUSD || 0).toFixed(2);
+    document.getElementById('m-tokens').textContent      =
+      `avg ${fmtK(metrics.avgInputTokens)} in / ${fmtK(metrics.avgOutputTokens)} out`;
+    document.getElementById('m-last-run').textContent    = 'last: ' + timeSince(metrics.lastRun);
+
+    if (cr > 0) { document.getElementById('tgch-t').textContent = `ACTIVE (${cr}% hit)`; }
+    if (cr > 10) {
+      document.getElementById('tgch-c').textContent  = 'WARMING';
+      document.getElementById('tgch-c').className    = 'tgch-status tgch-pending';
+    }
+    if (metrics.totalRuns > 93) {
+      document.getElementById('tgch-h').textContent = `${metrics.totalRuns} interactions`;
+    }
+
+    const svcMap = Object.fromEntries(services.map(s => [s.name, s]));
+    document.getElementById('services-core').innerHTML =
+      CORE_SERVICES.map(n => svcMap[n] ? renderServiceRow(svcMap[n]) : renderLoadingRow(n)).join('');
+    document.getElementById('services-ai').innerHTML =
+      AI_SERVICES.map(n => svcMap[n] ? renderServiceRow(svcMap[n]) : renderLoadingRow(n)).join('');
+
+    document.getElementById('last-update').textContent = 'updated ' + new Date().toLocaleTimeString();
+  } catch {
+    document.getElementById('last-update').textContent = 'API offline — start: npm run orchestrator';
+  }
+}
+
+refresh();
+setInterval(refresh, 30000);
+</script>
 </body>
 </html>

@@ -1,0 +1,58 @@
+name: Infrastructure Health Check
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # every 6 hours
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run infrastructure test
+        env:
+          CLOUDFLARE_API_TOKEN:      ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID:     ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PINECONE_API_KEY:          ${{ secrets.PINECONE_API_KEY }}
+          QDRANT_URL:                ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY:            ${{ secrets.QDRANT_API_KEY }}
+          NEON_API_KEY:              ${{ secrets.NEON_API_KEY }}
+          NEON_CONNECTION_STRING:    ${{ secrets.NEON_CONNECTION_STRING }}
+          COHERE_API_KEY:            ${{ secrets.COHERE_API_KEY }}
+          HF_TOKEN_READ:             ${{ secrets.HF_TOKEN_READ }}
+          UPSTASH_REDIS_KEY:         ${{ secrets.UPSTASH_REDIS_KEY }}
+          FIREBASE_API_KEY:          ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_PROJECT_ID:       ${{ secrets.FIREBASE_PROJECT_ID }}
+          AWS_ACCESS_KEY_ID:         ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY:     ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          ALIBABA_AGENTBAY_API_KEY:  ${{ secrets.ALIBABA_AGENTBAY_API_KEY }}
+        run: bash scripts/test-infrastructure.sh 2>&1 | tee health-report.txt
+
+      - name: Post summary
+        if: always()
+        run: |
+          echo "## Infrastructure Health" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -20 health-report.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-report-${{ github.run_id }}
+          path: health-report.txt
+          retention-days: 30
