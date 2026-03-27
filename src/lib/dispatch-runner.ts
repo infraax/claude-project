@@ -26,6 +26,7 @@ import { initResearchDb, writeObservation, getResearchDbPath, DispatchObservatio
 import { classifyTaskType, inferInteractionPair } from './task-classifier.js';
 import { selectFormat, encodeDispatchBody, DispatchFormat } from './format-encoder.js';
 import { sendTelemetryAsync } from './telemetry.js';
+import { buildSystemPrompt } from './system-prompt-builder.js';
 
 // Approximate token cost of sending BUILTIN_TOOLS to the API (measured: 5 tools ≈ 350 tokens).
 const BUILTIN_TOOLS_TOKEN_COUNT = 350;
@@ -302,8 +303,12 @@ export async function runDispatch(
   // Resolve agent definition
   const agentKey = dispatch.agent ?? Object.keys(project.agents ?? {})[0];
   const agentDef = agentKey ? (project.agents ?? {})[agentKey] : undefined;
+  // Always use the rich cacheable prompt as the base (≥1024 tokens required for cache activation).
+  // Append any agent-specific instructions from the config on top.
+  const basePrompt = buildSystemPrompt(agentKey ?? 'main');
   const systemPrompt = agentDef?.instructions
-    ?? `You are a helpful agent for the project "${project.name}". Complete the given task clearly and concisely.`;
+    ? `${basePrompt}\n\n## Agent-Specific Instructions\n\n${agentDef.instructions}`
+    : basePrompt;
   const model = agentDef?.model ?? 'claude-sonnet-4-6';
   const maxTokens = agentDef?.max_tokens ?? 4096;
   const agentTools = agentDef?.tools ?? [];
@@ -392,7 +397,7 @@ export async function runDispatch(
       const response = await client.messages.create({
         model,
         max_tokens: maxTokens,
-        system: systemPrompt,
+        system,
         messages: [{ role: 'user', content: messageBody }],
       });
       timings.inference = Date.now() - inferStart;
@@ -422,7 +427,7 @@ export async function runDispatch(
         const response = await client.messages.create({
           model,
           max_tokens: maxTokens,
-          system: systemPrompt,
+          system,
           messages,
           tools: allowedTools,
         });
