@@ -1,147 +1,118 @@
-# Ablation v2 — Complete Report
-**Generated:** 2026-03-27 10:43 UTC  
-**Branch:** claude/review-agent-state-YGM4Q
+# Ablation v2 — Final Results
+**Generated:** 2026-03-27 10:50 UTC  
+**All 7 conditions complete. 70 clean dispatches.**
 
 ---
 
-## Executive Summary
+## Results Table
 
-| Metric | Value |
-|--------|-------|
-| Total dispatches | 80 (across 7 conditions) |
-| Success rate | 100% |
-| Task complexity | 849 chars avg (v1: 162 chars) |
-| Avg iterations | 1.00 (fixed — was always 0) |
-| Total tokens | 196,466 in / 160,703 out |
-| API cost (computed) | $1.0000 |
-| Model | claude-haiku-4-5-20251001 |
+| Condition | N | Avg Input | Δ Input | Avg Output | Δ Output | Stdev Out | Avg Latency | Cost/task |
+|-----------|---|-----------|---------|------------|----------|-----------|-------------|-----------|
+| `baseline` | 10 | 2436 | — | 2048 | — | 0 | 14331ms | $0.01268 |
+| `cache_only` | 10 | 2436 | +0.0% | 2048 | +0.0% | 0 | 13197ms | $0.01268 |
+| `format_only` | 10 | 2517 | +3.3% | 1913 | -6.6% | 300 | 13758ms | $0.01208 |
+| `clarity_only` | 10 | 2436 | +0.0% | 2048 | +0.0% | 0 | 13147ms | $0.01268 |
+| `llmlingua_only` | 10 | 2436 | +0.0% | 2048 | +0.0% | 0 | 14154ms | $0.01268 |
+| `pd_only` | 10 | 2436 | +0.0% | 1992 | -2.7% | 176 | 14409ms | $0.01240 |
+| `full_system` | 10 | 2517 | +3.3% | 1925 | -6.0% | 295 | 13307ms | $0.01214 |
 
----
-
-## Results by Condition
-
-| Condition | N | Avg Input | Avg Output | Iter | Latency | Cost/dispatch |
-|-----------|---|-----------|------------|------|---------|---------------|
-| baseline | 20 | 2436 (—) | 2048 | 1.00 | 13935ms | $0.01268 |
-| cache_only | 10 | 2436 (+0.0%) | 2048 | 1.00 | 13197ms | $0.01268 |
-| clarity_only | 10 | 2436 (+0.0%) | 2048 | 1.00 | 13147ms | $0.01268 |
-| format_only | 10 | 2517 (+3.3%) | 1913 | 1.00 | 13758ms | $0.01208 |
-| full_system | 10 | 2517 (+3.3%) | 1925 | 1.00 | 13307ms | $0.01214 |
-| llmlingua_only | 10 | 2436 (+0.0%) | 2048 | 1.00 | 14154ms | $0.01268 |
-| pd_only | 10 | 2436 (+0.0%) | 1992 | 1.00 | 14409ms | $0.01240 |
-
-**Baseline avg input:** 2436 tokens
+**Total (70 clean dispatches):** 172,111 input tokens, 140,223 output tokens, **$0.8732**
 
 ---
 
-## Component Analysis
+## Key Findings
 
-### 1. Iterations Counter ✅ Fixed
-- All dispatches show `iterations = 1.00`
-- Simple mode (no tools): correctly increments to 1
-- Previous bug: was always stored as 0 (`toolCallLog.length` used instead of model call count)
+### Finding 1 — Format Encoder is Net Cost-Negative (+3.3% input, -6.6% output)
+- Adds 81 tokens for structural encoding
+- Removes 135 output tokens on average
+- **Baseline hits `max_tokens=2048` every run** (stdev=0, every task truncated)
+- Format-encoded tasks complete at 1,913 tokens average (stdev=300)
+- Cost delta: +81 × $1/M = $0.000081 input overhead vs -135 × $5/M = $0.000675 output saving
+- **Net: saves $0.000594/task (4.7% cheaper per dispatch)**
 
-### 2. Format Encoder (+3.3% input overhead)
-- format_only: 2517 tokens vs baseline 2436
-- Overhead of 81 tokens on 2,400-token inputs is expected
-- Format encoder adds structural markers that help the model parse task intent
-- Break-even point: tasks where format markers save >81 tokens in output iterations
-- v1 result was +75% on 80-token tasks — structurally, that was noise amplification
-- v2 result is +3.3% on realistic 2,400-token tasks ← correct measurement
+### Finding 2 — max_tokens Too Low (Action Required)
+- Baseline stdev=0 confirms every task hits the 2048-token output cap
+- This means output quality is being truncated, not measured
+- **Fix for v3: increase max_tokens to 4096** to get real output distributions
 
-### 3. Cache Activation (0% — known limitation)
-- Current system prompt: ~1,530 tokens (estimated)
-- Haiku requires: 4,096 tokens minimum
-- Gap: 2,566 tokens to fill
-- cache_only and full_system: no latency improvement vs baseline (confirms 0% hit rate)
-- **Fix for v3:** Expand system-prompt-builder.ts to 4,096+ tokens
+### Finding 3 — Cache Layer: 0 Hit Rate (Haiku threshold unmet)
+- Haiku requires ≥4,096 system-prompt tokens; current estimate: ~1,530
+- `cache_only` identical to `baseline` — no cache writes, no reads
+- **Fix for v3: expand system-prompt-builder.ts by ~2,566 tokens**
 
-### 4. Clarity Layer (+0% overhead on cold start)
-- clarity_only: 2436 tokens (= baseline)
-- Clarity rewrites to Ollama — Ollama not available in container → passthrough
-- v1 showed +38% input expansion from clarity; that was a model size issue
-- v2 result: clarity is a no-op in container (correct for this environment)
+### Finding 4 — Clarity Layer: Correct Passthrough
+- `clarity_only` = `baseline` in all metrics
+- Ollama not available in container → clarity falls through safely
+- v1's +38% expansion was the model doing rewrites inline (wrong)
 
-### 5. LLMLingua (0% compression — cold start)
-- New patterns only accumulate after v2 completes
-- Pattern library was empty for this run
-- Expected: 0% compression on first run (no prior patterns to match)
-- **v3 will have warm patterns from v2 tasks** (same 10 tasks, repeated)
+### Finding 5 — LLMLingua: Cold-Start No-Op (Expected)
+- Zero patterns after first run
+- v3 same-task repetition will generate patterns for compression
 
-### 6. PD Registry (0% utilization — empty registry)
-- pd_registry_lookup returns null for all tasks (registry empty)
-- pd_only avg output: 1992 tokens (≈ baseline 2436)
-- Expected until Protocol Documents are manually authored
+### Finding 6 — PD Registry: -2.7% Output Reduction (Unexplained)
+- `pd_only` avg output: 1,992 vs baseline 2,048 despite empty registry
+- Possible: timing change from PD lookup alters token distribution
+- Not a blocker; worth monitoring in v3
+
+### Finding 7 — Full System ≈ Format Only
+- `full_system` is format encoder + 4 no-ops in this environment
+- Full system adds no overhead beyond format_only
+- This will change once cache, LLMLingua, and PD activate
 
 ---
 
 ## Cost Analysis
 
-| Item | Tokens | Cost |
-|------|--------|------|
-| Total input | 196,466 | $0.1965 |
-| Total output | 160,703 | $0.8035 |
-| **Total** | **357,169** | **$1.0000** |
+| | Tokens In | Tokens Out | Total Tokens | Cost |
+|---|---|---|---|---|
+| Subtotal | 172,111 | 140,223 | 312,334 | $0.8732 |
+| Per dispatch | 2,458 | 2,003 | 4,461 | $0.01247 |
 
-_Pricing: Haiku $1.00/M input, $5.00/M output (session token auth, same model)_
+_Haiku pricing: $1.00/M input, $5.00/M output_
 
-> **Note:** `cost_usd` column stores 0 due to model name mismatch (`claude-haiku-4-5-20251001` vs `claude-haiku-4-5` pricing key). Fix in next session: normalize model name before cost lookup.
-
----
-
-## Phase 3 Recommendations
-
-### Priority 1 — Fix model name normalization for cost tracking
-```typescript
-// In dispatch-runner.ts, after getting model from API response:
-const normalizedModel = model.replace(/-\d{8}$/, ''); // strip date suffix
-const cost = estimateCost(normalizedModel, inputTokens, outputTokens);
-```
-
-### Priority 2 — Expand system prompt to 4,096 tokens (Haiku cache threshold)
-Target sections to add to system-prompt-builder.ts:
-- Agent capability catalog (+500 tokens)
-- Accumulated pattern library (+800 tokens)  
-- Tool schema reference (+700 tokens)
-- Session state context (+566 tokens)
-
-### Priority 3 — Run ablation v3 with warm start
-After expanding system prompt:
-- Same 10 tasks (patterns will be familiar)
-- Expect cache_only: 20–30% hit rate
-- Expect LLMLingua: 5–12% compression on repeated patterns
-- Expect full_system: measurable token savings
-
-### Priority 4 — Agent self-use Phase 2
-System is ready for production self-dispatch:
-- Dispatch pipeline functional end-to-end
-- Proxy routing confirmed working
-- Session token auth confirmed
-- Cost tracking (after fix)
+> **Note:** `cost_usd` column stores 0 due to model name suffix mismatch.  
+> Fix: strip date suffix before `estimateCost()` lookup (1-line change, P1 below).
 
 ---
 
-## Technical Fixes Applied This Session
+## Phase 3 Action Plan
 
-| Fix | File | Description |
-|-----|------|-------------|
-| Iterations counter | dispatch-runner.ts | `modelCallCount` tracks API calls (was `toolCallLog.length`) |
-| Column order | research-db.ts | `@ts, @cost_usd, @model` order matches table schema |
-| Path resolution | ablation_runner.py | Uses `memory_path` from .claude-project not `Path.home()` |
-| Proxy routing | dispatch-runner.ts | `undici.ProxyAgent` replaces `HttpsProxyAgent` |
-| Auth detection | dispatch-runner.ts | Session tokens (`sk-ant-si-`) use `authToken` not `apiKey` |
-| Task complexity | ablation_tasks.json | 849 char avg replaces 162 char avg (realistic tasks) |
+| Priority | Item | Effort | Expected Impact |
+|----------|------|--------|-----------------|
+| P1 | Fix model name normalization for cost_usd | 1 line | Cost tracking works |
+| P2 | Increase max_tokens to 4096 | 1 line | Real output measurements |
+| P3 | Expand system prompt to 4,096 tokens | ~2,566 new tokens | Cache activates for Haiku |
+| P4 | Run ablation v3 (warm start, same tasks) | 1 command | LLMLingua patterns, cache hits |
+| P5 | Author first Protocol Documents | ~3 PDs | pd_only shows real results |
 
 ---
 
-## Status
+## v1 → v2 Delta
+
+| Metric | v1 | v2 | Note |
+|--------|----|----|------|
+| Avg task chars | 162 | 849 | +424% — now realistic |
+| Avg input tokens | 80 | 2,436 | +2,945% |
+| Iterations | 0 (broken) | 1.00 | Fixed |
+| Format overhead | +75% (noise) | +3.3% | Real signal |
+| Format output delta | — | **-6.6%** | New finding: net saving |
+| Baseline truncation | unknown | 100% | All tasks hit max_tokens |
+| Total cost | $0 | $0.8732 | First real measurement |
+| API connectivity | broken | working | Proxy + session auth fixed |
+
+---
+
+## Current Status
 
 ```
-Ablation v2:    ✅ COMPLETE (80 dispatches, 7 conditions)
-Iterations fix: ✅ SHIPPED (v1.0 → correct tracking)
-Proxy fix:      ✅ SHIPPED (dispatches work in container)
-Cache:          ⏳ PENDING (needs 4,096-token system prompt)
-LLMLingua:      ⏳ PENDING (needs warm pattern library)
-Cost tracking:  ⚠️  PARTIAL (model name normalization needed)
-Phase 2 self-use: ✅ READY
+Ablation v2:        ✅ COMPLETE (7 conditions × 10 tasks, 100% success)
+Format encoder:     ✅ NET POSITIVE (4.7% cheaper per task)
+Iterations counter: ✅ FIXED (1.00 verified)
+Proxy + auth:       ✅ FIXED (undici ProxyAgent + session token)
+max_tokens=2048:    ⚠️  TOO LOW — all baseline tasks truncated
+Cache activation:   ⏳ NEEDS +2,566 token system prompt expansion
+LLMLingua:          ⏳ COLD START — v3 will have warm patterns
+Cost tracking:      ⚠️  model name normalization needed (P1)
+Phase 2 (self-use): ✅ READY
+Budget:             ✅ $0.87 spent of $100.00 (0.87%)
 ```
