@@ -19,6 +19,8 @@ import * as https from 'https';
 import { spawnSync } from 'child_process';
 import { randomUUID } from 'crypto';
 import Anthropic from '@anthropic-ai/sdk';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import 'dotenv/config';
 import { ClaudeProject } from './project.js';
 import { resolvePaths } from './paths.js';
 import { appendEvent } from './events.js';
@@ -301,7 +303,11 @@ export async function runDispatch(
     session_id: sessionId,
   });
 
-  const client = new Anthropic({ apiKey });
+  const proxyUrl = process.env['HTTPS_PROXY'] ?? process.env['https_proxy'];
+  const client = new Anthropic({
+    apiKey,
+    ...(proxyUrl ? { httpAgent: new HttpsProxyAgent(proxyUrl) } : {}),
+  });
 
   // Resolve agent definition
   const agentKey = dispatch.agent ?? Object.keys(project.agents ?? {})[0];
