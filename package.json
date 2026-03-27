@@ -152,6 +152,7 @@
     "better-sqlite3": "^12.8.0",
     "commander": "^12.1.0",
     "dotenv": "^17.3.1",
+    "firebase-tools": "^15.12.0",
     "https-proxy-agent": "^5.0.1"
   },
   "devDependencies": {

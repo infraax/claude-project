@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 .env.local
+.env.*.local
 *.js.map
 *.d.ts.map
 .DS_Store
@@ -12,4 +13,17 @@ __pycache__/
 *.pyo
 claude-project-instructions/INSTRUCTIONS.md
 claude-project-instructions/key.md
-claude-project-gk.github/Freesetup.md 
+claude-project-gk.github/Freesetup.md
+
+# Infrastructure secrets — NEVER COMMIT
+INFRA/
+.google/
+reports/
+*.pem
+*.p12
+*.pfx
+*.key
+*-adminsdk-*.json
+*-serviceaccount*.json
+*apiKey*.csv
+.keys/
