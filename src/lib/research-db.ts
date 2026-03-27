@@ -233,3 +233,29 @@ export function writeObservation(db: Database.Database, obs: DispatchObservation
     ts: obs.ts,
   });
 }
+
+export interface SpendResult {
+  total_usd: number;
+  by_condition: Record<string, number>;
+}
+
+export function getSpend(db: Database.Database, days: number = 30): SpendResult {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+
+  const total = db.prepare(
+    `SELECT COALESCE(SUM(cost_usd), 0) as total FROM dispatch_observations WHERE ts >= ?`
+  ).get(since) as { total: number };
+
+  const byCondition = db.prepare(
+    `SELECT COALESCE(ablation_condition, 'uncategorized') as condition,
+            COALESCE(SUM(cost_usd), 0) as cost
+     FROM dispatch_observations
+     WHERE ts >= ?
+     GROUP BY ablation_condition`
+  ).all(since) as Array<{ condition: string; cost: number }>;
+
+  return {
+    total_usd: total.total,
+    by_condition: Object.fromEntries(byCondition.map((r) => [r.condition, r.cost])),
+  };
+}
