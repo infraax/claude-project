@@ -1,0 +1,38 @@
+#!/bin/bash
+# Pre-commit: scans staged files for secrets before commit
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+FOUND=0
+
+PATTERNS=(
+  "sk-ant-api[0-9a-zA-Z_\-]{20,}"
+  "npm_[a-zA-Z0-9]{36}"
+  "ghp_[a-zA-Z0-9]{36}"
+  "pplx-[a-zA-Z0-9]{40,}"
+  "ANTHROPIC_API_KEY=['\"]?sk-ant-api[0-9a-zA-Z_\-]{20,}"
+  "-----BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-----"
+)
+
+STAGED=$(git diff --cached --name-only \
+  | grep -v node_modules | grep -v dist)
+
+for FILE in $STAGED; do
+  FULL="$REPO_ROOT/$FILE"
+  [ -f "$FULL" ] || continue
+  for PATTERN in "${PATTERNS[@]}"; do
+    if grep -qE "$PATTERN" "$FULL" 2>/dev/null; then
+      echo "❌ COMMIT BLOCKED — secret in $FILE"
+      echo "   Pattern: $PATTERN"
+      FOUND=1
+    fi
+  done
+done
+
+if [ "$FOUND" -eq 1 ]; then
+  echo "🚫 COMMIT ABORTED — remove secrets first"
+  echo "To bypass (DANGEROUS): git commit --no-verify"
+  exit 1
+fi
+
+echo "✅ Pre-commit scan passed"
+exit 0
