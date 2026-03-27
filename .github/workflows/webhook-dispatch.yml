@@ -1,0 +1,41 @@
+name: Webhook Pipeline Trigger
+on:
+  repository_dispatch:
+    types:
+      - run-ablation
+      - export-data
+      - cache-smoke-test
+      - deploy-dashboard
+permissions:
+  contents: write
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Handle dispatch event
+        run: |
+          echo "Event type: ${{ github.event.action }}"
+          echo "Payload: ${{ toJson(github.event.client_payload) }}"
+          case "${{ github.event.action }}" in
+            run-ablation)
+              echo "Triggering ablation run via queue"
+              ;;
+            export-data)
+              echo "Exporting pipeline data to gh-pages"
+              bash scripts/export-to-pages.sh || true
+              ;;
+            cache-smoke-test)
+              echo "Cache smoke test triggered externally"
+              ;;
+            deploy-dashboard)
+              echo "Dashboard deploy triggered"
+              ;;
+          esac
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
