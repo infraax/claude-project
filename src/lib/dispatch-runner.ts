@@ -27,6 +27,7 @@ import { classifyTaskType, inferInteractionPair } from './task-classifier.js';
 import { selectFormat, encodeDispatchBody, DispatchFormat } from './format-encoder.js';
 import { sendTelemetryAsync } from './telemetry.js';
 import { buildSystemPrompt } from './system-prompt-builder.js';
+import { getModel, estimateCost, CACHE_MIN_TOKENS } from '../config/models.js';
 
 // Approximate token cost of sending BUILTIN_TOOLS to the API (measured: 5 tools ≈ 350 tokens).
 const BUILTIN_TOOLS_TOKEN_COUNT = 350;
@@ -61,6 +62,8 @@ export interface DispatchFile {
   encoded_chars?: number;
   original_chars?: number;
   compression_ratio?: number;
+  cost_usd?: number;
+  model_used?: string;
 }
 
 // ── Built-in tool definitions sent to the Claude API ─────────────────────────
@@ -309,7 +312,7 @@ export async function runDispatch(
   const systemPrompt = agentDef?.instructions
     ? `${basePrompt}\n\n## Agent-Specific Instructions\n\n${agentDef.instructions}`
     : basePrompt;
-  const model = agentDef?.model ?? 'claude-sonnet-4-6';
+  const model = agentDef?.model ?? getModel('dispatch');
   const maxTokens = agentDef?.max_tokens ?? 4096;
   const agentTools = agentDef?.tools ?? [];
 
@@ -380,8 +383,13 @@ export async function runDispatch(
     timings.pd_lookup = Date.now() - pdLookupStart;
   }
 
-  // (k) Build system: cached block array or plain string
-  const system: string | Anthropic.Messages.TextBlockParam[] = useCache
+  // (k) Build system: cached block array or plain string.
+  // Cache is only activated when system prompt is above the model's minimum token threshold.
+  // Below threshold, cache_control is wasteful — strip it.
+  const estSystemTokens = Math.round(effectiveSystemPrompt.split(/\s+/).length * 1.3);
+  const cacheMinForModel = CACHE_MIN_TOKENS[model] ?? 1024;
+  const activateCache = useCache && estSystemTokens >= cacheMinForModel;
+  const system: string | Anthropic.Messages.TextBlockParam[] = activateCache
     ? [{ type: 'text' as const, text: effectiveSystemPrompt, cache_control: { type: 'ephemeral' as const } }]
     : effectiveSystemPrompt;
 
@@ -391,6 +399,12 @@ export async function runDispatch(
   try {
     let resultText = '';
 
+    // Beta header opts-in to prompt caching and overrides cross-region routing blocks.
+    // Only sent when cache is actually active (system prompt above model minimum).
+    const cacheApiOpts = activateCache
+      ? { headers: { 'anthropic-beta': 'prompt-caching-2024-07-31' } }
+      : {};
+
     if (agentTools.length === 0) {
       // ── Simple mode: single API call ────────────────────────────────────────
       const inferStart = Date.now();
@@ -399,7 +413,7 @@ export async function runDispatch(
         max_tokens: maxTokens,
         system,
         messages: [{ role: 'user', content: messageBody }],
-      });
+      }, cacheApiOpts);
       timings.inference = Date.now() - inferStart;
       lastResponse = response;
       totalUsage.input_tokens += response.usage.input_tokens;
@@ -430,7 +444,7 @@ export async function runDispatch(
           system,
           messages,
           tools: allowedTools,
-        });
+        }, cacheApiOpts);
         timings.inference += Date.now() - iterStart;
         lastResponse = response;
 
@@ -481,6 +495,8 @@ export async function runDispatch(
     }
 
     // Success
+    const cacheRead = ((lastResponse?.usage as unknown) as Record<string, unknown>)?.['cache_read_input_tokens'] as number ?? 0;
+    const dispatchCost = estimateCost(model, totalUsage.input_tokens, totalUsage.output_tokens, cacheRead);
     writeDispatch(dispatchFilePath, {
       status: 'completed',
       completed_at: new Date().toISOString(),
@@ -488,6 +504,8 @@ export async function runDispatch(
       tool_calls: toolCallLog,
       usage: totalUsage,
       task_type: classifyTaskType(dispatch.title, dispatch.body ?? ''),
+      cost_usd: dispatchCost,
+      model_used: model,
     });
 
     // Record research observation + increment interaction pair counter
@@ -549,6 +567,8 @@ export async function runDispatch(
         iterations: toolCallLog.length,
         task_completed: true,
         ablation_condition: (dispatch as any).ablation_condition ?? null,
+        cost_usd: dispatchCost,
+        model,
         ts: new Date().toISOString(),
       };
       writeObservation(db, obs);
