@@ -1,0 +1,23 @@
+name: OSV Weekly Scan
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  osv-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google/osv-scanner-action@v1
+        with:
+          scan-args: |-
+            --lockfile=package-lock.json
+            --format=sarif
+            --output=osv-results.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: osv-results.sarif
