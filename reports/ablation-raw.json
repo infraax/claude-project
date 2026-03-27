@@ -1,515 +1,155 @@
 [
   {
-    "condition": "cache_only",
+    "condition": "pd_only",
     "task_id": "t01",
     "task_type": "code_gen",
     "status": "success",
-    "dispatch_id": "dispatch-31483c59",
-    "elapsed_s": 12.3,
+    "dispatch_id": "dispatch-0c419da7",
+    "elapsed_s": 15.3,
     "returncode": 0
   },
   {
-    "condition": "cache_only",
+    "condition": "pd_only",
     "task_id": "t02",
     "task_type": "code_gen",
     "status": "success",
-    "dispatch_id": "dispatch-1f02c274",
-    "elapsed_s": 12.3,
+    "dispatch_id": "dispatch-ceabd82a",
+    "elapsed_s": 12.1,
     "returncode": 0
   },
   {
-    "condition": "cache_only",
+    "condition": "pd_only",
     "task_id": "t03",
     "task_type": "analysis",
     "status": "success",
-    "dispatch_id": "dispatch-6abdf0ee",
-    "elapsed_s": 23.8,
+    "dispatch_id": "dispatch-eece6e29",
+    "elapsed_s": 22.7,
     "returncode": 0
   },
   {
-    "condition": "cache_only",
+    "condition": "pd_only",
     "task_id": "t04",
     "task_type": "code_gen",
     "status": "success",
-    "dispatch_id": "dispatch-5eade0b5",
-    "elapsed_s": 12.2,
+    "dispatch_id": "dispatch-a82340e5",
+    "elapsed_s": 17.5,
     "returncode": 0
   },
   {
-    "condition": "cache_only",
+    "condition": "pd_only",
     "task_id": "t05",
     "task_type": "test_gen",
     "status": "success",
-    "dispatch_id": "dispatch-545407fa",
-    "elapsed_s": 11.0,
+    "dispatch_id": "dispatch-9cde287c",
+    "elapsed_s": 10.9,
     "returncode": 0
   },
   {
-    "condition": "cache_only",
+    "condition": "pd_only",
     "task_id": "t06",
     "task_type": "pipeline",
     "status": "success",
-    "dispatch_id": "dispatch-2b74a49d",
-    "elapsed_s": 11.9,
-    "returncode": 0
-  },
-  {
-    "condition": "cache_only",
-    "task_id": "t07",
-    "task_type": "refactor",
-    "status": "success",
-    "dispatch_id": "dispatch-2979037d",
-    "elapsed_s": 13.6,
-    "returncode": 0
-  },
-  {
-    "condition": "cache_only",
-    "task_id": "t08",
-    "task_type": "documentation",
-    "status": "success",
-    "dispatch_id": "dispatch-6a1cd4e0",
+    "dispatch_id": "dispatch-165e6883",
     "elapsed_s": 13.1,
     "returncode": 0
   },
   {
-    "condition": "cache_only",
-    "task_id": "t09",
-    "task_type": "code_gen",
+    "condition": "pd_only",
+    "task_id": "t07",
+    "task_type": "refactor",
     "status": "success",
-    "dispatch_id": "dispatch-ad3c079a",
-    "elapsed_s": 8.3,
-    "returncode": 0
-  },
-  {
-    "condition": "cache_only",
-    "task_id": "t10",
-    "task_type": "planning",
-    "status": "success",
-    "dispatch_id": "dispatch-02c2d17b",
-    "elapsed_s": 18.0,
-    "returncode": 0
-  },
-  {
-    "condition": "format_only",
-    "task_id": "t01",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-1491f10e",
-    "elapsed_s": 11.0,
-    "returncode": 0
-  },
-  {
-    "condition": "format_only",
-    "task_id": "t02",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-a0976f85",
-    "elapsed_s": 6.9,
-    "returncode": 0
-  },
-  {
-    "condition": "format_only",
-    "task_id": "t03",
-    "task_type": "analysis",
-    "status": "success",
-    "dispatch_id": "dispatch-982a18fc",
-    "elapsed_s": 21.7,
-    "returncode": 0
-  },
-  {
-    "condition": "format_only",
-    "task_id": "t04",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-81744b25",
-    "elapsed_s": 12.7,
-    "returncode": 0
-  },
-  {
-    "condition": "format_only",
-    "task_id": "t05",
-    "task_type": "test_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-0c14a0e7",
-    "elapsed_s": 11.4,
-    "returncode": 0
-  },
-  {
-    "condition": "format_only",
-    "task_id": "t06",
-    "task_type": "pipeline",
-    "status": "success",
-    "dispatch_id": "dispatch-ad093a6a",
+    "dispatch_id": "dispatch-8f8ded81",
     "elapsed_s": 12.6,
     "returncode": 0
   },
   {
-    "condition": "format_only",
-    "task_id": "t07",
-    "task_type": "refactor",
-    "status": "success",
-    "dispatch_id": "dispatch-973eeab1",
-    "elapsed_s": 13.2,
-    "returncode": 0
-  },
-  {
-    "condition": "format_only",
+    "condition": "pd_only",
     "task_id": "t08",
     "task_type": "documentation",
     "status": "success",
-    "dispatch_id": "dispatch-80aef742",
-    "elapsed_s": 18.6,
+    "dispatch_id": "dispatch-3570c2e2",
+    "elapsed_s": 20.6,
     "returncode": 0
   },
   {
-    "condition": "format_only",
+    "condition": "pd_only",
     "task_id": "t09",
     "task_type": "code_gen",
     "status": "success",
-    "dispatch_id": "dispatch-4e6c2d73",
-    "elapsed_s": 13.4,
+    "dispatch_id": "dispatch-00ece612",
+    "elapsed_s": 16.2,
     "returncode": 0
   },
   {
-    "condition": "format_only",
+    "condition": "pd_only",
     "task_id": "t10",
     "task_type": "planning",
     "status": "success",
-    "dispatch_id": "dispatch-9642198d",
-    "elapsed_s": 20.3,
+    "dispatch_id": "dispatch-13a60982",
+    "elapsed_s": 22.9,
     "returncode": 0
   },
   {
-    "condition": "clarity_only",
+    "condition": "full_system",
     "task_id": "t01",
     "task_type": "code_gen",
     "status": "success",
-    "dispatch_id": "dispatch-0d98be01",
-    "elapsed_s": 11.2,
+    "dispatch_id": "dispatch-37b2c1dc",
+    "elapsed_s": 10.2,
     "returncode": 0
   },
   {
-    "condition": "clarity_only",
+    "condition": "full_system",
     "task_id": "t02",
     "task_type": "code_gen",
     "status": "success",
-    "dispatch_id": "dispatch-a93813d7",
-    "elapsed_s": 11.5,
+    "dispatch_id": "dispatch-a9d7a778",
+    "elapsed_s": 9.5,
     "returncode": 0
   },
   {
-    "condition": "clarity_only",
+    "condition": "full_system",
     "task_id": "t03",
     "task_type": "analysis",
     "status": "success",
-    "dispatch_id": "dispatch-2d08c1d7",
-    "elapsed_s": 22.3,
+    "dispatch_id": "dispatch-512390f7",
+    "elapsed_s": 24.1,
     "returncode": 0
   },
   {
-    "condition": "clarity_only",
+    "condition": "full_system",
     "task_id": "t04",
     "task_type": "code_gen",
     "status": "success",
-    "dispatch_id": "dispatch-d596920d",
-    "elapsed_s": 12.2,
-    "returncode": 0
-  },
-  {
-    "condition": "clarity_only",
-    "task_id": "t05",
-    "task_type": "test_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-17f9866b",
-    "elapsed_s": 11.6,
-    "returncode": 0
-  },
-  {
-    "condition": "clarity_only",
-    "task_id": "t06",
-    "task_type": "pipeline",
-    "status": "success",
-    "dispatch_id": "dispatch-1794d711",
-    "elapsed_s": 13.6,
-    "returncode": 0
-  },
-  {
-    "condition": "clarity_only",
-    "task_id": "t07",
-    "task_type": "refactor",
-    "status": "success",
-    "dispatch_id": "dispatch-cb9e6695",
-    "elapsed_s": 11.6,
-    "returncode": 0
-  },
-  {
-    "condition": "clarity_only",
-    "task_id": "t08",
-    "task_type": "documentation",
-    "status": "success",
-    "dispatch_id": "dispatch-fda6e55c",
-    "elapsed_s": 11.8,
-    "returncode": 0
-  },
-  {
-    "condition": "clarity_only",
-    "task_id": "t09",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-f558600b",
-    "elapsed_s": 11.2,
-    "returncode": 0
-  },
-  {
-    "condition": "clarity_only",
-    "task_id": "t10",
-    "task_type": "planning",
-    "status": "success",
-    "dispatch_id": "dispatch-3022127c",
-    "elapsed_s": 19.6,
-    "returncode": 0
-  },
-  {
-    "condition": "llmlingua_only",
-    "task_id": "t01",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-8cf1a0f7",
-    "elapsed_s": 10.8,
-    "returncode": 0
-  },
-  {
-    "condition": "llmlingua_only",
-    "task_id": "t02",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-f35845c2",
-    "elapsed_s": 12.7,
-    "returncode": 0
-  },
-  {
-    "condition": "llmlingua_only",
-    "task_id": "t03",
-    "task_type": "analysis",
-    "status": "success",
-    "dispatch_id": "dispatch-7aad41c8",
-    "elapsed_s": 22.7,
-    "returncode": 0
-  },
-  {
-    "condition": "llmlingua_only",
-    "task_id": "t04",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-2025c48a",
+    "dispatch_id": "dispatch-a199a2ae",
     "elapsed_s": 13.0,
     "returncode": 0
   },
   {
-    "condition": "llmlingua_only",
+    "condition": "full_system",
     "task_id": "t05",
     "task_type": "test_gen",
     "status": "success",
-    "dispatch_id": "dispatch-ee790986",
-    "elapsed_s": 11.1,
-    "returncode": 0
-  },
-  {
-    "condition": "llmlingua_only",
-    "task_id": "t06",
-    "task_type": "pipeline",
-    "status": "success",
-    "dispatch_id": "dispatch-15a56682",
-    "elapsed_s": 11.9,
-    "returncode": 0
-  },
-  {
-    "condition": "llmlingua_only",
-    "task_id": "t07",
-    "task_type": "refactor",
-    "status": "success",
-    "dispatch_id": "dispatch-79af0c29",
-    "elapsed_s": 11.8,
-    "returncode": 0
-  },
-  {
-    "condition": "llmlingua_only",
-    "task_id": "t08",
-    "task_type": "documentation",
-    "status": "success",
-    "dispatch_id": "dispatch-d3d65a8f",
-    "elapsed_s": 20.2,
-    "returncode": 0
-  },
-  {
-    "condition": "llmlingua_only",
-    "task_id": "t09",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-d1c932be",
-    "elapsed_s": 11.8,
-    "returncode": 0
-  },
-  {
-    "condition": "llmlingua_only",
-    "task_id": "t10",
-    "task_type": "planning",
-    "status": "success",
-    "dispatch_id": "dispatch-667e05b6",
-    "elapsed_s": 20.3,
-    "returncode": 0
-  },
-  {
-    "condition": "pd_only",
-    "task_id": "t01",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-e1aadf58",
-    "elapsed_s": 11.1,
-    "returncode": 0
-  },
-  {
-    "condition": "pd_only",
-    "task_id": "t02",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-ecdba65d",
-    "elapsed_s": 16.7,
-    "returncode": 0
-  },
-  {
-    "condition": "pd_only",
-    "task_id": "t03",
-    "task_type": "analysis",
-    "status": "success",
-    "dispatch_id": "dispatch-a29cefa9",
-    "elapsed_s": 22.7,
-    "returncode": 0
-  },
-  {
-    "condition": "pd_only",
-    "task_id": "t04",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-fd3bbf29",
-    "elapsed_s": 12.2,
-    "returncode": 0
-  },
-  {
-    "condition": "pd_only",
-    "task_id": "t05",
-    "task_type": "test_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-fabb1a85",
+    "dispatch_id": "dispatch-f358b959",
     "elapsed_s": 12.7,
     "returncode": 0
   },
   {
-    "condition": "pd_only",
+    "condition": "full_system",
     "task_id": "t06",
     "task_type": "pipeline",
     "status": "success",
-    "dispatch_id": "dispatch-a7842473",
-    "elapsed_s": 13.8,
-    "returncode": 0
-  },
-  {
-    "condition": "pd_only",
-    "task_id": "t07",
-    "task_type": "refactor",
-    "status": "success",
-    "dispatch_id": "dispatch-17a2ff1e",
-    "elapsed_s": 8.7,
-    "returncode": 0
-  },
-  {
-    "condition": "pd_only",
-    "task_id": "t08",
-    "task_type": "documentation",
-    "status": "success",
-    "dispatch_id": "dispatch-d696f9ee",
-    "elapsed_s": 18.0,
-    "returncode": 0
-  },
-  {
-    "condition": "pd_only",
-    "task_id": "t09",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-20614a2a",
-    "elapsed_s": 10.7,
-    "returncode": 0
-  },
-  {
-    "condition": "pd_only",
-    "task_id": "t10",
-    "task_type": "planning",
-    "status": "success",
-    "dispatch_id": "dispatch-4a81e6cb",
-    "elapsed_s": 21.9,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t01",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-560aab51",
-    "elapsed_s": 10.4,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t02",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-a4efd029",
-    "elapsed_s": 6.5,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t03",
-    "task_type": "analysis",
-    "status": "success",
-    "dispatch_id": "dispatch-32d2a07d",
-    "elapsed_s": 20.3,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t04",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-dfa2035d",
+    "dispatch_id": "dispatch-6f8b6241",
     "elapsed_s": 13.3,
     "returncode": 0
   },
   {
     "condition": "full_system",
-    "task_id": "t05",
-    "task_type": "test_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-9b871784",
-    "elapsed_s": 11.9,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t06",
-    "task_type": "pipeline",
-    "status": "success",
-    "dispatch_id": "dispatch-218e36bd",
-    "elapsed_s": 13.1,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
     "task_id": "t07",
     "task_type": "refactor",
     "status": "success",
-    "dispatch_id": "dispatch-01c8b87d",
-    "elapsed_s": 14.3,
+    "dispatch_id": "dispatch-9c45bc64",
+    "elapsed_s": 7.0,
     "returncode": 0
   },
   {
@@ -517,8 +157,8 @@
     "task_id": "t08",
     "task_type": "documentation",
     "status": "success",
-    "dispatch_id": "dispatch-6b879b2e",
-    "elapsed_s": 13.1,
+    "dispatch_id": "dispatch-424d44e7",
+    "elapsed_s": 18.4,
     "returncode": 0
   },
   {
@@ -526,8 +166,8 @@
     "task_id": "t09",
     "task_type": "code_gen",
     "status": "success",
-    "dispatch_id": "dispatch-acd543d2",
-    "elapsed_s": 13.0,
+    "dispatch_id": "dispatch-51a3509d",
+    "elapsed_s": 11.9,
     "returncode": 0
   },
   {
@@ -535,8 +175,8 @@
     "task_id": "t10",
     "task_type": "planning",
     "status": "success",
-    "dispatch_id": "dispatch-468d938e",
-    "elapsed_s": 22.4,
+    "dispatch_id": "dispatch-0d01d185",
+    "elapsed_s": 20.5,
     "returncode": 0
   }
 ]
