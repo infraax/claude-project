@@ -410,6 +410,7 @@ export async function runDispatch(
 
   const toolCallLog: DispatchFile['tool_calls'] = [];
   let totalUsage = { input_tokens: 0, output_tokens: 0 };
+  let modelCallCount = 0;
 
   try {
     let resultText = '';
@@ -431,6 +432,7 @@ export async function runDispatch(
       }, cacheApiOpts);
       timings.inference = Date.now() - inferStart;
       lastResponse = response;
+      modelCallCount = 1;
       totalUsage.input_tokens += response.usage.input_tokens;
       totalUsage.output_tokens += response.usage.output_tokens;
       resultText = response.content
@@ -504,6 +506,7 @@ export async function runDispatch(
         messages.push({ role: 'user', content: toolResults });
       }
 
+      modelCallCount = iterations;
       if (iterations >= MAX_ITERATIONS) {
         resultText += '\n[Stopped: reached max iterations limit]';
       }
@@ -579,7 +582,7 @@ export async function runDispatch(
             : 0,
         },
         outcome: 'success',
-        iterations: toolCallLog.length,
+        iterations: modelCallCount,
         task_completed: true,
         ablation_condition: (dispatch as any).ablation_condition ?? null,
         cost_usd: dispatchCost,
@@ -639,7 +642,7 @@ export async function runDispatch(
         },
         latency_ms: timings,
         outcome: 'failure',
-        iterations: toolCallLog.length,
+        iterations: modelCallCount,
         task_completed: false,
         ablation_condition: (dispatch as any).ablation_condition ?? null,
         ts: new Date().toISOString(),
