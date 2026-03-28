@@ -271,7 +271,7 @@ const ACTION_HANDLERS: Record<string, ActionHandler> = {
       try {
         spawnSync('osascript', [
           '-e',
-          `display notification "${msg.replace(/"/g, '\\"')}" with title "claude-project"`,
+          `display notification "${msg.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}" with title "claude-project"`,
         ], { timeout: 5000 });
       } catch { /* non-fatal */ }
     }
