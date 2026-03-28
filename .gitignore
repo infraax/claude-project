@@ -24,3 +24,4 @@ Infra/
 # Environment registry (local, anonymous IDs — never commit)
 .env-registry/
 .mcp.json
+reports/
