@@ -1,4 +1,3 @@
-
 # git-crypt encrypted files
 .env filter=git-crypt diff=git-crypt
 .google/**/*.json filter=git-crypt diff=git-crypt
