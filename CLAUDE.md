@@ -65,3 +65,32 @@ ALWAYS store new patterns you notice:
   store_memory(category="pattern", text="[repeated pattern description]")
 
 This is how the system learns and improves itself.
+
+---
+
+## COMMIT MESSAGE RULES — ABSOLUTE
+
+### Never include in any commit message
+1. **Claude session URLs** (`https://claude.ai/code/session_*`)
+   → Auto-stripped by `prepare-commit-msg` hook. Never add manually.
+
+2. **OPSEC narration** — never document what went wrong:
+   - ❌ `"Previous key was accidentally embedded in commit 570e326"`
+   - ❌ `"Old key fingerprint: AEdJVENS..."`
+   - ✅ `"security: rotate credentials"`
+   - ✅ `"security: key rotation — vault entry v-XXXX"`
+
+3. **Base64 blobs** or key material of any kind
+
+4. **Specific SHAs in security context** (`"fixes exposure in 570e326"`)
+
+### For sensitive operational commits — use encrypted commits
+```bash
+bash scripts/commit-secure.sh "real detailed message here"
+# Git log shows: VAULT:v-a3f7b2c1 [security]
+# Decrypt with:  bash scripts/read-commit.sh HEAD
+```
+
+### Session URLs are auto-stripped
+The `prepare-commit-msg` hook removes them before the commit lands.
+NEVER add them back manually. They reveal agent session identity.

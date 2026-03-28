@@ -18,3 +18,4 @@ claude-project-gk.github/Freesetup.md
 Infra/
 .claude/SECRETS.md
 .keys/git-crypt-master.key
+.keys/commit-vault.key

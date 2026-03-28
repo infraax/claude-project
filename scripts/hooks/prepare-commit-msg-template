@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# prepare-commit-msg: sanitize agent habits before commit lands
+
+COMMIT_MSG_FILE="$1"
+COMMIT_SOURCE="$2"
+
+# Always sanitize
+bash "$(git rev-parse --show-toplevel)/scripts/hooks/sanitize-commit-msg.sh" "$COMMIT_MSG_FILE"
