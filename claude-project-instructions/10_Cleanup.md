@@ -411,7 +411,7 @@ export async function syncCommand(): Promise<void> {
 **Verify:**
 ```bash
 npm run build
-grep -n "ClaudeLab\|obsidianProjectDir\|obsidianVault\b" src/commands/sync.ts \
+grep -n "<local-app>\|obsidianProjectDir\|obsidianVault\b" src/commands/sync.ts \
   && echo "ISSUES REMAIN" || echo "Clean ✓"
 ```
 
@@ -581,7 +581,7 @@ New header: `Claude Project — MCP Memory & Dispatch Server v5`
 - Add `_OBSIDIAN_ENABLED = bool(os.environ.get("CLAUDE_OBSIDIAN_VAULT", ""))`
 
 **10c — Fix _get_source() (L72)**
-Remove all `MacBook/gebruiker` hardcodes. Use `hostname/user` generic pattern.
+Remove all `MacBook/<user>` hardcodes. Use `hostname/user` generic pattern.
 
 **10d — Fix _resolve_paths() (L132)**
 Return `(memory_dir, dispatches_dir, db_path)` — remove all obsidian return values.
@@ -609,7 +609,7 @@ First line: `if not _OBSIDIAN_ENABLED: return`
 ```bash
 echo "=== Checking server.py for legacy refs ==="
 grep -n "diary_path\|obsidian_vault\|obsidian_folder\|CLAUDE_DIARY_PATH\
-\|claude-diary\|MacBook\|gebruiker\|WirePod\|ClaudeLab\
+\|claude-diary\|MacBook\|<user>\|<robot-platform>\|<local-app>\
 \|update_dexter_profile\|journal_append\|wakeup_read\|wakeup_update\
 \|get_context_legacy\|list_sessions\|get_today\|memory_append_thought\
 \|read_memory_file\|get_source_info" mcp/server.py \
@@ -647,7 +647,7 @@ Write to AGENT_STATE.md: `cleanup_file_index: 10, cleanup_server_py: complete`
 
 **Verify:**
 ```bash
-grep -n "ClaudeLab\|WirePod\|gebruiker\|claude-diary\|diary_path\b" README.md \
+grep -n "<local-app>\|<robot-platform>\|<user>\|claude-diary\|diary_path\b" README.md \
   && echo "ISSUES REMAIN" || echo "Clean ✓"
 ```
 
@@ -682,9 +682,9 @@ After all 12 files done, run this full sweep — **must produce zero output:**
 set -e
 
 PATTERNS=(
-  "gebruiker"
-  "WirePod"
-  "ClaudeLab"
+  "<user>"
+  "<robot-platform>"
+  "<local-app>"
   "Volumes/Claude"
   "MacBook / "
   "claude-diary"

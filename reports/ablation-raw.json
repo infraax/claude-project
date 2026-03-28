@@ -1,182 +1,92 @@
 [
   {
-    "condition": "pd_only",
+    "condition": "full_system",
     "task_id": "t01",
     "task_type": "code_gen",
     "status": "success",
-    "dispatch_id": "dispatch-0c419da7",
-    "elapsed_s": 15.3,
+    "dispatch_id": "dispatch-649e7b90",
+    "elapsed_s": 10.6,
     "returncode": 0
   },
   {
-    "condition": "pd_only",
+    "condition": "full_system",
     "task_id": "t02",
     "task_type": "code_gen",
     "status": "success",
-    "dispatch_id": "dispatch-ceabd82a",
-    "elapsed_s": 12.1,
+    "dispatch_id": "dispatch-0d9e7c2d",
+    "elapsed_s": 7.3,
     "returncode": 0
   },
   {
-    "condition": "pd_only",
+    "condition": "full_system",
     "task_id": "t03",
     "task_type": "analysis",
     "status": "success",
-    "dispatch_id": "dispatch-eece6e29",
-    "elapsed_s": 22.7,
+    "dispatch_id": "dispatch-ab7a0e85",
+    "elapsed_s": 21.6,
     "returncode": 0
   },
   {
-    "condition": "pd_only",
+    "condition": "full_system",
     "task_id": "t04",
     "task_type": "code_gen",
     "status": "success",
-    "dispatch_id": "dispatch-a82340e5",
-    "elapsed_s": 17.5,
+    "dispatch_id": "dispatch-8f424b96",
+    "elapsed_s": 12.4,
     "returncode": 0
   },
   {
-    "condition": "pd_only",
+    "condition": "full_system",
     "task_id": "t05",
     "task_type": "test_gen",
     "status": "success",
-    "dispatch_id": "dispatch-9cde287c",
-    "elapsed_s": 10.9,
+    "dispatch_id": "dispatch-9b26f36e",
+    "elapsed_s": 12.3,
     "returncode": 0
   },
   {
-    "condition": "pd_only",
+    "condition": "full_system",
     "task_id": "t06",
     "task_type": "pipeline",
     "status": "success",
-    "dispatch_id": "dispatch-165e6883",
-    "elapsed_s": 13.1,
+    "dispatch_id": "dispatch-c0df4479",
+    "elapsed_s": 14.1,
     "returncode": 0
   },
   {
-    "condition": "pd_only",
+    "condition": "full_system",
     "task_id": "t07",
     "task_type": "refactor",
     "status": "success",
-    "dispatch_id": "dispatch-8f8ded81",
+    "dispatch_id": "dispatch-ce7e05bb",
+    "elapsed_s": 8.1,
+    "returncode": 0
+  },
+  {
+    "condition": "full_system",
+    "task_id": "t08",
+    "task_type": "documentation",
+    "status": "success",
+    "dispatch_id": "dispatch-d69ed489",
+    "elapsed_s": 20.9,
+    "returncode": 0
+  },
+  {
+    "condition": "full_system",
+    "task_id": "t09",
+    "task_type": "code_gen",
+    "status": "success",
+    "dispatch_id": "dispatch-ec1f959b",
     "elapsed_s": 12.6,
     "returncode": 0
   },
   {
-    "condition": "pd_only",
-    "task_id": "t08",
-    "task_type": "documentation",
-    "status": "success",
-    "dispatch_id": "dispatch-3570c2e2",
-    "elapsed_s": 20.6,
-    "returncode": 0
-  },
-  {
-    "condition": "pd_only",
-    "task_id": "t09",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-00ece612",
-    "elapsed_s": 16.2,
-    "returncode": 0
-  },
-  {
-    "condition": "pd_only",
-    "task_id": "t10",
-    "task_type": "planning",
-    "status": "success",
-    "dispatch_id": "dispatch-13a60982",
-    "elapsed_s": 22.9,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t01",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-37b2c1dc",
-    "elapsed_s": 10.2,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t02",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-a9d7a778",
-    "elapsed_s": 9.5,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t03",
-    "task_type": "analysis",
-    "status": "success",
-    "dispatch_id": "dispatch-512390f7",
-    "elapsed_s": 24.1,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t04",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-a199a2ae",
-    "elapsed_s": 13.0,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t05",
-    "task_type": "test_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-f358b959",
-    "elapsed_s": 12.7,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t06",
-    "task_type": "pipeline",
-    "status": "success",
-    "dispatch_id": "dispatch-6f8b6241",
-    "elapsed_s": 13.3,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t07",
-    "task_type": "refactor",
-    "status": "success",
-    "dispatch_id": "dispatch-9c45bc64",
-    "elapsed_s": 7.0,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t08",
-    "task_type": "documentation",
-    "status": "success",
-    "dispatch_id": "dispatch-424d44e7",
-    "elapsed_s": 18.4,
-    "returncode": 0
-  },
-  {
-    "condition": "full_system",
-    "task_id": "t09",
-    "task_type": "code_gen",
-    "status": "success",
-    "dispatch_id": "dispatch-51a3509d",
-    "elapsed_s": 11.9,
-    "returncode": 0
-  },
-  {
     "condition": "full_system",
     "task_id": "t10",
     "task_type": "planning",
     "status": "success",
-    "dispatch_id": "dispatch-0d01d185",
-    "elapsed_s": 20.5,
+    "dispatch_id": "dispatch-eb82d3c7",
+    "elapsed_s": 21.2,
     "returncode": 0
   }
 ]

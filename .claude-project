@@ -5,8 +5,8 @@
   "name": "claude-project",
   "description": "MCP memory and dispatch server \u2014 self-hosted",
   "created": "2026-03-26",
-  "created_by": "mac.home / gebruiker",
-  "memory_path": "/Users/gebruiker/.claude/projects/project-0bf67307/memory",
+  "created_by": "mac.home / <user>",
+  "memory_path": "~/.claude/projects/project-0bf67307/memory",
   "monitoring": {
     "enabled": true,
     "log_retention_days": 90,
