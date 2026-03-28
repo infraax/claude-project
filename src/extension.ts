@@ -16,6 +16,13 @@ import * as os from 'os';
 import { ClaudeProject } from './lib/project.js';
 import { inject, isInjected, eject, getMcpJsonPath } from './lib/mcp-inject.js';
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Single-quote a string for safe shell use — handles all metacharacters. */
+function shellQuote(s: string): string {
+  return "'" + s.replace(/'/g, "'\\''") + "'";
+}
+
 // ── State ─────────────────────────────────────────────────────────────────────
 
 let statusBarItem: vscode.StatusBarItem;
