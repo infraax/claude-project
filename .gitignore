@@ -13,3 +13,7 @@ __pycache__/
 claude-project-instructions/INSTRUCTIONS.md
 claude-project-instructions/key.md
 claude-project-gk.github/Freesetup.md 
+.google/
+.keys/
+Infra/
+.claude/SECRETS.md
