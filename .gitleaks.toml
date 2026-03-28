@@ -49,5 +49,7 @@ regexes = [
 ]
 paths = [
   '\.commit-vault/.*\.enc',
-  '\.env\.template'
+  '\.env\.template',
+  '\.github/workflows/security-guardian\.yml',
+  '\.gitleaks\.toml'
 ]

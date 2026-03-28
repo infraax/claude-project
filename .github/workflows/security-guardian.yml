@@ -53,6 +53,9 @@ jobs:
             [[ "$file" == */node_modules/* ]] && continue
             [[ "$file" == */.commit-vault/*.enc ]] && continue
             [[ "$file" == */dist/* ]] && continue
+            # Skip files that define scanner rules — pattern appears as rule definition, not a secret
+            [[ "$file" == */.github/workflows/security-guardian.yml ]] && continue
+            [[ "$file" == */.gitleaks.toml ]] && continue
             case "$file" in *.png|*.jpg|*.jpeg|*.gif|*.ico|*.woff*|*.ttf|*.zip|*.gz) continue ;; esac
 
             content=$(cat "$file" 2>/dev/null) || continue
