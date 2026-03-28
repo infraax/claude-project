@@ -177,6 +177,10 @@ function cmdStatus(): void {
   });
 }
 
+function shellQuote(s: string): string {
+  return "'" + s.replace(/'/g, "'\\''") + "'";
+}
+
 function cmdInit(): void {
   const folder = vscode.workspace.workspaceFolders?.[0];
   if (!folder) {
@@ -209,8 +213,8 @@ function cmdInit(): void {
       // Run CLI in integrated terminal — keeps output visible and familiar
       const terminal = vscode.window.createTerminal('Claude Project');
       terminal.show();
-      const desc = description ? ` -d "${description.replace(/"/g, '\\"')}"` : '';
-      terminal.sendText(`claude-project init "${name.replace(/"/g, '\\"')}"${desc}`);
+      const desc = description ? ` -d ${shellQuote(description)}` : '';
+      terminal.sendText(`claude-project init ${shellQuote(name)}${desc}`);
     });
   });
 }

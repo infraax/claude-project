@@ -8,14 +8,29 @@
       "version": "3.11"
     }
   },
-  "postCreateCommand": "npm ci && sudo apt-get install -y git-crypt -q && bash scripts/bootstrap.sh",
+  "postCreateCommand": "npm ci && sudo apt-get install -y git-crypt -q && bash .devcontainer/postCreate.sh",
+  "postStartCommand": "bash .devcontainer/postStart.sh",
   "secrets": {
     "GIT_CRYPT_KEY_B64": {
       "description": "Base64-encoded git-crypt master key for decrypting .env",
       "documentationUrl": "https://github.com/infraax/claude-project#setup"
+    },
+    "ANTHROPIC_API_KEY": {
+      "description": "Anthropic API key for Claude Code and ablation runner"
     }
   },
   "forwardPorts": [3000, 3456],
+  "portsAttributes": {
+    "3000": {
+      "label": "Live API Bridge",
+      "onAutoForward": "notify",
+      "visibility": "public"
+    },
+    "3456": {
+      "label": "Orchestrator Dashboard",
+      "onAutoForward": "silent"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
@@ -24,7 +39,10 @@
         "ms-vscode.vscode-typescript-next"
       ],
       "settings": {
-        "terminal.integrated.defaultProfile.linux": "bash"
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.env.linux": {
+          "CLAUDE_PROJECT_DIR": "${containerWorkspaceFolder}"
+        }
       }
     }
   }
