@@ -1643,6 +1643,73 @@ def check_negotiation_threshold(interaction_pair: str) -> dict:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# SKILLS — discovery and loading
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _skills_dir() -> Path:
+    """Resolve .claude/skills/ relative to the project root (CWD upward, same as .claude-project)."""
+    ctx = _find_project_context()
+    if ctx and ctx.get("_project_file"):
+        base = Path(ctx["_project_file"]).parent
+    else:
+        base = Path(os.environ.get("CLAUDE_PROJECT_DIR", Path.cwd()))
+    return base / ".claude" / "skills"
+
+
+@mcp.tool()
+def list_skills() -> list:
+    """
+    List all available skills in .claude/skills/.
+    Returns [{name, description, path}] — description is the first non-empty line after the h1.
+    Call at session start or before beginning a task type you haven't done recently.
+    """
+    skills_dir = _skills_dir()
+    if not skills_dir.exists():
+        return []
+
+    results = []
+    for md_file in sorted(skills_dir.glob("*.md")):
+        name = md_file.stem
+        description = ""
+        try:
+            lines = md_file.read_text().splitlines()
+            # Find "## When to load" section and grab its first content line
+            for i, line in enumerate(lines):
+                if line.startswith("## When to load"):
+                    for j in range(i + 1, min(i + 4, len(lines))):
+                        stripped = lines[j].strip()
+                        if stripped:
+                            description = stripped
+                            break
+                    break
+        except Exception:
+            pass
+        results.append({"name": name, "description": description, "path": str(md_file)})
+
+    return results
+
+
+@mcp.tool()
+def load_skill(name: str) -> str:
+    """
+    Load the full content of a skill by name (without .md extension).
+    Example: load_skill("dispatch") returns the dispatch skill guide.
+    Use list_skills() to see available names.
+    """
+    if not name or "/" in name or ".." in name:
+        return "ERROR: invalid skill name"
+
+    skills_dir = _skills_dir()
+    skill_file = skills_dir / f"{name}.md"
+
+    if not skill_file.exists():
+        available = [f.stem for f in skills_dir.glob("*.md")] if skills_dir.exists() else []
+        return f"Skill '{name}' not found. Available: {', '.join(sorted(available))}"
+
+    return skill_file.read_text()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Entry point
 # ══════════════════════════════════════════════════════════════════════════════
 
