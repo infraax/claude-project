@@ -1,7 +1,25 @@
 # start — Launch live API bridge
 
-Run bash scripts/start-live-bridge.sh in background at session start.
+## Step 0 — Unlock secrets (run first)
+```bash
+# Unlock git-crypt if key is present
+if command -v git-crypt &>/dev/null && [ -f .keys/git-crypt-master.key ]; then
+  git-crypt unlock .keys/git-crypt-master.key 2>/dev/null && echo "✅ git-crypt unlocked — .env decrypted" || echo "⚠️  git-crypt already unlocked"
+elif [ -n "$GIT_CRYPT_KEY_B64" ]; then
+  sudo apt-get install -y git-crypt -q 2>/dev/null
+  echo "$GIT_CRYPT_KEY_B64" | base64 -d > /tmp/gc.key
+  git-crypt unlock /tmp/gc.key && echo "✅ git-crypt unlocked via GIT_CRYPT_KEY_B64" || true
+  rm -f /tmp/gc.key
+else
+  echo "⚠️  git-crypt key not found — .env may still be encrypted"
+  echo "   Fix: copy .keys/git-crypt-master.key from iCloud or set GIT_CRYPT_KEY_B64"
+fi
 
+set -a; source .env 2>/dev/null; set +a
+echo "✅ Secrets loaded: $(grep -v '^#' .env | grep -v '^$' | grep '=.' | wc -l | tr -d ' ') keys"
+```
+
+## Step 1 — Start the live API bridge
 ```bash
 bash scripts/start-live-bridge.sh &
 ```
