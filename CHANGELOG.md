@@ -40,7 +40,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Removed `claudeProject.obsidianVault` VS Code setting
 
 ### Fixed
-- All legacy machine-specific paths (`MacBook / gebruiker`, `WirePod`, `ClaudeLab`) removed
+- All legacy machine-specific paths (``, ``, ``) removed
 - `CLAUDE_DIARY_PATH` env var → `CLAUDE_PROJECT_DIR`
 - Certification script `scripts/certify_clean.sh` created; passes on all 12 files
 

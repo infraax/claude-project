@@ -423,7 +423,7 @@ claude-project/
 | `SESSION_JOURNAL.md` | `memory/SESSION_JOURNAL.md` | Narrative journal duplicates event log. Redundant. Delete. |
 | `generate-claude-md.ts` | `src/commands/generate-claude-md.ts` | Generates a human-readable document. Replace with MCP `get_context()` typed struct. |
 | Obsidian sync (every write) | `mcp/server.py`, `automation.ts` | Pure human UX. Adds write latency, machine-specific paths. Decouple to optional async export. |
-| Source attribution as strings | `events.ts`, `mcp/server.py` | `"MacBook / gebruiker"` is human-readable. Replace with structured `{device_id, hostname, user}`. |
+| Source attribution as strings | `events.ts`, `mcp/server.py` | `"local-device / <user>"` is human-readable. Replace with structured `{device_id, hostname, user}`. |
 
 ### 🟡 KEEP BUT UPGRADE (right intent, wrong implementation)
 
@@ -495,7 +495,7 @@ interface ProjectEvent {
   id: string;        // 8-char UUID prefix
   ts: string;        // ISO timestamp
   type: EventType;   // union of strings
-  source: string;    // HUMAN STRING: "MacBook / gebruiker"
+  source: string;    // HUMAN STRING: "local-device / <user>"
   project_id: string;
    Record<string, unknown>;  // UNTYPED — no enforcement
   tags?: string[];
@@ -606,7 +606,7 @@ The system has three layers that never bleed into each other:
 ```
 1. Damian types a prompt (possibly messy/scattered)
    ↓
-2. CLARITY LAYER (M1 MacBook, Ollama + Qwen2.5-7B, ~1-2s, $0)
+2. CLARITY LAYER (local-macOS, Ollama + Qwen2.5-7B, ~1-2s, $0)
    - Reconstructs intent
    - Flags ambiguities as clarifying questions if needed
    - Output: clean, complete, unambiguous text

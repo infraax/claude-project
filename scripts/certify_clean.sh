@@ -5,11 +5,11 @@
 set -e
 
 PATTERNS=(
-  "gebruiker"
-  "WirePod"
-  "ClaudeLab"
+  "<local-user>"
+  "<robot-platform>"
+  "<local-app>"
   "Volumes/Claude"
-  "MacBook / "
+  "<device-label>"
   "claude-diary"
   "CLAUDE_DIARY_PATH"
   "@claudelab"

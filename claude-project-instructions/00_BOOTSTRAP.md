@@ -111,7 +111,7 @@ done
 
 echo ""
 echo "=== LEGACY REFS STILL IN CONTEXT FILES ==="
-grep -c "obsidian\|diary_path\|claude-diary\|MacBook\|gebruiker\|WirePod" \
+grep -c "obsidian\|diary_path\|claude-diary\|MacBook\|<user>\|<robot-platform>" \
   CLAUDE.md README.md CHANGELOG.md 2>/dev/null || echo "none found"
 
 echo ""
@@ -138,7 +138,7 @@ if [ -f CLAUDE.md ]; then
   sed -i '/WAKEUP\.md/d' CLAUDE.md
   sed -i '/SESSION_JOURNAL/d' CLAUDE.md
   sed -i '/MacBook \//d' CLAUDE.md
-  sed -i '/gebruiker/d' CLAUDE.md
+  sed -i '/<user>/d' CLAUDE.md
 
   AFTER=$(wc -l < CLAUDE.md)
   echo "CLAUDE.md: $BEFORE → $AFTER lines (removed $((BEFORE - AFTER)))"

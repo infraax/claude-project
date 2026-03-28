@@ -1,177 +1,20 @@
 {
-  "computed_at": "2026-03-27T10:48:26.519631+00:00",
-  "total_observations": 80,
+  "computed_at": "2026-03-28T16:10:26.151812+00:00",
+  "total_observations": 20,
   "conditions_run": [
-    "baseline",
-    "cache_only",
-    "format_only",
-    "clarity_only",
     "llmlingua_only",
-    "pd_only",
     "full_system"
   ],
   "per_condition": {
-    "baseline": {
-      "n_observations": 20,
-      "tokens_input": {
-        "n": 20,
-        "mean": 2435.5,
-        "median": 2418.0,
-        "stdev": 59.5,
-        "min": 2380,
-        "max": 2596
-      },
-      "tokens_output": {
-        "n": 20,
-        "mean": 2048,
-        "median": 2048.0,
-        "stdev": 0.0,
-        "min": 2048,
-        "max": 2048
-      },
-      "cache_read": {
-        "n": 20,
-        "mean": 0,
-        "median": 0.0,
-        "stdev": 0.0,
-        "min": 0,
-        "max": 0
-      },
-      "latency_ms": {
-        "n": 20,
-        "mean": 13939.2,
-        "median": 12317.5,
-        "stdev": 3733.7,
-        "min": 10301,
-        "max": 22383
-      },
-      "compression_ratio": null,
-      "success_rate": 100.0,
-      "cache_hit_rate": 0.0
-    },
-    "cache_only": {
-      "n_observations": 10,
-      "tokens_input": {
-        "n": 10,
-        "mean": 2435.5,
-        "median": 2418.0,
-        "stdev": 61.1,
-        "min": 2380,
-        "max": 2596
-      },
-      "tokens_output": {
-        "n": 10,
-        "mean": 2048,
-        "median": 2048.0,
-        "stdev": 0.0,
-        "min": 2048,
-        "max": 2048
-      },
-      "cache_read": {
-        "n": 10,
-        "mean": 0,
-        "median": 0.0,
-        "stdev": 0.0,
-        "min": 0,
-        "max": 0
-      },
-      "latency_ms": {
-        "n": 10,
-        "mean": 13201.2,
-        "median": 11859.0,
-        "stdev": 4313.8,
-        "min": 7845,
-        "max": 23382
-      },
-      "compression_ratio": null,
-      "success_rate": 100.0,
-      "cache_hit_rate": 0.0
-    },
-    "format_only": {
-      "n_observations": 10,
-      "tokens_input": {
-        "n": 10,
-        "mean": 2516.8,
-        "median": 2525.5,
-        "stdev": 51.4,
-        "min": 2423,
-        "max": 2599
-      },
-      "tokens_output": {
-        "n": 10,
-        "mean": 1913.2,
-        "median": 2048.0,
-        "stdev": 300.5,
-        "min": 1167,
-        "max": 2048
-      },
-      "cache_read": {
-        "n": 10,
-        "mean": 0,
-        "median": 0.0,
-        "stdev": 0.0,
-        "min": 0,
-        "max": 0
-      },
-      "latency_ms": {
-        "n": 10,
-        "mean": 13761.7,
-        "median": 12569.5,
-        "stdev": 4598.1,
-        "min": 6483,
-        "max": 21279
-      },
-      "compression_ratio": null,
-      "success_rate": 100.0,
-      "cache_hit_rate": 0.0
-    },
-    "clarity_only": {
-      "n_observations": 10,
-      "tokens_input": {
-        "n": 10,
-        "mean": 2435.5,
-        "median": 2418.0,
-        "stdev": 61.1,
-        "min": 2380,
-        "max": 2596
-      },
-      "tokens_output": {
-        "n": 10,
-        "mean": 2048,
-        "median": 2048.0,
-        "stdev": 0.0,
-        "min": 2048,
-        "max": 2048
-      },
-      "cache_read": {
-        "n": 10,
-        "mean": 0,
-        "median": 0.0,
-        "stdev": 0.0,
-        "min": 0,
-        "max": 0
-      },
-      "latency_ms": {
-        "n": 10,
-        "mean": 13218.4,
-        "median": 11244.5,
-        "stdev": 3965.5,
-        "min": 10706,
-        "max": 21887
-      },
-      "compression_ratio": null,
-      "success_rate": 100.0,
-      "cache_hit_rate": 0.0
-    },
     "llmlingua_only": {
       "n_observations": 10,
       "tokens_input": {
         "n": 10,
-        "mean": 2435.5,
-        "median": 2418.0,
+        "mean": 6224.6,
+        "median": 6207.0,
         "stdev": 61.1,
-        "min": 2380,
-        "max": 2596
+        "min": 6169,
+        "max": 6385
       },
       "tokens_output": {
         "n": 10,
@@ -191,49 +34,11 @@
       },
       "latency_ms": {
         "n": 10,
-        "mean": 14183.1,
-        "median": 11844.5,
-        "stdev": 4520.0,
-        "min": 10410,
-        "max": 22243
-      },
-      "compression_ratio": null,
-      "success_rate": 100.0,
-      "cache_hit_rate": 0.0
-    },
-    "pd_only": {
-      "n_observations": 10,
-      "tokens_input": {
-        "n": 10,
-        "mean": 2435.5,
-        "median": 2418.0,
-        "stdev": 61.1,
-        "min": 2380,
-        "max": 2596
-      },
-      "tokens_output": {
-        "n": 10,
-        "mean": 1992.5,
-        "median": 2048.0,
-        "stdev": 175.5,
-        "min": 1493,
-        "max": 2048
-      },
-      "cache_read": {
-        "n": 10,
-        "mean": 0,
-        "median": 0.0,
-        "stdev": 0.0,
-        "min": 0,
-        "max": 0
-      },
-      "latency_ms": {
-        "n": 10,
-        "mean": 14416.4,
-        "median": 12811.0,
-        "stdev": 4817.9,
-        "min": 8255,
-        "max": 22319
+        "mean": 14095,
+        "median": 12403.0,
+        "stdev": 4106.1,
+        "min": 10518,
+        "max": 21575
       },
       "compression_ratio": null,
       "success_rate": 100.0,
@@ -243,118 +48,52 @@
       "n_observations": 10,
       "tokens_input": {
         "n": 10,
-        "mean": 2516.8,
-        "median": 2525.5,
-        "stdev": 51.4,
-        "min": 2423,
-        "max": 2599
+        "mean": 307.9,
+        "median": 316.5,
+        "stdev": 51.5,
+        "min": 214,
+        "max": 390
       },
       "tokens_output": {
         "n": 10,
-        "mean": 1924.6,
+        "mean": 1830.7,
         "median": 2048.0,
-        "stdev": 295.2,
-        "min": 1134,
+        "stdev": 386.3,
+        "min": 1032,
         "max": 2048
       },
       "cache_read": {
         "n": 10,
-        "mean": 0,
-        "median": 0.0,
-        "stdev": 0.0,
+        "mean": 5398.2,
+        "median": 5998.0,
+        "stdev": 1896.7,
         "min": 0,
-        "max": 0
+        "max": 5998
       },
       "latency_ms": {
         "n": 10,
-        "mean": 13396.7,
-        "median": 12637.0,
-        "stdev": 4557.6,
-        "min": 6063,
-        "max": 21994
+        "mean": 13683.5,
+        "median": 12083.0,
+        "stdev": 5325.4,
+        "min": 6906,
+        "max": 21191
       },
       "compression_ratio": null,
       "success_rate": 100.0,
-      "cache_hit_rate": 0.0
+      "cache_hit_rate": 90.0
     }
   },
   "vs_baseline": {
-    "baseline": null,
-    "cache_only": {
-      "reduction_pct": 0.0,
-      "tokens_saved_mean": 0.0
-    },
-    "format_only": {
-      "reduction_pct": -3.3,
-      "tokens_saved_mean": -81.3
-    },
-    "clarity_only": {
-      "reduction_pct": 0.0,
-      "tokens_saved_mean": 0.0
-    },
-    "llmlingua_only": {
-      "reduction_pct": 0.0,
-      "tokens_saved_mean": 0.0
-    },
-    "pd_only": {
-      "reduction_pct": 0.0,
-      "tokens_saved_mean": 0.0
-    },
-    "full_system": {
-      "reduction_pct": -3.3,
-      "tokens_saved_mean": -81.3
-    }
+    "llmlingua_only": null,
+    "full_system": null
   },
-  "per_task_type_full_system": {
-    "analysis": {
-      "n_baseline": 2,
-      "n_optimized": 1,
-      "baseline_mean": 2596,
-      "optimized_mean": 2599,
-      "reduction_pct": -0.1
-    },
-    "test_gen": {
-      "n_baseline": 2,
-      "n_optimized": 1,
-      "baseline_mean": 2418,
-      "optimized_mean": 2534,
-      "reduction_pct": -4.8
-    },
-    "unknown": {
-      "n_baseline": 2,
-      "n_optimized": 1,
-      "baseline_mean": 2423,
-      "optimized_mean": 2423,
-      "reduction_pct": 0.0
-    },
-    "refactor": {
-      "n_baseline": 4,
-      "n_optimized": 2,
-      "baseline_mean": 2437,
-      "optimized_mean": 2552,
-      "reduction_pct": -4.7
-    },
-    "documentation": {
-      "n_baseline": 2,
-      "n_optimized": 1,
-      "baseline_mean": 2453,
-      "optimized_mean": 2453,
-      "reduction_pct": 0.0
-    },
-    "code_gen": {
-      "n_baseline": 8,
-      "n_optimized": 4,
-      "baseline_mean": 2397.8,
-      "optimized_mean": 2513.8,
-      "reduction_pct": -4.8
-    }
-  },
+  "per_task_type_full_system": {},
   "n_breakeven_pd_negotiation": null,
   "summary": {
-    "baseline_mean_tokens": 2435.5,
-    "full_system_mean_tokens": 2516.8,
-    "overall_reduction_pct": -3.3,
-    "biggest_single_win": "cache_only",
-    "biggest_single_win_pct": 0.0
+    "baseline_mean_tokens": null,
+    "full_system_mean_tokens": 307.9,
+    "overall_reduction_pct": null,
+    "biggest_single_win": null,
+    "biggest_single_win_pct": 0
   }
 }

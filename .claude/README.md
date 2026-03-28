@@ -11,4 +11,4 @@ It lives alongside `.claude-project` and can be committed to version control.
 | `tools/` | Project-local scripts and tool definitions |
 
 Runtime state (events, sessions, dispatches) is stored in:
-`/Users/gebruiker/.claude/projects/project-0bf67307`
+`~/.claude/projects/<project-hash>`

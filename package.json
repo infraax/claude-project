@@ -1,7 +1,7 @@
 {
   "name": "claude-project",
   "displayName": "Claude Project",
-  "version": "5.2.0",
+  "version": "5.1.0",
   "description": "Project brain for Claude Code — .claude-project v5, event log, registry, dispatch queue, agent orchestration, daemon, MCP memory server, CLI, VS Code integration, research instrumentation, Protocol Documents, typed dispatch, prompt caching",
   "author": "infraax",
   "license": "MIT",
@@ -144,17 +144,14 @@
     "package": "vsce package",
     "publish:npm": "npm publish --access public",
     "publish:vsce": "vsce publish",
-    "publish:all": "npm run build && npm run publish:npm && npm run publish:vsce",
-    "orchestrator": "npx ts-node --esm src/orchestration/api-server.ts",
-    "orchestrator:bg": "nohup npx ts-node --esm src/orchestration/api-server.ts &"
+    "publish:all": "npm run build && npm run publish:npm && npm run publish:vsce"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.80.0",
+    "@anthropic-ai/sdk": "^0.54.0",
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.8.0",
     "commander": "^12.1.0",
     "dotenv": "^17.3.1",
-    "firebase-tools": "^15.12.0",
     "https-proxy-agent": "^5.0.1"
   },
   "devDependencies": {

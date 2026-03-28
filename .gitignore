@@ -2,7 +2,6 @@ node_modules/
 dist/
 .env
 .env.local
-.env.*.local
 *.js.map
 *.d.ts.map
 .DS_Store
@@ -13,17 +12,15 @@ __pycache__/
 *.pyo
 claude-project-instructions/INSTRUCTIONS.md
 claude-project-instructions/key.md
-claude-project-gk.github/Freesetup.md
-
-# Infrastructure secrets — NEVER COMMIT
-INFRA/
+claude-project-gk.github/Freesetup.md 
 .google/
-reports/
-*.pem
-*.p12
-*.pfx
-*.key
-*-adminsdk-*.json
-*-serviceaccount*.json
-*apiKey*.csv
 .keys/
+Infra/
+.claude/SECRETS.md
+.keys/git-crypt-master.key
+.keys/commit-vault.key
+.mcp.json
+
+# Environment registry (local, anonymous IDs — never commit)
+.env-registry/
+.mcp.json

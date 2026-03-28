@@ -1,37 +1,31 @@
 {
   "name": "claude-project",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
   "features": {
-    "ghcr.io/devcontainers/features/node:1": {"version": "22"},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
-  },
-  "postCreateCommand": "npm ci",
-  "forwardPorts": [3000, 3001],
-  "portsAttributes": {
-    "3000": {
-      "label": "Pipeline API",
-      "onAutoForward": "notify"
+    "ghcr.io/devcontainers/features/git-lfs:1": {},
+    "ghcr.io/devcontainers/features/aws-cli:1": {},
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
     }
   },
+  "postCreateCommand": "npm ci && sudo apt-get install -y git-crypt -q && bash scripts/bootstrap.sh",
+  "secrets": {
+    "GIT_CRYPT_KEY_B64": {
+      "description": "Base64-encoded git-crypt master key for decrypting .env",
+      "documentationUrl": "https://github.com/infraax/claude-project#setup"
+    }
+  },
+  "forwardPorts": [3000, 3456],
   "customizations": {
     "vscode": {
       "extensions": [
-        "GitHub.copilot",
-        "GitHub.copilot-chat",
         "dbaeumer.vscode-eslint",
-        "ms-vscode.vscode-typescript-next",
-        "alexcvzz.vscode-sqlite"
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-next"
       ],
       "settings": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        "terminal.integrated.defaultProfile.linux": "bash"
       }
-    }
-  },
-  "secrets": {
-    "ANTHROPIC_API_KEY": {
-      "description": "Anthropic API key for claude-project pipeline",
-      "documentationUrl": "https://console.anthropic.com"
     }
   }
 }

@@ -55,7 +55,7 @@ The system has three layers that never bleed into each other:
 ```
 1. Damian types a prompt (possibly messy/scattered)
    ↓
-2. CLARITY LAYER (M1 MacBook, Ollama + Qwen2.5-7B, ~1-2s, $0)
+2. CLARITY LAYER (local-macOS, Ollama + Qwen2.5-7B, ~1-2s, $0)
    - Reconstructs intent
    - Flags ambiguities as clarifying questions if needed
    - Output: clean, complete, unambiguous text

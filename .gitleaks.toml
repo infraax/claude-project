@@ -1,0 +1,55 @@
+title = "infraax/claude-project"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "git-crypt-key-blob"
+description = "git-crypt master key blob"
+regex = 'AEdJVENSWVBUS0VZ[A-Za-z0-9+/=]{20,}'
+tags = ["secret", "git-crypt"]
+
+[[rules]]
+id = "anthropic-session-token"
+description = "Anthropic session ingress token"
+regex = 'sk-ant-si[0-9a-zA-Z_-]{20,}'
+tags = ["secret", "anthropic"]
+
+[[rules]]
+id = "pinecone-api-key"
+description = "Pinecone API key"
+regex = 'pcsk_[a-zA-Z0-9]{50,}'
+tags = ["secret", "pinecone"]
+
+[[rules]]
+id = "perplexity-api-key"
+description = "Perplexity API key"
+regex = 'pplx-[a-zA-Z0-9]{40,}'
+tags = ["secret", "perplexity"]
+
+[[rules]]
+id = "claude-session-url"
+description = "Claude Code session URL — OPSEC violation"
+regex = 'https://claude\.ai/code/session_[A-Za-z0-9]{10,}'
+tags = ["opsec"]
+
+[[rules]]
+id = "qdrant-jwt"
+description = "Qdrant JWT API key"
+regex = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+'
+tags = ["secret", "qdrant"]
+
+[allowlist]
+regexes = [
+  'VAULT:v-[a-f0-9]{8}',
+  'sk-ant-\.\.\.',
+  '<KEY>',
+  '<BLOB>',
+  'AEdJVENSWVBUS0VZ.*ENCRYPTED-SEE-VAULT'
+]
+paths = [
+  '\.commit-vault/.*\.enc',
+  '\.env\.template',
+  '\.github/workflows/security-guardian\.yml',
+  '\.gitleaks\.toml'
+]

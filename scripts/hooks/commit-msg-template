@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# commit-msg: block OPSEC violations before commit completes
+
+COMMIT_MSG_FILE="$1"
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Strip session URL if still present (belt + suspenders)
+if echo "$COMMIT_MSG" | grep -q 'https://claude\.ai/code/session_'; then
+  sed -i '/https:\/\/claude\.ai\/code\/session_/d' "$COMMIT_MSG_FILE"
+fi
+
+# Block OPSEC narration phrases
+BLOCKED_PHRASES=(
+  "accidentally embedded"
+  "was exposed"
+  "security flaw"
+  "vulnerability was"
+  "key was committed"
+  "secret was leaked"
+  "token was exposed"
+  "Previous key"
+  "Old key fingerprint"
+  "key fingerprint"
+)
+
+for phrase in "${BLOCKED_PHRASES[@]}"; do
+  if echo "$COMMIT_MSG" | grep -qi "$phrase"; then
+    echo "❌ OPSEC VIOLATION: commit message narrates security incident"
+    echo "   Blocked phrase: '$phrase'"
+    echo ""
+    echo "   ✅ Use generic language instead:"
+    echo "   Bad:  'Previous key was accidentally embedded'"
+    echo "   Good: 'security: rotate credentials'"
+    echo "   Best: bash scripts/commit-secure.sh 'real details here'"
+    exit 1
+  fi
+done
+
+exit 0
