@@ -1,5 +1,13 @@
 {
   "mcpServers": {
+    "infra-monitor": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["tsx", "mcp/infra-monitor.ts"],
+      "env": {
+        "CLAUDE_PROJECT_DIR": "${CLAUDE_PROJECT_DIR}"
+      }
+    },
     "claude-project": {
       "command": "${CLAUDE_PROJECT_DIR}/.venv-research/bin/python3",
       "args": ["mcp/server.py"],

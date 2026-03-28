@@ -34,6 +34,15 @@ bash scripts/detect-env.sh --print
 | Codespaces | auto-runs on open via devcontainer.json |
 | GitHub Actions | unlock step in workflow → `npm ci` |
 
+## Check infrastructure quota (before batch work)
+```
+use_mcp_tool("infra-monitor", "get_budget_warning", {})
+```
+If output contains **CRITICAL** — stop and report to user before proceeding.
+If output contains **MONITOR** — note in session output and proceed cautiously.
+
+See `.claude/skills/infra-monitor.md` for full decision rules.
+
 If secrets missing after bootstrap:
 - Option A: `.keys/git-crypt-master.key` must be present (copy from iCloud)
 - Option B: `export GIT_CRYPT_KEY_B64=<base64-key>` then re-run bootstrap
