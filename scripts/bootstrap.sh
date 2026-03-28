@@ -1,5 +1,5 @@
 #!/bin/bash
-# bootstrap.sh — environment-aware session startup
+# bootstrap.sh — environment-aware session startup (v1.1)
 # Usage: source scripts/bootstrap.sh
 set -a
 
