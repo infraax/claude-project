@@ -12,12 +12,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: google/osv-scanner-action@v1
+      - name: Scan Node.js dependencies
+        uses: google/osv-scanner-action@v1
         with:
           scan-args: |-
             --lockfile=package-lock.json
             --format=sarif
-            --output=osv-results.sarif
-      - uses: github/codeql-action/upload-sarif@v3
+            --output=osv-node.sarif
+      - name: Scan Python dependencies
+        if: hashFiles('requirements-research.txt') != ''
+        uses: google/osv-scanner-action@v1
         with:
-          sarif_file: osv-results.sarif
+          scan-args: |-
+            --lockfile=requirements-research.txt
+            --format=sarif
+            --output=osv-python.sarif
+      - name: Upload Node.js results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: osv-node.sarif
+          category: osv-node
+      - name: Upload Python results
+        if: hashFiles('requirements-research.txt') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: osv-python.sarif
+          category: osv-python
