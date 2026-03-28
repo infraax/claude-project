@@ -17,3 +17,4 @@ claude-project-gk.github/Freesetup.md
 .keys/
 Infra/
 .claude/SECRETS.md
+.keys/git-crypt-master.key
