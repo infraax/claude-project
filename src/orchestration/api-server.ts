@@ -60,8 +60,9 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(404, CORS_HEADERS);
     res.end(JSON.stringify({ error: 'not found' }));
   } catch (err) {
+    console.error('[orchestrator]', err);
     res.writeHead(500, CORS_HEADERS);
-    res.end(JSON.stringify({ error: String(err) }));
+    res.end(JSON.stringify({ error: 'Internal server error' }));
   }
 });
 
