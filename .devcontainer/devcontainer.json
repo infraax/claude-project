@@ -1,42 +1,31 @@
 {
   "name": "claude-project",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20",
-
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
   "features": {
+    "ghcr.io/devcontainers/features/git-lfs:1": {},
+    "ghcr.io/devcontainers/features/aws-cli:1": {},
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.11"
-    },
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    }
   },
-
-  "postCreateCommand": "npm install && npm run build && npm link",
-
+  "postCreateCommand": "npm ci && sudo apt-get install -y git-crypt -q && bash scripts/bootstrap.sh",
+  "secrets": {
+    "GIT_CRYPT_KEY_B64": {
+      "description": "Base64-encoded git-crypt master key for decrypting .env",
+      "documentationUrl": "https://github.com/infraax/claude-project#setup"
+    }
+  },
+  "forwardPorts": [3000, 3456],
   "customizations": {
     "vscode": {
       "extensions": [
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "ms-vscode.vscode-typescript-next",
-        "redhat.vscode-yaml",
-        "claudelab.claude-project"
+        "ms-vscode.vscode-typescript-next"
       ],
       "settings": {
-        "editor.formatOnSave": true,
-        "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "typescript.preferences.importModuleSpecifier": "relative"
+        "terminal.integrated.defaultProfile.linux": "bash"
       }
-    }
-  },
-
-  "remoteEnv": {
-    "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
-  },
-
-  "forwardPorts": [8765],
-  "portsAttributes": {
-    "8765": {
-      "label": "MCP Server (HTTP)",
-      "onAutoForward": "silent"
     }
   }
 }
