@@ -3,3 +3,4 @@
 .google/**/*.json filter=git-crypt diff=git-crypt
 .keys/**/*.pem filter=git-crypt diff=git-crypt
 .keys/**/*.key filter=git-crypt diff=git-crypt
+.keys/commit-vault.key filter=git-crypt diff=git-crypt
