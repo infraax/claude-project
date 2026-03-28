@@ -19,3 +19,8 @@ Infra/
 .claude/SECRETS.md
 .keys/git-crypt-master.key
 .keys/commit-vault.key
+.mcp.json
+
+# Environment registry (local, anonymous IDs — never commit)
+.env-registry/
+.mcp.json

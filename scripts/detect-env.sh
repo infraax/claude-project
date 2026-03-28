@@ -4,14 +4,14 @@
 detect_environment() {
   if [[ "$OSTYPE" == "darwin"* ]]; then
     export ENV_TYPE="macbook"
-    export ENV_LABEL="MacBook (local)"
+    export ENV_LABEL="local-macOS"
     export ENV_PERSISTENT=true
     export ENV_PACKAGE_MGR="brew"
     export ENV_HOME="$HOME"
     return
   fi
 
-  if [ -n "$GITHUB_ACTIONS" ]; then
+  if [ -n "${GITHUB_ACTIONS:-}" ]; then
     export ENV_TYPE="github-actions"
     export ENV_LABEL="GitHub Actions Runner"
     export ENV_PERSISTENT=false
@@ -20,7 +20,7 @@ detect_environment() {
     return
   fi
 
-  if [ -n "$CODESPACES" ]; then
+  if [ -n "${CODESPACES:-}" ]; then
     export ENV_TYPE="codespaces"
     export ENV_LABEL="GitHub Codespaces"
     export ENV_PERSISTENT=false
@@ -29,7 +29,7 @@ detect_environment() {
     return
   fi
 
-  if [ -n "$ANTHROPIC_SANDBOX" ] || \
+  if [ -n "${ANTHROPIC_SANDBOX:-}" ] || \
      [ -f /etc/claude-sandbox ] || \
      [[ "$(hostname)" == *"claude"* ]] || \
      [[ "$(hostname)" == *"sandbox"* ]]; then

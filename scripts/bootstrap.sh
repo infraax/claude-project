@@ -71,7 +71,7 @@ echo ""
 echo "── Step 4: Environment-specific setup ──"
 
 if [ "$ENV_TYPE" = "macbook" ]; then
-  echo "MacBook: persistent environment — skipping tool install"
+  echo "local-macOS: persistent environment — skipping tool install"
 
 elif [ "$ENV_TYPE" = "claude-sandbox" ] || [ "$ENV_TYPE" = "linux-container" ]; then
   echo "Sandbox: checking runtime deps..."
@@ -112,3 +112,14 @@ echo "  Ready for: dispatch / orchestrator / ablation"
 echo "════════════════════════════════════════"
 
 set +a
+
+# ── Step 6: Register this environment + generate .mcp.json ──
+if [ -f scripts/env-register.sh ]; then
+  bash scripts/env-register.sh >/dev/null 2>&1 || true
+fi
+
+if [ -f .mcp.json.template ] && [ ! -f .mcp.json ]; then
+  REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  sed "s|\${CLAUDE_PROJECT_DIR}|$REPO_ROOT|g" .mcp.json.template > .mcp.json
+  echo "✅ .mcp.json generated for this environment"
+fi

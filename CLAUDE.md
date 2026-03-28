@@ -38,7 +38,7 @@ Read ONE at a time. Never load more than 2 files at once.
 ## CLI / Terminal Setup
 Start with: `cc` (shell function in ~/.zshrc) — launches Claude Code with MCP auto-connected.
 MCP registered globally in ~/.claude.json + locally in .mcp.json.
-Pipeline env var: CLAUDE_PROJECT_DIR=${CLAUDE_PROJECT_DIR}
+Pipeline env var: CLAUDE_PROJECT_DIR=$(git rev-parse --show-toplevel)
 
 ## Current Version
 v5.1.0 — legacy tools removed, schema updated, MCP globally registered, CLI ready.

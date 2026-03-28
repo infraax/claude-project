@@ -7,7 +7,7 @@ Run this at the start of every session to unlock secrets, load .env, and start t
 source scripts/bootstrap.sh
 ```
 
-Detects environment (MacBook / Sandbox / Codespaces / Actions), installs git-crypt if missing,
+Detects environment (local-macOS / Sandbox / Codespaces / Actions), installs git-crypt if missing,
 unlocks .env, loads all secrets, installs missing tools, verifies npm deps.
 
 ## Start live API bridge (optional)
@@ -29,7 +29,7 @@ bash scripts/detect-env.sh --print
 
 | Environment | Command |
 |-------------|---------|
-| MacBook | `source scripts/bootstrap.sh` |
+| local-macOS | `source scripts/bootstrap.sh` |
 | Sandbox / Claude Code | `source scripts/bootstrap.sh` |
 | Codespaces | auto-runs on open via devcontainer.json |
 | GitHub Actions | unlock step in workflow → `npm ci` |
