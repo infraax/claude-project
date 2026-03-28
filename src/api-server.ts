@@ -66,8 +66,8 @@ function handleDispatches(res: http.ServerResponse): void {
     db.close();
     json(res, { count: rows.length, rows });
   } catch (err) {
-    console.error("[api-server]", err);
-    json(res, { error: "Internal server error" }, 500);
+    console.error('[api-server]', err);
+    json(res, { error: 'Internal server error' }, 500);
   }
 }
 
@@ -122,8 +122,8 @@ function handleBudget(res: http.ServerResponse): void {
       pricing: { input_per_million: INPUT_CPM, output_per_million: OUTPUT_CPM },
     });
   } catch (err) {
-    console.error("[api-server]", err);
-    json(res, { error: "Internal server error" }, 500);
+    console.error('[api-server]', err);
+    json(res, { error: 'Internal server error' }, 500);
   }
 }
 
@@ -148,8 +148,8 @@ function handleQueue(res: http.ServerResponse): void {
 
     json(res, { count: files.length, files });
   } catch (err) {
-    console.error("[api-server]", err);
-    json(res, { error: "Internal server error" }, 500);
+    console.error('[api-server]', err);
+    json(res, { error: 'Internal server error' }, 500);
   }
 }
 
@@ -227,8 +227,8 @@ function handleTgch(res: http.ServerResponse): void {
       },
     });
   } catch (err) {
-    console.error("[api-server]", err);
-    json(res, { error: "Internal server error" }, 500);
+    console.error('[api-server]', err);
+    json(res, { error: 'Internal server error' }, 500);
   }
 }
 

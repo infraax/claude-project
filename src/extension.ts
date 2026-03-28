@@ -184,6 +184,10 @@ function cmdStatus(): void {
   });
 }
 
+function shellQuote(s: string): string {
+  return "'" + s.replace(/'/g, "'\\''") + "'";
+}
+
 function cmdInit(): void {
   const folder = vscode.workspace.workspaceFolders?.[0];
   if (!folder) {

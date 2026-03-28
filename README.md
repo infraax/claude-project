@@ -41,6 +41,7 @@ Drop a `.claude-project` file in any directory to give Claude persistent memory,
 | **Prompt cache** | Deterministic stable prefix with `cache_control: ephemeral` — 90% prefix cost reduction |
 | **Semantic memory** | LanceDB vector store (384-dim embeddings) for `find_related_files` queries |
 | **Federated telemetry** | Opt-in anonymous metrics → Cloudflare Worker → community threshold learning |
+| **Codespaces** | Zero-setup dev environment: Claude Code + live API bridge + ablation runner |
 
 ---
 
@@ -59,6 +60,15 @@ npm install -g claude-project --registry https://npm.pkg.github.com
 **Open in Codespaces** — zero setup dev environment:
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/infraax/claude-project)
+
+Codespaces automatically:
+- Unlocks secrets via `GIT_CRYPT_KEY_B64`
+- Installs Claude Code CLI + cloudflared
+- Starts a live API bridge on port 3000 with a public `trycloudflare.com` URL
+- Wires `~/.bashrc` with `cc`, `bridge-start/stop/url`, `ablate-*` shortcuts
+- Exposes VS Code tasks for ablation runner, bridge control, and build
+
+Add `ANTHROPIC_API_KEY` and `GIT_CRYPT_KEY_B64` in your [Codespaces secrets](https://github.com/settings/codespaces) to unlock the full environment.
 
 ---
 
@@ -313,6 +323,7 @@ Add to `~/.mcp.json`:
 | **Claude Code MCP** | `claude-project inject` |
 | **Obsidian** | Auto-synced via `sync_obsidian` action |
 | **macOS launchd** | `claude-project daemon install` |
+| **GitHub Codespaces** | [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/infraax/claude-project) |
 
 ---
 
@@ -326,6 +337,7 @@ cd claude-project && npm install && npm run build && npm link
 npm test                          # 25 Vitest tests (TypeScript)
 python scripts/test_full_pipeline.py  # 5 pipeline integration tests (Python)
 npm run lint   # TypeScript type-check
+bash scripts/test-infrastructure.sh  # 27-service connectivity report
 ```
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/infraax/claude-project)
@@ -334,24 +346,23 @@ npm run lint   # TypeScript type-check
 
 ## Changelog
 
-### v4.2.0
-- **Research instrumentation** — SQLite `DispatchObservation` recording every API call (tokens, latency, cache hit, task type, format, compression ratio)
-- **Task classifier** — 8 task types via regex; pipeline patterns before code_gen to prevent false positives
-- **Format encoder** — `typed_pseudocode`, `dsl`, `toon`, `codeact`, `natural_language` selected by task type
-- **Protocol Documents** — content-addressed reusable instruction blocks, SHA-256 deduplication, use tracking
-- **13 new MCP tools** — `store_memory`, `query_memory`, `get_context`, `set_context`, `set_file_summary`, `get_file_summary`, `find_related_files`, `register_pd`, `get_pd`, `search_pd`, `log_pd_usage`, `check_negotiation_threshold`, `dispatch_task`
-- **Clarity Layer** — Ollama/Qwen2.5-7B input pre-processor; passthrough when unavailable
-- **Prompt cache** — stable prefix builder with `cache_control: ephemeral`; SQLite hit-rate tracker
-- **LanceDB semantic memory** — 384-dim all-MiniLM-L6-v2 embeddings for `find_related_files`
-- **Python research requirements** — `lancedb`, `sentence-transformers`, `llmlingua`, `kuzu`, `mcp`, `fastmcp`
+### v5.3.0
+- **GitHub Codespaces — 3 use cases fully wired:**
+  - `postCreate.sh` — one-time setup: git-crypt unlock, npm ci, Python deps, Claude Code CLI, cloudflared, `~/.bashrc` helpers (`cc`, `bridge-start/stop/url`, `ablate-*`)
+  - `postStart.sh` — every-start: auto-restarts live API bridge + cloudflared tunnel, saves URL to `data/tunnel.json`
+  - `devcontainer.json` — added `ANTHROPIC_API_KEY` secret, `postStartCommand`, port 3000 public with "Live API Bridge" label
+  - `.vscode/tasks.json` — 10 VS Code tasks: bridge start/stop/URL, ablation runner (all conditions), log tail, Claude Code launch, tsc build
+- **Security hardening (CodeQL):**
+  - `extension.ts`: `shellQuote()` helper using POSIX single-quote wrapping replaces double-quote escaping on `terminal.sendText()` calls (CodeQL #2, #3)
+  - `automation.ts`: escape backslashes before double-quotes in osascript notification string (CodeQL #4)
+  - `api-server.ts` + `orchestration/api-server.ts`: log errors server-side, return generic `"Internal server error"` to clients (CodeQL #6, #7)
 
-### v4.1.0
-- **Automation engine** — event, schedule, manual, file_change, service_up/down triggers; 6 action types; idempotent state per automation
-- **Agent dispatch** — Claude API tool loop (MAX 10 iterations), path traversal guard, full dispatch lifecycle
-- **CLI**: `dispatch list/show/create/run`, `automation list/run`
-- **Tests**: 25 Vitest tests — idempotency, path traversal, lifecycle, tool loop
-- **CI**: tests on every push/PR; GitHub Packages publishing; `production` environment gate
-- **Docs**: GitHub Pages site, devcontainer, issue templates, CONTRIBUTING, SECURITY, dependabot
+### v5.2.0
+- **GitHub Pages** — live at https://infraax.github.io/claude-project/
+- **Dashboard** (`/dashboard.html`) — live pipeline metrics, TGCH status bars, 14-service health grid
+- **Orchestration Layer** — `Orchestrator` class, HTTP API (port 3456): `/health` `/api/services` `/api/metrics` `/api/all`
+- **Workflow audit** — removed 8 inapplicable workflows, fixed 5 broken ones (dashboard, orchestrator-health, osv-scanner, pyre, fortify)
+- **Security Guardian** — 14-pattern secret scan + gitleaks, false positive suppression for rule definition files
 
 ### v5.1.0
 - Anonymous federated telemetry (opt-in) — token metrics → Cloudflare Worker → community thresholds
@@ -360,10 +371,27 @@ npm run lint   # TypeScript type-check
 
 ### v5.0.0
 - **Schema v5**: `memory_path` canonical (deprecates `diary_path`); removed `obsidian_vault`, `obsidian_folder`, `devices`, `shared_paths`; added `optimizations`, `telemetry`
-- MCP server renamed _(legacy name, now claude-project)_ — **update `~/.mcp.json` key**
+- MCP server renamed — **update `~/.mcp.json` key**
 - Removed 10 legacy MCP tools (legacy session file / journal / Dexter profile)
 - All machine-specific paths removed; Obsidian sync opt-in via `CLAUDE_OBSIDIAN_VAULT`
 - Research instrumentation, Protocol Documents, typed dispatch, Clarity Layer, prompt cache, semantic memory
+
+### v4.2.0
+- Research instrumentation — SQLite `DispatchObservation` recording every API call
+- Task classifier — 8 task types via regex
+- Format encoder — `typed_pseudocode`, `dsl`, `toon`, `codeact`, `natural_language` selected by task type
+- Protocol Documents — content-addressed reusable instruction blocks, SHA-256 deduplication
+- 13 new MCP tools
+- Clarity Layer — Ollama/Qwen2.5-7B input pre-processor
+- Prompt cache — stable prefix builder with `cache_control: ephemeral`
+- LanceDB semantic memory — 384-dim all-MiniLM-L6-v2 embeddings
+
+### v4.1.0
+- Automation engine — event, schedule, manual, file_change, service_up/down triggers; 6 action types
+- Agent dispatch — Claude API tool loop (MAX 10 iterations), path traversal guard
+- CLI: `dispatch list/show/create/run`, `automation list/run`
+- Tests: 25 Vitest tests
+- CI: tests on every push/PR; GitHub Packages publishing; `production` environment gate
 
 ### v4.0.0
 - v4 schema: agents, services, automations, monitoring

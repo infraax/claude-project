@@ -1,0 +1,140 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Bridge: Start",
+      "type": "shell",
+      "command": "bash .devcontainer/postStart.sh",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "bridge"
+      },
+      "problemMatcher": [],
+      "detail": "Start the live API bridge + cloudflared tunnel"
+    },
+    {
+      "label": "Bridge: Stop",
+      "type": "shell",
+      "command": "pkill -f 'api-server\\|cloudflared' 2>/dev/null && echo 'Bridge stopped' || echo 'Nothing running'",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "bridge"
+      },
+      "problemMatcher": [],
+      "detail": "Stop the API server and tunnel"
+    },
+    {
+      "label": "Bridge: Show URL",
+      "type": "shell",
+      "command": "cat data/tunnel.url 2>/dev/null || echo 'Bridge not running'",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "group": "bridge"
+      },
+      "problemMatcher": [],
+      "detail": "Print the current cloudflared tunnel URL"
+    },
+    {
+      "label": "Ablation: Run full_system (10 tasks)",
+      "type": "shell",
+      "command": "source .env 2>/dev/null; python3 scripts/ablation_runner.py --condition 6 --max-tasks 10",
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "ablation"
+      },
+      "problemMatcher": [],
+      "detail": "Run condition 6 (full_system) ablation with 10 tasks"
+    },
+    {
+      "label": "Ablation: Run cache_only (10 tasks)",
+      "type": "shell",
+      "command": "source .env 2>/dev/null; python3 scripts/ablation_runner.py --condition 1 --max-tasks 10",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "ablation"
+      },
+      "problemMatcher": [],
+      "detail": "Run condition 1 (cache_only) ablation with 10 tasks"
+    },
+    {
+      "label": "Ablation: Run all conditions",
+      "type": "shell",
+      "command": "source .env 2>/dev/null; python3 scripts/ablation_runner.py --max-tasks 10",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "ablation"
+      },
+      "problemMatcher": [],
+      "detail": "Run all 7 ablation conditions (10 tasks each)"
+    },
+    {
+      "label": "Ablation: Show results",
+      "type": "shell",
+      "command": "python3 scripts/compute_ablation_results.py",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "group": "ablation"
+      },
+      "problemMatcher": [],
+      "detail": "Compute and display ablation study results from research.db"
+    },
+    {
+      "label": "API Server: Tail logs",
+      "type": "shell",
+      "command": "tail -f /tmp/api-server.log",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "bridge"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "detail": "Follow the API server log output"
+    },
+    {
+      "label": "Claude Code: Launch (cc)",
+      "type": "shell",
+      "command": "CLAUDE_PROJECT_DIR=$(git rev-parse --show-toplevel) claude --mcp-config .mcp.json",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": [],
+      "detail": "Launch Claude Code with MCP auto-connected"
+    },
+    {
+      "label": "Build: Compile TypeScript",
+      "type": "npm",
+      "script": "build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      },
+      "problemMatcher": ["$tsc"],
+      "detail": "Run tsc to compile TypeScript"
+    }
+  ]
+}
