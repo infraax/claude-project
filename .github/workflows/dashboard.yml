@@ -16,7 +16,7 @@ jobs:
     # Set FIREBASE_ENABLED repository variable to 'true' to activate
     if: ${{ vars.FIREBASE_ENABLED == 'true' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v4
         with:
